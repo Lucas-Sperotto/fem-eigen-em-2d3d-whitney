@@ -1,43 +1,58 @@
+# -----------------------------------------------------------------------------
+# Build/CMake
+# -----------------------------------------------------------------------------
 build/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+compile_commands.json
+CTestTestfile.cmake
+Testing/
 
-# Prerequisites
+# -----------------------------------------------------------------------------
+# Compilacao C/C++
+# -----------------------------------------------------------------------------
 *.d
-
-# Compiled Object files
 *.slo
 *.lo
 *.o
 *.obj
-
-# Precompiled Headers
 *.gch
 *.pch
-
-# Linker files
 *.ilk
-
-# Debugger Files
 *.pdb
-
-# Compiled Dynamic libraries
 *.so
 *.dylib
 *.dll
-
-# Fortran module files
 *.mod
 *.smod
-
-# Compiled Static libraries
 *.lai
 *.la
 *.a
 *.lib
-
-# Executables
 *.exe
 *.out
 *.app
-
-# debug information files
 *.dwo
+
+# -----------------------------------------------------------------------------
+# Ambientes locais / cache
+# -----------------------------------------------------------------------------
+.venv/
+.venv_pdf/
+__pycache__/
+*.pyc
+
+# -----------------------------------------------------------------------------
+# Saidas do projeto FEM (resultados e pos-processamento)
+# -----------------------------------------------------------------------------
+out/
+/*.vtk
+/*.vtu
+/*.pvtu
+/*.log
+
+# -----------------------------------------------------------------------------
+# Arquivos locais de referencia
+# -----------------------------------------------------------------------------
+19950011772.pdf
