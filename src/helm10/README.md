@@ -60,7 +60,47 @@ Matrizes elementares:
 
 `T_e(i,j) = int_e eps_r N_i N_j dA`
 
-## 4.1) Trilha de rastreabilidade
+## 4.1) Expressoes fechadas do elemento triangular
+
+Usando:
+
+```text
+N_i(x,y) = (a_i + b_i x + c_i y) / (2A)
+grad N_i = [b_i, c_i] / (2A)
+```
+
+as expressoes implementadas no backend `closed-form` ficam:
+
+```text
+S_e(i,j) = (1/mu_r) * (b_i b_j + c_i c_j) / (4A)
+```
+
+```text
+T_e(i,j) = eps_r * (A/12) * [2 1 1; 1 2 1; 1 1 2]_(i,j)
+```
+
+ou seja:
+
+```text
+T_e =
+eps_r * A/12 *
+[ 2 1 1
+  1 2 1
+  1 1 2 ]
+```
+
+Na forma global:
+
+```text
+S phi = kc^2 T phi
+```
+
+com:
+
+- TE: condicao natural de Neumann;
+- TM: condicao essencial de Dirichlet.
+
+## 4.2) Trilha de rastreabilidade
 
 Para conectar o artigo ao codigo, a trilha principal deste modulo e:
 

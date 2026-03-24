@@ -49,7 +49,60 @@ com:
 Solver:
 - `generalized_eigs_sym_vec` (`LAPACKE_dsygv`).
 
-## 3.1) Trilha de rastreabilidade
+## 3.1) Coeficientes locais e formas fechadas
+
+Para a aresta local `m = (i,j)`, o codigo usa os coeficientes:
+
+```text
+A_m = a_i b_j - a_j b_i
+B_m = c_i b_j - c_j b_i
+C_m = a_i c_j - a_j c_i
+D_m = b_i c_j - b_j c_i
+```
+
+e os momentos geometricos:
+
+```text
+x_tri = (x1 + x2 + x3) / 3
+y_tri = (y1 + y2 + y3) / 3
+
+(1/A) int_T x^2 dA = (sum x_i^2 + 9 x_tri^2) / 12
+(1/A) int_T y^2 dA = (sum y_i^2 + 9 y_tri^2) / 12
+```
+
+Assim, a base de Whitney pode ser lida como:
+
+```text
+W_m(x,y) = (L_m / (4 A^2)) * [ (A_m + B_m y) x_hat + (C_m + D_m x) y_hat ]
+```
+
+e as matrizes elementares usadas pelo backend `closed-form` ficam:
+
+```text
+S_e(m,n) = (1/mu_r) * (L_m L_n)/(4 A^3) * D_m D_n
+```
+
+```text
+T_e(m,n) = eps_r * (L_m L_n)/(16 A^3) * (It1 + It2 + It3 + It4 + It5)
+```
+
+com:
+
+```text
+It1 = A_m A_n + C_m C_n
+It2 = (C_m D_n + C_n D_m) x_tri
+It3 = (A_m B_n + A_n B_m) y_tri
+It4 = B_m B_n * (1/A) int_T y^2 dA
+It5 = D_m D_n * (1/A) int_T x^2 dA
+```
+
+Na forma global:
+
+```text
+S e = kc^2 T e
+```
+
+## 3.2) Trilha de rastreabilidade
 
 Para conectar o artigo ao codigo, a trilha principal deste modulo e:
 
