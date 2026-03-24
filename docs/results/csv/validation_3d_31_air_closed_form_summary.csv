@@ -1,0 +1,3 @@
+section,solver,backend,case,nx,ny,nz,n_modes,max_err_ana_pct,mean_err_ana_pct,max_err_ref_pct,mean_err_ref_pct
+3.1,fem3d0,closed-form,air,5,3,3,8,4.451,1.381375,3.573,1.70875
+3.1,fem3d0,closed-form,air,6,3,3,8,4.954,1.488,3.485,1.853625
