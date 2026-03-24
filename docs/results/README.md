@@ -15,6 +15,25 @@ python3 scripts/export_curated_results.py
 O script copia apenas arquivos selecionados de `out/` para `docs/results/` e
 reconstrui este `README.md`.
 
+## Campanha completa de sweep
+
+Quando voce rodar a campanha pesada com `10` niveis por backend em
+`out/sweeps/full_mesh_compare`, existe um exportador separado para curar
+essa arvore sem subir todo o volume de artefatos:
+
+```bash
+python3 scripts/export_curated_sweep_results.py
+```
+
+Esse exportador copia para `docs/results/sweeps/full_mesh_compare/`:
+
+- o `README.md` global da campanha
+- os CSVs agregados `sweep_runs.csv`, `sweep_modes.csv` e `sweep_levels.csv`
+- os CSVs de validacao do ultimo nivel disponivel de cada backend
+
+Assim, o repositorio guarda uma visao comunicativa da campanha completa,
+enquanto a arvore pesada continua local em `out/sweeps/...`.
+
 ## O que foi preservado
 
 - CSVs-resumo de validacao 2D, 3D e benchmark
