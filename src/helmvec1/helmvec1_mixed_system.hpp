@@ -16,6 +16,7 @@
 /*****************************************************************************/
 
 #pragma once
+#include "core/assembly_backend.hpp"
 #include "core/block_ops.hpp"
 #include "core/dense.hpp"
 #include "core/helm10_scalar_system.hpp"
@@ -27,6 +28,8 @@ struct MixedSystem92
 {
     // Sistema generalizado em blocos (Secao 2.2.2, Eq. 92):
     //   S x = (kc^2) T x, com x = [bloco_transversal_aresta; bloco_escalar_longitudinal]
+    // Este e o equivalente, no repositorio, ao programa HELMVEC1 do apendice
+    // em FORTRAN.
     DenseMat S; // [St  0]
                 // [ 0 Sz]
     DenseMat T; // [Tt  0]
@@ -48,13 +51,15 @@ struct MixedSystem92
 /* DESCRICAO: Monta o sistema misto em blocos da formulacao E para obtencao de*/
 /* kc. Corresponde ao sistema em blocos da Eq. (92), Secao 2.2.2.             */
 /* ENTRADA: mesh: const Mesh2D &; eps_r_tri: const std::vector<double> &;     */
-/* mu_r_tri: const std::vector<double> &.                                     */
+/* mu_r_tri: const std::vector<double> &; backend:                            */
+/* ElementAssemblyBackend.                                                    */
 /* SAIDA: MixedSystem92.                                                      */
 /******************************************************************************/
 MixedSystem92 build_system92_E(
     const Mesh2D &mesh,
     const std::vector<double> &eps_r_tri,
-    const std::vector<double> &mu_r_tri);
+    const std::vector<double> &mu_r_tri,
+    ElementAssemblyBackend backend = ElementAssemblyBackend::GaussianQuadrature);
 
 // Formulacao em H (Ht, Hz), operador dual por troca eps/mu:
 //   - BC de aresta: mantem arestas de contorno (condicao natural)
@@ -62,4 +67,5 @@ MixedSystem92 build_system92_E(
 MixedSystem92 build_system92_H(
     const Mesh2D &mesh,
     const std::vector<double> &eps_r_tri,
-    const std::vector<double> &mu_r_tri);
+    const std::vector<double> &mu_r_tri,
+    ElementAssemblyBackend backend = ElementAssemblyBackend::GaussianQuadrature);

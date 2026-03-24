@@ -14,6 +14,7 @@
 /*****************************************************************************/
 
 #pragma once
+#include "assembly_backend.hpp"
 #include "mesh2d.hpp"
 #include "dense.hpp"
 #include <vector>
@@ -26,6 +27,12 @@ enum class ScalarBC
 
 struct ScalarSystem
 {
+    // Sistema global escalar da Secao 2.1.
+    // Na nomenclatura do artigo, este e o sistema montado que corresponde a
+    // Eq. (43), isto e:
+    //   S u = (kc^2) T u
+    // Este bloco e o equivalente moderno, em C++, do nucleo do programa
+    // HELM10 descrito no apendice em FORTRAN.
     DenseMat S;
     DenseMat T;
     int ndof = 0;
@@ -35,16 +42,23 @@ struct ScalarSystem
 /******************************************************************************/
 /* FUNCAO: build_helm10_scalar_system                                         */
 /* DESCRICAO: Monta o sistema escalar generalizado da secao 2.1 com materiais */
-/* e BCs informados. Implementa a formulacao escalar da Secao 2.1.            */
-/* ENTRADA: mesh: const Mesh2D &; bc: ScalarBC.                               */
+/* e BCs informados. Implementa a formulacao escalar da Secao 2.1 e permite   */
+/* escolher o backend local de integracao/matriz elementar. No artigo, este   */
+/* ponto do codigo corresponde a montagem global da Eq. (43).                 */
+/* ENTRADA: mesh: const Mesh2D &; bc: ScalarBC; backend:                      */
+/* ElementAssemblyBackend.                                                    */
 /* SAIDA: ScalarSystem.                                                       */
 /******************************************************************************/
-ScalarSystem build_helm10_scalar_system(const Mesh2D &mesh, ScalarBC bc);
+ScalarSystem build_helm10_scalar_system(
+    const Mesh2D &mesh,
+    ScalarBC bc,
+    ElementAssemblyBackend backend = ElementAssemblyBackend::ClosedForm);
 
 // Variante nao homogenea (parametros por triangulo).
 ScalarSystem build_helm10_scalar_system(
     const Mesh2D &mesh,
     ScalarBC bc,
     const std::vector<double> &eps_r_tri,
-    const std::vector<double> &mu_r_tri
+    const std::vector<double> &mu_r_tri,
+    ElementAssemblyBackend backend = ElementAssemblyBackend::ClosedForm
 );

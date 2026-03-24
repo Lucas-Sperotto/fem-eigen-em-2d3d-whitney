@@ -14,6 +14,7 @@
 /*****************************************************************************/
 
 #pragma once
+#include "core/assembly_backend.hpp"
 #include "core/mesh3d_cylinder.hpp"
 #include "core/mesh3d_rect.hpp"
 #include "core/mesh3d_sphere.hpp"
@@ -48,6 +49,9 @@ struct CliOptions
   bool run_half = false;
   bool run_cyl = false;
   bool run_sphere = false;
+  ElementAssemblyBackend backend = ElementAssemblyBackend::GaussianQuadrature;
+  bool debug_local_blocks = false;
+  bool debug_candidates = false;
 
   bool custom_mesh = false;
   int nx = 0;
@@ -75,7 +79,9 @@ struct PreparedCase
 inline void print_usage(const char *bin_name)
 {
   std::cout << "Usage: " << bin_name
-            << " [--air|--half|--cyl|--sphere|--all] [--nx N --ny N --nz N]\n";
+            << " [--air|--half|--cyl|--sphere|--all] [--nx N --ny N --nz N]"
+            << " [--backend gauss|closed-form]"
+            << " [--debug-local-blocks] [--debug-candidates]\n";
 }
 
 /******************************************************************************/
@@ -150,6 +156,27 @@ inline std::optional<CliOptions> parse_cli(
     {
       opt.nz = std::atoi(argv[++i]);
       opt.custom_mesh = true;
+    }
+    else if (a == "--backend" && i + 1 < argc)
+    {
+      opt.backend = parse_element_assembly_backend(argv[++i]);
+    }
+    else if (a == "--debug" || a == "--debug-all")
+    {
+      opt.debug_local_blocks = true;
+      opt.debug_candidates = true;
+    }
+    else if (a == "--debug-local-blocks")
+    {
+      opt.debug_local_blocks = true;
+    }
+    else if (a == "--debug-candidates")
+    {
+      opt.debug_candidates = true;
+    }
+    else if (a.rfind("--backend=", 0) == 0)
+    {
+      opt.backend = parse_element_assembly_backend(a.substr(std::string("--backend=").size()));
     }
     else if (a == "--help")
     {

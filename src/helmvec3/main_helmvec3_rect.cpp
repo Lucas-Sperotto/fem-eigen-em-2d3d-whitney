@@ -11,13 +11,19 @@
 /* Artigo base: NASA 19950011772. Referencias principais: Secao 2.2.4, Eq.    */
 /* (126)-(127), Fig. 12-13, Tabelas 9-10.                                     */
 /*****************************************************************************/
-/* Observacao: Comentarios priorizam didatica, rastreabilidade e validacao.   */
+/* Observacao: Este driver desempenha o papel do programa HELMVEC3 do         */
+/* apendice em FORTRAN. A montagem global correspondente a Eq. (136) ocorre em*/
+/* src/helmvec2/helmvec2_coupled_system.cpp. Comentarios priorizam didatica,  */
+/* rastreabilidade e validacao.                                               */
 /*****************************************************************************/
 
 #include "core/lapack_eig.hpp"
 #include "core/mesh2d.hpp"
 #include "core/mesh2d_rect.hpp"
+#include "core/timing_utils.hpp"
+#include "explicit/tri2d_coupled_explicit.hpp"
 #include "helmvec2/helmvec23_shared.hpp"
+#include "helmvec2/coupled_cli_options.hpp"
 #include "helmvec2/helmvec2_coupled_system.hpp"
 #include <algorithm>
 #include <cmath>
@@ -37,22 +43,99 @@ struct Table10Block
 };
 
 /******************************************************************************/
+/* FUNCAO: print_block_3x3                                                    */
+/* DESCRICAO: Imprime uma matriz 3x3 em formato compacto para depuracao       */
+/* didatica dos blocos locais da formulacao acoplada.                         */
+/* ENTRADA: name: const char *; M: const double[3][3].                        */
+/* SAIDA: sem retorno explicito (void).                                       */
+/******************************************************************************/
+void print_block_3x3(const char *name, const double M[3][3])
+{
+    std::cout << "  " << name << " =\n";
+    for (int i = 0; i < 3; ++i)
+    {
+        std::cout << "   ";
+        for (int j = 0; j < 3; ++j)
+            std::cout << " " << M[i][j];
+        std::cout << "\n";
+    }
+}
+
+/******************************************************************************/
+/* FUNCAO: print_first_triangle_closed_form_debug                             */
+/* DESCRICAO: Imprime os blocos locais closed-form do primeiro triangulo para */
+/* a formulacao de 2.2.4, mostrando tanto as Eq. (137)-(142) quanto a forma  */
+/* rearranjada usada no sistema global Eq. (136).                             */
+/* ENTRADA: mesh: const Mesh2D &; k0: double; eps: const std::vector<double>  */
+/* &; mu: const std::vector<double> &.                                        */
+/* SAIDA: sem retorno explicito (void).                                       */
+/******************************************************************************/
+void print_first_triangle_closed_form_debug(
+    const Mesh2D &mesh,
+    double k0,
+    const std::vector<double> &eps,
+    const std::vector<double> &mu)
+{
+    if (mesh.tris.empty())
+        return;
+
+    const Tri &t = mesh.tris.front();
+    const TriGeomEdge tg = tri_geom_edge(mesh, t);
+    const auto blk142 = explicit_tri2d::tri2d_beta_closed_form_eq_137_142(
+        tg,
+        k0,
+        eps.front(),
+        mu.front());
+    const auto blk136 = explicit_tri2d::tri2d_beta_rearranged_closed_form_eq_136(
+        tg,
+        k0,
+        eps.front(),
+        mu.front());
+
+    std::cout << "\n[debug] primeiro triangulo: blocos locais closed-form de 2.2.4\n";
+    std::cout << "  k0_amostra=" << k0 << "\n";
+    std::cout << "  artigo Eq. (137)-(142):\n";
+    print_block_3x3("Sel_tt", blk142.Sel_tt);
+    print_block_3x3("Tel_tz", blk142.Tel_tz);
+    print_block_3x3("Tel_zt", blk142.Tel_zt);
+    print_block_3x3("Sel_zz", blk142.Sel_zz);
+    print_block_3x3("Tel_tt", blk142.Tel_tt);
+    print_block_3x3("Tel_zz", blk142.Tel_zz);
+
+    std::cout << "  rearranjo usado no codigo para Eq. (136):\n";
+    print_block_3x3("P_tt", blk136.P_tt);
+    print_block_3x3("P_zz", blk136.P_zz);
+    print_block_3x3("Q_tt", blk136.Q_tt);
+    print_block_3x3("Q_tz", blk136.Q_tz);
+    print_block_3x3("Q_zt", blk136.Q_zt);
+    print_block_3x3("Q_zz", blk136.Q_zz);
+}
+
+/******************************************************************************/
 /* FUNCAO: beta_ratio_candidates_from_k0                                      */
 /* DESCRICAO: Resolve o sistema de beta para um k0 fixo e filtra candidatos   */
 /* fisicos de beta/k0 para construir ramos de dispersao da Secao 2.2.4        */
 /* (Eq. 126-127).                                                             */
 /* ENTRADA: mesh: const Mesh2D &; eps: const std::vector<double> &; mu: const */
-/* std::vector<double> &; k0: double.                                         */
+/* std::vector<double> &; k0: double; backend: ElementAssemblyBackend.        */
 /* SAIDA: std::vector<double>.                                                */
 /******************************************************************************/
 std::vector<double> beta_ratio_candidates_from_k0(
     const Mesh2D &mesh,
     const std::vector<double> &eps,
     const std::vector<double> &mu,
-    double k0)
+    double k0,
+    ElementAssemblyBackend backend,
+    timing::Breakdown *perf = nullptr)
 {
-    auto sys = build_coupled_beta_system_E(mesh, k0, eps, mu);
+    timing::Stopwatch stage;
+    auto sys = build_coupled_beta_system_E(mesh, k0, eps, mu, backend);
+    if (perf != nullptr)
+        perf->assembly_ms += stage.elapsed_ms();
+    stage.reset();
     auto eig = generalized_eigs_real_vec(sys.P, sys.Q);
+    if (perf != nullptr)
+        perf->solve_ms += stage.elapsed_ms();
     auto beta = helmvec23::collect_positive_real_roots(eig, 1e-4);
 
     double eps_max = 1.0;
@@ -77,7 +160,8 @@ std::vector<double> beta_ratio_candidates_from_k0(
 /* de proximidade em beta/k0 para comparar com Tabela 9 e Tabela 10.          */
 /* ENTRADA: mesh: const Mesh2D &; eps: const std::vector<double> &; mu: const */
 /* std::vector<double> &; br_over_lambda: const std::vector<double> &; b:     */
-/* double; ref_ratio: const std::vector<double> &; debug: bool.               */
+/* double; ref_ratio: const std::vector<double> &; debug_candidates: bool;    */
+/* backend: ElementAssemblyBackend.                                           */
 /* SAIDA: std::vector<double>.                                                */
 /******************************************************************************/
 std::vector<double> match_ratio_to_reference(
@@ -87,7 +171,9 @@ std::vector<double> match_ratio_to_reference(
     const std::vector<double> &br_over_lambda,
     double b,
     const std::vector<double> &ref_ratio,
-    bool debug)
+    bool debug_candidates,
+    ElementAssemblyBackend backend,
+    timing::Breakdown *perf = nullptr)
 {
     std::vector<double> out;
     out.reserve(br_over_lambda.size());
@@ -102,7 +188,7 @@ std::vector<double> match_ratio_to_reference(
 
         const double s = br_over_lambda[i];
         const double k0 = 2.0 * M_PI * s / b;
-        auto cands = beta_ratio_candidates_from_k0(mesh, eps, mu, k0);
+        auto cands = beta_ratio_candidates_from_k0(mesh, eps, mu, k0, backend, perf);
         if (cands.empty())
         {
             out.push_back(std::numeric_limits<double>::quiet_NaN());
@@ -122,7 +208,7 @@ std::vector<double> match_ratio_to_reference(
         }
         out.push_back(cands[best]);
 
-        if (debug)
+        if (debug_candidates)
         {
             std::cout << "  [debug] s=" << s << " cands:";
             for (double c : cands)
@@ -141,7 +227,7 @@ std::vector<double> match_ratio_to_reference(
 /* amostragem consecutivos em b_r/lambda_0.                                   */
 /* ENTRADA: mesh: const Mesh2D &; eps: const std::vector<double> &; mu: const */
 /* std::vector<double> &; br_over_lambda: const std::vector<double> &; b:     */
-/* double; seed_ratio: double.                                                */
+/* double; seed_ratio: double; backend: ElementAssemblyBackend.               */
 /* SAIDA: std::vector<double>.                                                */
 /******************************************************************************/
 std::vector<double> trace_ratio_branch(
@@ -150,7 +236,9 @@ std::vector<double> trace_ratio_branch(
     const std::vector<double> &mu,
     const std::vector<double> &br_over_lambda,
     double b,
-    double seed_ratio)
+    double seed_ratio,
+    ElementAssemblyBackend backend,
+    timing::Breakdown *perf = nullptr)
 {
     std::vector<double> out;
     out.reserve(br_over_lambda.size());
@@ -159,7 +247,7 @@ std::vector<double> trace_ratio_branch(
     for (double s : br_over_lambda)
     {
         const double k0 = 2.0 * M_PI * s / b;
-        auto cands = beta_ratio_candidates_from_k0(mesh, eps, mu, k0);
+        auto cands = beta_ratio_candidates_from_k0(mesh, eps, mu, k0, backend, perf);
         if (cands.empty())
         {
             out.push_back(std::numeric_limits<double>::quiet_NaN());
@@ -194,6 +282,8 @@ std::vector<double> trace_ratio_branch(
 /******************************************************************************/
 int main(int argc, char **argv)
 {
+    timing::Breakdown perf;
+    timing::Stopwatch total_watch;
     // Parametros das Figuras 12/13 da secao 2.2.4.5.
     // Objetivo: obter beta para k0 conhecido e reconstruir curvas de dispersao.
     const double a = 1.0;
@@ -204,19 +294,39 @@ int main(int argc, char **argv)
     // Configuracoes opcionais em tempo de execucao:
     // argv[1] = d/a para uma pre-visualizacao de continuacao da Figura 13.
     // argv[2], argv[3] = nx, ny for the rectangular mesh.
-    // argv[4] = debug flag (0/1).
+    // argv[4] = debug legado (0/1).
     double d13_over_a = 0.20;
     int nx = 10, ny = 5; // 100 triangulos, como nos exemplos do artigo.
-    bool debug = false;
-    if (argc >= 2)
-        d13_over_a = std::atof(argv[1]);
-    if (argc >= 4)
+    helmvec2::CoupledCliOptions cli;
+    try
     {
-        nx = std::atoi(argv[2]);
-        ny = std::atoi(argv[3]);
+        cli = helmvec2::parse_coupled_cli_options(argc, argv);
     }
-    if (argc >= 5)
-        debug = (std::atoi(argv[4]) != 0);
+    catch (const std::exception &e)
+    {
+        std::cerr << "Erro ao interpretar argumentos: " << e.what() << "\n";
+        std::cerr << "Uso: ./helmvec3_rect [d_over_a [nx ny [debug]]]"
+                  << " [--backend gauss|closed-form]"
+                  << " [--debug-local-blocks] [--debug-candidates]\n";
+        return 2;
+    }
+
+    if (!cli.positionals.empty())
+        d13_over_a = std::atof(cli.positionals[0].c_str());
+    if (cli.positionals.size() >= 3)
+    {
+        nx = std::atoi(cli.positionals[1].c_str());
+        ny = std::atoi(cli.positionals[2].c_str());
+    }
+    if (cli.positionals.size() >= 4)
+    {
+        const bool legacy_debug = (std::atoi(cli.positionals[3].c_str()) != 0);
+        if (legacy_debug)
+        {
+            cli.debug_local_blocks = true;
+            cli.debug_candidates = true;
+        }
+    }
 
     Mesh2D mesh = make_rect_mesh(a, b, nx, ny);
     std::vector<double> mu(mesh.tris.size(), 1.0);
@@ -238,12 +348,27 @@ int main(int argc, char **argv)
     };
 
     auto eps12 = helmvec23::eps_step_y(mesh, d12, eps_fill, 1.0);
-    auto ratio9 = match_ratio_to_reference(mesh, eps12, mu, br_over_lambda_9, b, ref_ana_9, debug);
+    if (cli.debug_local_blocks)
+    {
+        const double k0_sample = 2.0 * M_PI * br_over_lambda_9.front() / b;
+        print_first_triangle_closed_form_debug(mesh, k0_sample, eps12, mu);
+    }
+    auto ratio9 = match_ratio_to_reference(
+        mesh,
+        eps12,
+        mu,
+        br_over_lambda_9,
+        b,
+        ref_ana_9,
+        cli.debug_candidates,
+        cli.backend,
+        &perf);
     // Bloco acima corresponde ao caso da Figura 12 (interface horizontal).
 
     std::cout << "[2.2.4] beta from given k0 (Figure 12)\n";
     std::cout << "a=" << a << " b=" << b << " d=" << d12 << " eps_fill=" << eps_fill
-              << " nx=" << nx << " ny=" << ny << " tris=" << mesh.tris.size() << "\n";
+              << " nx=" << nx << " ny=" << ny << " tris=" << mesh.tris.size()
+              << " backend=" << element_assembly_backend_name(cli.backend) << "\n";
     std::cout << "br/lambda0  beta/k0(FEM)  Analytic(ref)  HELMVEC3(ref)\n";
     for (int i = 0; i < (int)br_over_lambda_9.size(); ++i)
     {
@@ -255,7 +380,15 @@ int main(int argc, char **argv)
 
     // Pre-visualizacao opcional de continuacao para um valor de d/a (depuracao visual).
     auto eps13_single = helmvec23::eps_step_x(mesh, d13_over_a * a, eps_fill, 1.0);
-    auto ratio13_preview = trace_ratio_branch(mesh, eps13_single, mu, br_over_lambda_9, b, 0.5);
+    auto ratio13_preview = trace_ratio_branch(
+        mesh,
+        eps13_single,
+        mu,
+        br_over_lambda_9,
+        b,
+        0.5,
+        cli.backend,
+        &perf);
     // Bloco acima reproduz a logica da Figura 13 (interface vertical).
     std::cout << "\n[2.2.4] beta from given k0 (Figure 13, single d/a preview)\n";
     std::cout << "d/a=" << d13_over_a << "\n";
@@ -270,7 +403,7 @@ int main(int argc, char **argv)
     std::cout << "d/a  br/lambda0  beta/k0(FEM matched)  Analytical(ref)  HELMVEC3(ref)\n";
     for (const auto &blk : table10)
     {
-        if (debug)
+        if (cli.debug_candidates)
             std::cout << "  [debug] Figure13 block d/a=" << blk.d_over_a << "\n";
 
         // Para cada d/a, calcula beta/k0 e faz casamento por proximidade
@@ -283,7 +416,9 @@ int main(int argc, char **argv)
             br_over_lambda_10,
             b,
             blk.analytic_beta_over_k0,
-            debug);
+            cli.debug_candidates,
+            cli.backend,
+            &perf);
 
         for (int i = 0; i < (int)br_over_lambda_10.size(); ++i)
         {
@@ -298,5 +433,7 @@ int main(int argc, char **argv)
         }
     }
 
+    perf.total_ms = total_watch.elapsed_ms();
+    timing::print_breakdown("helmvec3_rect", perf);
     return 0;
 }

@@ -15,6 +15,7 @@
 /*****************************************************************************/
 
 #pragma once
+#include "core/assembly_backend.hpp"
 #include "core/dense.hpp"
 #include "core/helm10_scalar_system.hpp"
 #include "core/mesh2d.hpp"
@@ -24,7 +25,10 @@
 struct CoupledWaveNumberSystem
 {
     // Secao 2.2.3 (obtencao de k0 para beta fixo):
-    //   A x = (k0^2) B x      (Eq. 108-109 apos discretizacao)
+    //   A x = (k0^2) B x
+    // Na leitura do artigo, esta estrutura representa o sistema global montado
+    // da Eq. (119), obtido a partir da discretizacao das Eq. (108)-(109) e da
+    // assembleia dos blocos locais Eq. (120)-(125).
     // com x = [Et; Ez].
     // Blocos:
     //   A = [S_tt(beta)  S_tz(beta);
@@ -32,6 +36,8 @@ struct CoupledWaveNumberSystem
     //   B = [T_tt        0;
     //        0           T_zz(beta)]
     // O operador acoplado em geral nao e simetrico.
+    // Este bloco corresponde ao papel do programa HELMVEC2 no apendice
+    // em FORTRAN.
     DenseMat A;
     DenseMat B;
     int nt = 0; // numero de DOFs de aresta no bloco Et
@@ -45,7 +51,10 @@ struct CoupledWaveNumberSystem
 struct CoupledBetaSystem
 {
     // Secao 2.2.4 (obtencao de beta para k0 fixo):
-    //   P x = (beta^2) Q x    (Eq. 126-127 apos rearranjo matricial)
+    //   P x = (beta^2) Q x
+    // Na leitura do artigo, esta estrutura representa o sistema global montado
+    // da Eq. (136), obtido apos o rearranjo das Eq. (126)-(127) e a assembleia
+    // dos blocos locais Eq. (137)-(142).
     // com x = [Et; Ez].
     // Blocos:
     //   P = [P_tt(k0)  0;
@@ -58,6 +67,8 @@ struct CoupledBetaSystem
     int nz = 0; // numero de DOFs nodais no bloco Ez
 
     // Sub-blocos mantidos para diagnostico/pos-processamento.
+    // Este bloco corresponde ao papel do programa HELMVEC3 no apendice
+    // em FORTRAN.
     EdgeSystem edge;
     ScalarSystem scal;
 };
@@ -68,29 +79,37 @@ struct CoupledBetaSystem
 /******************************************************************************/
 /* FUNCAO: build_coupled_wavenumber_system_E                                  */
 /* DESCRICAO: Monta o sistema acoplado A x = k0^2 B x para k0 dado beta.      */
-/* Corresponde ao problema da Secao 2.2.3 (Eq. 108-109), com formulacao em E  */
-/* usando os blocos Et/Ez.                                                    */
+/* Corresponde ao problema da Secao 2.2.3. No nivel de sistema global, este   */
+/* e o ponto onde o codigo monta a Eq. (119), usando formulacao em E com      */
+/* blocos Et/Ez. O parametro backend permite escolher entre a montagem por     */
+/* quadratura e a versao closed-form local das Eq. (120)-(125).               */
 /* ENTRADA: mesh: const Mesh2D &; beta: double; eps_r_tri: const              */
-/* std::vector<double> &; mu_r_tri: const std::vector<double> &.              */
+/* std::vector<double> &; mu_r_tri: const std::vector<double> &; backend:     */
+/* ElementAssemblyBackend.                                                    */
 /* SAIDA: CoupledWaveNumberSystem.                                            */
 /******************************************************************************/
 CoupledWaveNumberSystem build_coupled_wavenumber_system_E(
     const Mesh2D &mesh,
     double beta,
     const std::vector<double> &eps_r_tri,
-    const std::vector<double> &mu_r_tri);
+    const std::vector<double> &mu_r_tri,
+    ElementAssemblyBackend backend = ElementAssemblyBackend::GaussianQuadrature);
 
 /******************************************************************************/
 /* FUNCAO: build_coupled_beta_system_E                                        */
 /* DESCRICAO: Monta o sistema acoplado P x = beta^2 Q x para beta dado k0.    */
-/* Corresponde ao problema da Secao 2.2.4 (Eq. 126-127), com formulacao em E  */
-/* e acoplamento entre Et e Ez.                                               */
+/* Corresponde ao problema da Secao 2.2.4. No nivel de sistema global, este   */
+/* e o ponto onde o codigo monta a Eq. (136), com formulacao em E e           */
+/* acoplamento entre Et e Ez. O parametro backend permite escolher entre a    */
+/* montagem por quadratura e os blocos constituintes closed-form.             */
 /* ENTRADA: mesh: const Mesh2D &; k0: double; eps_r_tri: const                */
-/* std::vector<double> &; mu_r_tri: const std::vector<double> &.              */
+/* std::vector<double> &; mu_r_tri: const std::vector<double> &; backend:     */
+/* ElementAssemblyBackend.                                                    */
 /* SAIDA: CoupledBetaSystem.                                                  */
 /******************************************************************************/
 CoupledBetaSystem build_coupled_beta_system_E(
     const Mesh2D &mesh,
     double k0,
     const std::vector<double> &eps_r_tri,
-    const std::vector<double> &mu_r_tri);
+    const std::vector<double> &mu_r_tri,
+    ElementAssemblyBackend backend = ElementAssemblyBackend::GaussianQuadrature);

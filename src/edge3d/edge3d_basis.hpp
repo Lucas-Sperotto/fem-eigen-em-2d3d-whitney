@@ -26,11 +26,22 @@ struct Vec3d
   double z = 0.0;
 };
 
+struct TetSimplexCoeff3D
+{
+  double a = 0.0;
+  double b = 0.0;
+  double c = 0.0;
+  double d = 0.0;
+};
+
 struct TetGeomEdge
 {
   double V = 0.0;
   std::array<Vec3d, 4> X;
   std::array<Vec3d, 4> grad_lambda;
+  // Eq. (162): cofatores brutos da coordenada simplex
+  // lambda_i = (a_i + b_i x + c_i y + d_i z)/(6V).
+  std::array<TetSimplexCoeff3D, 4> lambda_coeff;
   // Ordem local das arestas: (0,1), (0,2), (0,3), (1,2), (1,3), (2,3).
   std::array<double, 6> L;
 };
@@ -47,7 +58,8 @@ TetGeomEdge tet_geom_edge(const Mesh3D &mesh, const Tet &t);
 /******************************************************************************/
 /* FUNCAO: whitney_W_local_3d                                                 */
 /* DESCRICAO: Avalia a base vetorial de aresta W_ij = L_ij(la_i grad(la_j) -  */
-/* la_j grad(la_i)) no tetraedro; termo usado no bloco de massa (Eq. 177).    */
+/* la_j grad(la_i)) no tetraedro; corresponde a Eq. (163) e entra no bloco de */
+/* massa (Eq. 177) e na propriedade tangencial da Eq. (173).                  */
 /* ENTRADA: m: int; tg: const TetGeomEdge &; lambda: const std::array<double, */
 /* 4> &.                                                                      */
 /* SAIDA: Vec3d.                                                              */

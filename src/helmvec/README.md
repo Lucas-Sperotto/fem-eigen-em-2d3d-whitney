@@ -49,6 +49,17 @@ com:
 Solver:
 - `generalized_eigs_sym_vec` (`LAPACKE_dsygv`).
 
+## 3.1) Trilha de rastreabilidade
+
+Para conectar o artigo ao codigo, a trilha principal deste modulo e:
+
+1. Eq. `(66)` e Eq. `(67)` -> formas locais closed-form em
+   `src/explicit/tri2d_edge_explicit.hpp`
+2. Eq. `(65)` -> sistema global vetorial montado em
+   `src/edge/edge_assembly.cpp`
+3. funcao de montagem principal ->
+   `build_helm10_edge_system(...)`
+
 ## 4) Condicoes de contorno
 
 - `EdgeBC::TE_PEC_TangentialZero`
@@ -86,20 +97,45 @@ Exportacao:
 Retangular:
 
 ```bash
-./build/edge_rect 14 14
+./build/edge_rect 14 14 --backend gauss
 ```
 
 Circular:
 
 ```bash
-./build/edge_circle 10 48
+./build/edge_circle 10 48 --backend gauss
 ```
 
 Coaxial:
 
 ```bash
-./build/edge_coax 10 48
+./build/edge_coax 10 48 --backend gauss
 ```
+
+## 7.1) Backends e depuracao
+
+Flags disponiveis:
+
+- `--backend gauss`
+- `--backend closed-form`
+- `--debug-local-blocks`
+- `--debug-candidates`
+- `--debug` ou `--debug-all`
+
+Exemplos:
+
+```bash
+./build/edge_rect 14 14 8 --backend closed-form --debug-local-blocks
+./build/edge_circle 10 48 8 --backend gauss --debug-candidates
+./build/edge_coax 10 48 8 --backend closed-form --debug-local-blocks --debug-candidates
+```
+
+Interpretacao:
+
+- `--debug-local-blocks`: imprime o primeiro triangulo com os blocos locais das
+  Eq. `(66)` e `(67)` e sua relacao com a Eq. `(65)`;
+- `--debug-candidates`: imprime os primeiros `kc` positivos antes do matching
+  modal.
 
 ## 8) Saidas tipicas
 

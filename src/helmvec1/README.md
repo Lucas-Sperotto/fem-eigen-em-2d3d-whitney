@@ -36,6 +36,19 @@ onde:
 - `St`, `Tt` vem da montagem edge,
 - `Sz`, `Tz` vem da montagem escalar.
 
+## 2.1) Trilha de rastreabilidade
+
+Para conectar o artigo ao codigo, a trilha principal deste modulo e:
+
+1. Eq. `(66)` e Eq. `(67)` -> bloco vetorial transversal em
+   `src/explicit/tri2d_edge_explicit.hpp`
+2. Eq. `(30)` e Eq. `(33)` -> bloco escalar longitudinal em
+   `src/explicit/tri2d_scalar_explicit.hpp`
+3. Eq. `(92)` -> sistema global misto montado em
+   `src/helmvec1/helmvec1_mixed_system.cpp`
+4. funcoes de montagem principais ->
+   `build_system92_E(...)` e `build_system92_H(...)`
+
 ## 3) Formulacao E e formulacao H
 
 ### 3.1) `build_system92_E`
@@ -98,20 +111,45 @@ Como os sistemas montados sao simetricos:
 Retangular:
 
 ```bash
-./build/mixed_rect 12 6
+./build/mixed_rect 12 6 --backend gauss
 ```
 
 Circular:
 
 ```bash
-./build/mixed_circle 10 48
+./build/mixed_circle 10 48 --backend gauss
 ```
 
 Coaxial:
 
 ```bash
-./build/mixed_coax 10 48
+./build/mixed_coax 10 48 --backend gauss
 ```
+
+## 7.1) Backends e depuracao
+
+Flags disponiveis:
+
+- `--backend gauss`
+- `--backend closed-form`
+- `--debug-local-blocks`
+- `--debug-candidates`
+- `--debug` ou `--debug-all`
+
+Exemplos:
+
+```bash
+./build/mixed_rect 12 6 --backend closed-form --debug-local-blocks --debug-candidates
+./build/mixed_circle 10 48 --backend gauss --debug-candidates
+./build/mixed_coax 10 48 --backend closed-form --debug-local-blocks
+```
+
+Interpretacao:
+
+- `--debug-local-blocks`: imprime os blocos locais edge e escalar do primeiro
+  triangulo que alimentam a Eq. `(92)`;
+- `--debug-candidates`: imprime os candidatos separados por bloco dominante
+  antes da tabela final.
 
 ## 8) Saidas tipicas
 

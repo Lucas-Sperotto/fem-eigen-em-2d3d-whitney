@@ -39,6 +39,58 @@ Elementos:
 - `Mt_(1/mu)`: massa vetorial com peso `1/mu_r`,
 - `C(m,j) = int (1/mu_r) W_m . grad(N_j) dA`.
 
+## 2.1) Forma fechada implementada
+
+No caminho `--backend closed-form`, o modulo nao depende apenas de reuso
+implicito dos montadores base. A formulacao local de `2.2.4` foi deixada
+explicitamente nomeada em:
+
+- `src/explicit/tri2d_coupled_explicit.hpp`
+
+Funcoes principais:
+
+- `tri2d_beta_closed_form_eq_137_142(...)`
+  - monta diretamente os seis blocos locais do artigo:
+  - `Sel(tt)`, `Tel(tz)`, `Tel(zt)`, `Sel(zz)`, `Tel(tt)`, `Tel(zz)`.
+
+- `tri2d_beta_rearranged_closed_form_eq_136(...)`
+  - rearranja esses blocos para a forma usada no codigo:
+  - `P x = beta^2 Q x`.
+
+Essa segunda funcao e a mais importante para a montagem global, porque o
+repositorio resolve a Secao `2.2.4` ja na forma rearranjada da Eq. `(136)`.
+Assim, o codigo fica ao mesmo tempo:
+
+- fiel ao artigo no nivel dos blocos locais `(137)` a `(142)`;
+- fiel ao fluxo numerico validado do repositorio no nivel da montagem global.
+
+Observacao importante:
+- a forma impressa do artigo nem sempre e a melhor representacao para a
+  implementacao global;
+- por isso, o codigo privilegia a equivalencia algebraica validada e deixa os
+  comentarios apontando onde cada equacao entra.
+
+## 2.2) Onde a Eq. (136) e montada no codigo
+
+A montagem global da Eq. `(136)` ocorre em:
+
+- `src/helmvec2/helmvec2_coupled_system.cpp`
+- funcao `build_coupled_beta_system_E(...)`
+
+No backend `closed-form`, a montagem elemento a elemento passa por:
+
+- `assemble_beta_system_closed_form(...)`
+
+e cada triangulo usa:
+
+- `tri2d_beta_rearranged_closed_form_eq_136(...)`
+
+Ou seja, a cadeia didatica fica:
+
+1. `Eq. (137)` a `Eq. (142)` -> helper local explicito
+2. rearranjo para `Eq. (136)` -> helper local rearranjado
+3. assembleia global -> `build_coupled_beta_system_E(...)`
+
 ## 3) Geometrias/casos de validacao
 
 Parametros base:
@@ -84,6 +136,9 @@ Motivacao:
 ```bash
 ./build/helmvec3_rect 0.20 10 5
 ./build/helmvec3_rect 0.20 10 5 1
+./build/helmvec3_rect 0.20 10 5 1 --backend closed-form
+./build/helmvec3_rect 0.20 10 5 --debug-local-blocks --backend closed-form
+./build/helmvec3_rect 0.20 10 5 --debug-candidates
 # args: d_over_a nx ny [debug]
 ```
 
@@ -91,6 +146,24 @@ Saida textual em 3 blocos:
 - Tabela 9 (Figura 12),
 - preview de ramo (Figura 13, um `d/a`),
 - validacao completa da Tabela 10.
+
+Quando `debug=1`, o driver tambem imprime os blocos locais do primeiro
+triangulo para inspecao didatica:
+
+- blocos do artigo `Eq. (137)` a `Eq. (142)`;
+- blocos rearranjados usados no sistema global `Eq. (136)`.
+
+Flags de depuracao:
+- `--debug-local-blocks`: imprime apenas os blocos locais e o rearranjo da
+  Eq. `(136)`
+- `--debug-candidates`: imprime os candidatos modais usados no matching
+- `debug=1` legado: ativa os dois comportamentos
+
+Para acompanhar a saida bruta via script:
+
+```bash
+python3 scripts/validate_2d_22.py --backend closed-form --show-output --debug-candidates
+```
 
 ## 7) Integracao com scripts
 
@@ -110,3 +183,23 @@ Campos relacionados:
 
 A base de montagem e blocos FEM permanece a mesma; muda apenas o rearranjo
 algebrico entre operador da esquerda/direita no EVP generalizado.
+
+## 9) Comparacao entre `gauss` e `closed-form`
+
+O executavel aceita:
+
+- `--backend gauss`
+- `--backend closed-form`
+
+Isso permite comparar:
+
+- autovalores;
+- ramos `beta/k0`;
+- tempo de montagem e tempo total;
+- consistencia entre a integracao numerica e a forma fechada.
+
+Na pratica:
+
+- `gauss` e util para manter continuidade com a montagem numerica tradicional;
+- `closed-form` e util para rastreabilidade matematica e comparacao direta com
+  as equacoes do artigo.

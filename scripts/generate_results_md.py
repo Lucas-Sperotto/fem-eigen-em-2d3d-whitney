@@ -153,16 +153,17 @@ def _top_mode_errors(mode_rows: List[Dict[str, str]], top_n: int = 12) -> List[D
 
 
 def _group_2d22_case_stats(rows: List[Dict[str, str]]) -> List[Dict[str, object]]:
-    groups: Dict[Tuple[str, str], List[Dict[str, str]]] = defaultdict(list)
+    groups: Dict[Tuple[str, str, str], List[Dict[str, str]]] = defaultdict(list)
     for r in rows:
-        groups[(r.get("section", ""), r.get("case", ""))].append(r)
+        groups[(r.get("backend", "legacy"), r.get("section", ""), r.get("case", ""))].append(r)
 
     out = []
-    for (sec, case), gr in sorted(groups.items()):
+    for (backend, sec, case), gr in sorted(groups.items()):
         e1 = [abs(_to_float(r.get("err_primary_pct", "")) or 0.0) for r in gr if _to_float(r.get("err_primary_pct", "")) is not None]
         e2 = [abs(_to_float(r.get("err_secondary_pct", "")) or 0.0) for r in gr if _to_float(r.get("err_secondary_pct", "")) is not None]
         out.append(
             {
+                "backend": backend,
                 "section": sec,
                 "case": case,
                 "rows": len(gr),
@@ -174,17 +175,18 @@ def _group_2d22_case_stats(rows: List[Dict[str, str]]) -> List[Dict[str, object]
 
 
 def _max_3d_modes(mode_rows: List[Dict[str, str]]) -> List[Dict[str, object]]:
-    groups: Dict[Tuple[str, str], List[Dict[str, str]]] = defaultdict(list)
+    groups: Dict[Tuple[str, str, str], List[Dict[str, str]]] = defaultdict(list)
     for r in mode_rows:
-        groups[(r.get("solver", ""), r.get("case", ""))].append(r)
+        groups[(r.get("solver", ""), r.get("backend", "legacy"), r.get("case", ""))].append(r)
 
     out = []
-    for (solver, case), gr in sorted(groups.items()):
+    for (solver, backend, case), gr in sorted(groups.items()):
         e_ana = [abs(_to_float(r.get("err_ana_pct", "")) or 0.0) for r in gr]
         e_ref = [abs(_to_float(r.get("err_ref_pct", "")) or 0.0) for r in gr]
         out.append(
             {
                 "solver": solver,
+                "backend": backend,
                 "case": case,
                 "rows": len(gr),
                 "max_err_ana_pct": max(e_ana) if e_ana else None,
@@ -202,6 +204,101 @@ def _fmt(x: Optional[float], nd: int = 4) -> str:
     return f"{x:.{nd}f}"
 
 
+def _benchmark_speedups(summary_rows: List[Dict[str, str]]) -> List[Dict[str, object]]:
+    grouped: Dict[str, Dict[str, Dict[str, str]]] = defaultdict(dict)
+    for row in summary_rows:
+        grouped[row.get("case_id", "")][row.get("backend", "")] = row
+
+    out: List[Dict[str, object]] = []
+    for case_id, backends in sorted(grouped.items()):
+        if "gauss" not in backends or "closed-form" not in backends:
+            continue
+        gauss = backends["gauss"]
+        closed = backends["closed-form"]
+        wall_gauss = _to_float(gauss.get("wall_ms_mean", ""))
+        wall_closed = _to_float(closed.get("wall_ms_mean", ""))
+        speedup = None
+        if wall_gauss is not None and wall_closed is not None and wall_closed > 0.0:
+            speedup = wall_gauss / wall_closed
+        out.append(
+            {
+                "section": gauss.get("section", ""),
+                "case_id": case_id,
+                "wall_gauss": wall_gauss,
+                "wall_closed": wall_closed,
+                "speedup": speedup,
+                "assembly_gauss": _to_float(gauss.get("assembly_ms_mean", "")),
+                "assembly_closed": _to_float(closed.get("assembly_ms_mean", "")),
+            }
+        )
+    return out
+
+
+def _equation_trace_rows() -> List[Dict[str, str]]:
+    return [
+        {
+            "program": "HELM10",
+            "section": "2.1",
+            "local_eqs": "30, 33",
+            "global_eq": "43",
+            "module": "src/helm10",
+            "explicit": "src/explicit/tri2d_scalar_explicit.hpp",
+            "assembly": "src/core/helm10_scalar_system.cpp",
+            "function": "build_helm10_scalar_system(...)",
+        },
+        {
+            "program": "HELMVEC",
+            "section": "2.2.1",
+            "local_eqs": "66, 67",
+            "global_eq": "65",
+            "module": "src/helmvec",
+            "explicit": "src/explicit/tri2d_edge_explicit.hpp",
+            "assembly": "src/edge/edge_assembly.cpp",
+            "function": "build_helm10_edge_system(...)",
+        },
+        {
+            "program": "HELMVEC1",
+            "section": "2.2.2",
+            "local_eqs": "66, 67, 30, 33",
+            "global_eq": "92",
+            "module": "src/helmvec1",
+            "explicit": "src/explicit/tri2d_edge_explicit.hpp + src/explicit/tri2d_scalar_explicit.hpp",
+            "assembly": "src/helmvec1/helmvec1_mixed_system.cpp",
+            "function": "build_system92_E(...), build_system92_H(...)",
+        },
+        {
+            "program": "HELMVEC2",
+            "section": "2.2.3",
+            "local_eqs": "120-125",
+            "global_eq": "119",
+            "module": "src/helmvec2",
+            "explicit": "src/explicit/tri2d_coupled_explicit.hpp",
+            "assembly": "src/helmvec2/helmvec2_coupled_system.cpp",
+            "function": "build_coupled_wavenumber_system_E(...)",
+        },
+        {
+            "program": "HELMVEC3",
+            "section": "2.2.4",
+            "local_eqs": "137-142",
+            "global_eq": "136",
+            "module": "src/helmvec3",
+            "explicit": "src/explicit/tri2d_coupled_explicit.hpp",
+            "assembly": "src/helmvec2/helmvec2_coupled_system.cpp",
+            "function": "build_coupled_beta_system_E(...)",
+        },
+        {
+            "program": "FEM3D0/FEM3D1",
+            "section": "3.1",
+            "local_eqs": "181, 182",
+            "global_eq": "178",
+            "module": "src/fem3d0 + src/fem3d1",
+            "explicit": "src/explicit/tet3d_edge_explicit.hpp",
+            "assembly": "src/edge3d/edge3d_assembly.cpp",
+            "function": "build_helm3d_edge_system(...), build_helm3d_edge_system_sparse(...)",
+        },
+    ]
+
+
 def _write_report(
     report_path: Path,
     out_dir: Path,
@@ -209,6 +306,8 @@ def _write_report(
     v2d_rows: List[Dict[str, str]],
     v3m_rows: List[Dict[str, str]],
     v3s_rows: List[Dict[str, str]],
+    bench_detail_rows: List[Dict[str, str]],
+    bench_summary_rows: List[Dict[str, str]],
     log_info: Dict[str, object],
 ) -> None:
     now = dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -220,6 +319,7 @@ def _write_report(
     top_mode = _top_mode_errors(mode_rows, top_n=12)
     c2 = _group_2d22_case_stats(v2d_rows)
     c3 = _max_3d_modes(v3m_rows)
+    cbench = _benchmark_speedups(bench_summary_rows)
 
     v22_img = out_dir / "img_all" / "validation_2d_22"
     v22_imgs = sorted(v22_img.rglob("*.png")) if v22_img.exists() else []
@@ -238,6 +338,50 @@ def _write_report(
     lines.append(f"- CSV validacao 3D (summary): {_md_link(out_dir / 'validation' / 'validation_3d_31_summary.csv')}")
     lines.append(f"- Imagens de campos 2D: {_md_link(out_dir / 'img_all')}")
     lines.append(f"- Imagens de validacao 2.2.x: {_md_link(v22_img)}")
+    bench_detail = out_dir / "benchmark" / "backend_benchmark_detail.csv"
+    bench_summary = out_dir / "benchmark" / "backend_benchmark_summary.csv"
+    bench_report = out_dir / "benchmark" / "BACKEND_BENCHMARK.md"
+    if bench_detail.exists():
+        lines.append(f"- Benchmark detalhado: {_md_link(bench_detail)}")
+    if bench_summary.exists():
+        lines.append(f"- Benchmark agregado: {_md_link(bench_summary)}")
+    if bench_report.exists():
+        lines.append(f"- Benchmark Markdown: {_md_link(bench_report)}")
+    lines.append("")
+
+    lines.append("## Rastreabilidade das Equacoes")
+    lines.append("")
+    lines.append("Esta secao resume a trilha didatica principal do repositorio:")
+    lines.append("equacoes locais closed-form -> sistema global -> funcao de montagem.")
+    lines.append("")
+    lines.append("| Programa | Secao | Eq. locais | Eq. global | Modulo | Closed-form | Montagem global | Funcao |")
+    lines.append("|---|---|---|---|---|---|---|---|")
+    for row in _equation_trace_rows():
+        lines.append(
+            f"| `{row['program']}` | `{row['section']}` | `{row['local_eqs']}` | `{row['global_eq']}` | "
+            f"`{row['module']}` | `{row['explicit']}` | `{row['assembly']}` | `{row['function']}` |"
+        )
+    lines.append("")
+
+    lines.append("## Depuracao, Backends e Reproducao")
+    lines.append("")
+    lines.append("Fluxos recomendados para inspecao didatica e comparacao numerica:")
+    lines.append("")
+    lines.append("- `--backend gauss`: usa a montagem por quadratura/cubatura do repositorio.")
+    lines.append("- `--backend closed-form`: usa os helpers ligados diretamente as equacoes do artigo.")
+    lines.append("- `--debug-local-blocks`: imprime os blocos locais do primeiro elemento.")
+    lines.append("- `--debug-candidates`: imprime as primeiras raizes/candidatos antes do matching final.")
+    lines.append("- `--show-output` (scripts Python): ecoa a saida bruta dos executaveis durante a validacao.")
+    lines.append("- `--show-validation-output` (`build_and_run_all.sh`): repassa esse comportamento para o pipeline completo.")
+    lines.append("")
+    lines.append("```bash")
+    lines.append("./build/helm10_rect 14 14 8 --backend closed-form --debug-local-blocks")
+    lines.append("./build/edge_rect 14 14 8 --backend gauss --debug-candidates")
+    lines.append("./build/mixed_rect 12 6 --backend closed-form --debug-local-blocks --debug-candidates")
+    lines.append("python3 scripts/validate_2d_22.py --backend closed-form --show-output --debug-local-blocks")
+    lines.append("python3 scripts/validate_3d_31.py --backend closed-form --show-output --debug-candidates")
+    lines.append("scripts/build_and_run_all.sh --backend closed-form --show-validation-output --debug-local-blocks")
+    lines.append("```")
     lines.append("")
 
     lines.append("## Inventario de Arquivos")
@@ -341,11 +485,11 @@ def _write_report(
     lines.append("")
     lines.append("### Estatisticas por caso")
     lines.append("")
-    lines.append("| Secao | Caso | Linhas | Max err primary (%) | Max err secondary (%) |")
-    lines.append("|---|---|---:|---:|---:|")
+    lines.append("| Backend | Secao | Caso | Linhas | Max err primary (%) | Max err secondary (%) |")
+    lines.append("|---|---|---|---:|---:|---:|")
     for r in c2:
         lines.append(
-            f"| `{r['section']}` | `{r['case']}` | {r['rows']} | {_fmt(r['max_err_primary_pct'])} | {_fmt(r['max_err_secondary_pct'])} |"
+            f"| `{r['backend']}` | `{r['section']}` | `{r['case']}` | {r['rows']} | {_fmt(r['max_err_primary_pct'])} | {_fmt(r['max_err_secondary_pct'])} |"
         )
     lines.append("")
     if v22_imgs:
@@ -362,25 +506,42 @@ def _write_report(
     lines.append("")
     lines.append("### Maximos por solver/caso (a partir de validation_3d_31_modes.csv)")
     lines.append("")
-    lines.append("| Solver | Caso | Linhas | Max err ana (%) | Max err ref (%) |")
-    lines.append("|---|---|---:|---:|---:|")
+    lines.append("| Solver | Backend | Caso | Linhas | Max err ana (%) | Max err ref (%) |")
+    lines.append("|---|---|---|---:|---:|---:|")
     for r in c3:
         lines.append(
-            f"| `{r['solver']}` | `{r['case']}` | {r['rows']} | {_fmt(r['max_err_ana_pct'])} | {_fmt(r['max_err_ref_pct'])} |"
+            f"| `{r['solver']}` | `{r['backend']}` | `{r['case']}` | {r['rows']} | {_fmt(r['max_err_ana_pct'])} | {_fmt(r['max_err_ref_pct'])} |"
         )
     lines.append("")
 
     lines.append("### Summary detalhado (validation_3d_31_summary.csv)")
     lines.append("")
-    lines.append("| Solver | Caso | nx | ny | nz | n_modes | max_err_ana | mean_err_ana | max_err_ref | mean_err_ref |")
-    lines.append("|---|---|---:|---:|---:|---:|---:|---:|---:|---:|")
+    lines.append("| Solver | Backend | Caso | nx | ny | nz | n_modes | max_err_ana | mean_err_ana | max_err_ref | mean_err_ref |")
+    lines.append("|---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|")
     for r in v3s_rows:
         lines.append(
-            f"| `{r.get('solver','')}` | `{r.get('case','')}` | {r.get('nx','')} | {r.get('ny','')} | {r.get('nz','')} | "
+            f"| `{r.get('solver','')}` | `{r.get('backend','legacy')}` | `{r.get('case','')}` | {r.get('nx','')} | {r.get('ny','')} | {r.get('nz','')} | "
             f"{r.get('n_modes','')} | {_fmt(_to_float(r.get('max_err_ana_pct','')))} | {_fmt(_to_float(r.get('mean_err_ana_pct','')))} | "
             f"{_fmt(_to_float(r.get('max_err_ref_pct','')))} | {_fmt(_to_float(r.get('mean_err_ref_pct','')))} |"
         )
     lines.append("")
+
+    if bench_summary_rows:
+        lines.append("## Benchmark de Backends")
+        lines.append("")
+        lines.append(f"- Linhas em benchmark detalhado: `{len(bench_detail_rows)}`")
+        lines.append(f"- Linhas em benchmark agregado: `{len(bench_summary_rows)}`")
+        lines.append("")
+        lines.append("### Speedup closed-form vs gauss")
+        lines.append("")
+        lines.append("| Secao | Caso | Wall gauss (ms) | Wall closed-form (ms) | Speedup | Assembly gauss (ms) | Assembly closed-form (ms) |")
+        lines.append("|---|---|---:|---:|---:|---:|---:|")
+        for r in cbench:
+            lines.append(
+                f"| `{r['section']}` | `{r['case_id']}` | {_fmt(r['wall_gauss'], 3)} | {_fmt(r['wall_closed'], 3)} | "
+                f"{_fmt(r['speedup'], 3)}x | {_fmt(r['assembly_gauss'], 3)} | {_fmt(r['assembly_closed'], 3)} |"
+            )
+        lines.append("")
 
     report_path.parent.mkdir(parents=True, exist_ok=True)
     report_path.write_text("\n".join(lines).strip() + "\n", encoding="utf-8")
@@ -403,12 +564,16 @@ def main() -> None:
     v2d_csv = out_dir / "validation" / "validation_2d_22.csv"
     v3m_csv = out_dir / "validation" / "validation_3d_31_modes.csv"
     v3s_csv = out_dir / "validation" / "validation_3d_31_summary.csv"
+    bench_detail_csv = out_dir / "benchmark" / "backend_benchmark_detail.csv"
+    bench_summary_csv = out_dir / "benchmark" / "backend_benchmark_summary.csv"
     log_file = out_dir / "run_all.log"
 
     mode_rows = _read_csv(mode_csv)
     v2d_rows = _read_csv(v2d_csv)
     v3m_rows = _read_csv(v3m_csv)
     v3s_rows = _read_csv(v3s_csv)
+    bench_detail_rows = _read_csv(bench_detail_csv)
+    bench_summary_rows = _read_csv(bench_summary_csv)
     log_info = _analyze_log(log_file)
 
     _write_report(
@@ -418,6 +583,8 @@ def main() -> None:
         v2d_rows=v2d_rows,
         v3m_rows=v3m_rows,
         v3s_rows=v3s_rows,
+        bench_detail_rows=bench_detail_rows,
+        bench_summary_rows=bench_summary_rows,
         log_info=log_info,
     )
 

@@ -25,10 +25,13 @@ def _resolve(path: Path) -> Path:
     return path if path.is_absolute() else ROOT / path
 
 
-def run_checked(build_dir: Path, cmd: list[str], verbose: bool) -> str:
+def run_checked(build_dir: Path, cmd: list[str], verbose: bool, show_output: bool) -> str:
     if verbose:
         print(f"Running: {' '.join(cmd)}")
-    return subprocess.check_output(cmd, cwd=build_dir, text=True)
+    out = subprocess.check_output(cmd, cwd=build_dir, text=True)
+    if show_output:
+        print(out, end="" if out.endswith("\n") else "\n")
+    return out
 
 
 def parse_helmvec2_table(text: str) -> list[dict]:
@@ -216,6 +219,7 @@ def parse_args() -> argparse.Namespace:
     ap = argparse.ArgumentParser(description="Validate Section 2.2 and save CSV.")
     ap.add_argument("--build-dir", type=Path, default=Path("build"), help="Build directory containing executables.")
     ap.add_argument("--out-csv", type=Path, default=Path("out/validation/validation_2d_22.csv"), help="Output CSV path.")
+    ap.add_argument("--backend", choices=["gauss", "closed-form", "both"], default="gauss", help="Backend de montagem a validar.")
     ap.add_argument("--rect-nx", type=int, default=12)
     ap.add_argument("--rect-ny", type=int, default=6)
     ap.add_argument("--circle-nr", type=int, default=10)
@@ -228,6 +232,9 @@ def parse_args() -> argparse.Namespace:
     ap.add_argument("--d-over-a", type=float, default=0.20, help="Figure 13 preview parameter for helmvec3_rect.")
     ap.add_argument("--hv3-nx", type=int, default=10)
     ap.add_argument("--hv3-ny", type=int, default=5)
+    ap.add_argument("--debug-local-blocks", action="store_true", help="Propaga --debug-local-blocks para helmvec2/helmvec3.")
+    ap.add_argument("--debug-candidates", action="store_true", help="Propaga --debug-candidates para helmvec2/helmvec3.")
+    ap.add_argument("--show-output", action="store_true", help="Mostra a saida bruta dos executaveis chamados durante a validacao.")
     ap.add_argument("--verbose", action="store_true", help="Print executed commands.")
     return ap.parse_args()
 
@@ -240,52 +247,83 @@ def main() -> None:
     if not build_dir.exists():
         raise SystemExit(f"Build directory not found: {build_dir}")
 
-    out_mixed_rect = run_checked(build_dir, ["./mixed_rect", str(args.rect_nx), str(args.rect_ny)], args.verbose)
-    out_mixed_circle = run_checked(build_dir, ["./mixed_circle", str(args.circle_nr), str(args.circle_nt)], args.verbose)
-    out_mixed_coax = run_checked(build_dir, ["./mixed_coax", str(args.coax_nr), str(args.coax_nt)], args.verbose)
-    out_hv2 = run_checked(
-        build_dir,
-        ["./helmvec2_rect", f"{args.beta}", str(args.hv2_nx), str(args.hv2_ny)],
-        args.verbose,
-    )
-    out_hv3 = run_checked(
-        build_dir,
-        ["./helmvec3_rect", f"{args.d_over_a}", str(args.hv3_nx), str(args.hv3_ny)],
-        args.verbose,
-    )
-
     rows: list[dict] = []
-    rows.extend(parse_helmvec2_table(out_hv2))
-    rows.extend(parse_helmvec3_table9(out_hv3))
-    rows.extend(parse_helmvec3_table10(out_hv3))
-    rows.extend(
-        parse_mixed_rect_table(
-            out_mixed_rect,
-            "[E-formulation] TE cutoffs (edge block)",
-            "mixed_rect_E_TE_table",
-        )
-    )
-    rows.extend(
-        parse_mixed_rect_table(
-            out_mixed_rect,
-            "[E-formulation] TM cutoffs (scalar block)",
-            "mixed_rect_E_TM_table",
-        )
-    )
+    backends = ["gauss", "closed-form"] if args.backend == "both" else [args.backend]
+    debug_args: list[str] = []
+    if args.debug_local_blocks:
+        debug_args.append("--debug-local-blocks")
+    if args.debug_candidates:
+        debug_args.append("--debug-candidates")
 
-    snapshots = [
-        ("2.2.2", "mixed_circle_TE_edge", parse_first_kc_block(out_mixed_circle, "TE (edge block), first 8 kc:")),
-        ("2.2.2", "mixed_circle_TM_scalar", parse_first_kc_block(out_mixed_circle, "TM (scalar block), first 8 kc:")),
-        ("2.2.2", "mixed_coax_TE_edge", parse_first_kc_block(out_mixed_coax, "TE (edge block), first 8 kc:")),
-        ("2.2.2", "mixed_coax_TM_scalar", parse_first_kc_block(out_mixed_coax, "TM (scalar block), first 8 kc:")),
-    ]
-    append_snapshot_rows(rows, snapshots)
+    for backend in backends:
+        out_mixed_rect = run_checked(
+            build_dir,
+            ["./mixed_rect", str(args.rect_nx), str(args.rect_ny), "--backend", backend, *debug_args],
+            args.verbose,
+            args.show_output,
+        )
+        out_mixed_circle = run_checked(
+            build_dir,
+            ["./mixed_circle", str(args.circle_nr), str(args.circle_nt), "--backend", backend, *debug_args],
+            args.verbose,
+            args.show_output,
+        )
+        out_mixed_coax = run_checked(
+            build_dir,
+            ["./mixed_coax", str(args.coax_nr), str(args.coax_nt), "--backend", backend, *debug_args],
+            args.verbose,
+            args.show_output,
+        )
+        out_hv2 = run_checked(
+            build_dir,
+            ["./helmvec2_rect", f"{args.beta}", str(args.hv2_nx), str(args.hv2_ny), "0", "--backend", backend, *debug_args],
+            args.verbose,
+            args.show_output,
+        )
+        out_hv3 = run_checked(
+            build_dir,
+            ["./helmvec3_rect", f"{args.d_over_a}", str(args.hv3_nx), str(args.hv3_ny), "0", "--backend", backend, *debug_args],
+            args.verbose,
+            args.show_output,
+        )
+
+        backend_rows: list[dict] = []
+        backend_rows.extend(parse_helmvec2_table(out_hv2))
+        backend_rows.extend(parse_helmvec3_table9(out_hv3))
+        backend_rows.extend(parse_helmvec3_table10(out_hv3))
+        backend_rows.extend(
+            parse_mixed_rect_table(
+                out_mixed_rect,
+                "[E-formulation] TE cutoffs (edge block)",
+                "mixed_rect_E_TE_table",
+            )
+        )
+        backend_rows.extend(
+            parse_mixed_rect_table(
+                out_mixed_rect,
+                "[E-formulation] TM cutoffs (scalar block)",
+                "mixed_rect_E_TM_table",
+            )
+        )
+
+        snapshots = [
+            ("2.2.2", "mixed_circle_TE_edge", parse_first_kc_block(out_mixed_circle, "TE (edge block), first 8 kc:")),
+            ("2.2.2", "mixed_circle_TM_scalar", parse_first_kc_block(out_mixed_circle, "TM (scalar block), first 8 kc:")),
+            ("2.2.2", "mixed_coax_TE_edge", parse_first_kc_block(out_mixed_coax, "TE (edge block), first 8 kc:")),
+            ("2.2.2", "mixed_coax_TM_scalar", parse_first_kc_block(out_mixed_coax, "TM (scalar block), first 8 kc:")),
+        ]
+        append_snapshot_rows(backend_rows, snapshots)
+
+        for row in backend_rows:
+            row["backend"] = backend
+        rows.extend(backend_rows)
 
     out_csv.parent.mkdir(parents=True, exist_ok=True)
     with out_csv.open("w", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(
             f,
             fieldnames=[
+                "backend",
                 "section",
                 "case",
                 "mode",

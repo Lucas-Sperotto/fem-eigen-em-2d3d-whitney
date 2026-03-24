@@ -17,6 +17,7 @@
 
 #include "edge3d_assembly.hpp"
 #include "edge3d_basis.hpp"
+#include "explicit/tet3d_edge_explicit.hpp"
 #include <array>
 #include <stdexcept>
 #include <utility>
@@ -41,6 +42,66 @@ constexpr std::array<std::array<double, 4>, 4> kTetQuadP2 = {{
 double dot3(Vec3d a, Vec3d b) { return a.x * b.x + a.y * b.y + a.z * b.z; }
 
 /******************************************************************************/
+/* FUNCAO: assemble_local_3d_element_mats                                     */
+/* DESCRICAO: Monta as matrizes locais do tetraedro 3D escolhendo entre       */
+/* backend por quadratura/cubatura e backend closed-form.                     */
+/* ENTRADA: tg: const TetGeomEdge &; eps_r: double; mu_r: double; backend:    */
+/* ElementAssemblyBackend; Sel: double[6][6]; Tel: double[6][6].              */
+/* SAIDA: sem retorno explicito (void).                                       */
+/******************************************************************************/
+void assemble_local_3d_element_mats(
+    const TetGeomEdge &tg,
+    double eps_r,
+    double mu_r,
+    ElementAssemblyBackend backend,
+    double Sel[6][6],
+    double Tel[6][6])
+{
+  if (backend == ElementAssemblyBackend::ClosedForm)
+  {
+    // Eq. (181)-(182): caminho totalmente explicito via cofatores da Eq. (162)
+    // e coeficientes das Eq. (164)-(172).
+    explicit_tet3d::tet3d_edge_closed_form_eq_181_182(
+        tg,
+        1.0 / mu_r,
+        eps_r,
+        Sel,
+        Tel);
+    return;
+  }
+
+  // Eq. (176): bloco curl-curl.
+  // Mesmo no backend "gauss", esse termo e avaliado exatamente porque
+  // curl(W_i) e constante no tetraedro linear.
+  Vec3d curlW[6];
+  for (int m = 0; m < 6; ++m)
+    curlW[m] = whitney_curl_local_3d(m, tg);
+
+  for (int i = 0; i < 6; ++i)
+  {
+    for (int j = 0; j < 6; ++j)
+      Sel[i][j] = (tg.V / mu_r) * dot3(curlW[i], curlW[j]);
+  }
+
+  // Eq. (177): bloco de massa vetorial.
+  // W_i.W_j e polinomio de grau 2; a cubatura tetraedrica de 4 pontos
+  // adotada aqui integra esse termo exatamente.
+  for (const auto &lam : kTetQuadP2)
+  {
+    const double w = tg.V / 4.0;
+    Vec3d W[6];
+    for (int m = 0; m < 6; ++m)
+      W[m] = whitney_W_local_3d(m, tg, lam);
+
+    for (int i = 0; i < 6; ++i)
+    {
+      for (int j = 0; j < 6; ++j)
+        Tel[i][j] += eps_r * w * dot3(W[i], W[j]);
+    }
+  }
+}
+
+/******************************************************************************/
 /* FUNCAO: uniform_data                                                       */
 /* DESCRICAO: Cria vetor de material uniforme por tetraedro para facilitar    */
 /* chamadas com meios homogeneos.                                             */
@@ -57,7 +118,9 @@ template <typename AddFn>
 /* FUNCAO: assemble_generic                                                   */
 /* DESCRICAO: Monta contribuicoes locais 3D e acumula no sistema global       */
 /* conforme politica de armazenamento. Implementa a formulacao vetorial 3D da */
-/* Secao 3.1, incluindo os termos equivalentes aos coeficientes I1..I10.      */
+/* Secao 3.1, incluindo os termos equivalentes aos coeficientes I1..I10. Ao   */
+/* final da assembleia em todos os tetraedros, obtem-se o sistema global da   */
+/* Eq. (178).                                                                 */
 /* ENTRADA: mesh: const Mesh3D &; ed: const EdgeDofs3D &; eps_r_tet: const    */
 /* std::vector<double> &; mu_r_tet: const std::vector<double> &; add_global:  */
 /* AddFn.                                                                     */
@@ -68,6 +131,7 @@ void assemble_generic(
     const EdgeDofs3D &ed,
     const std::vector<double> &eps_r_tet,
     const std::vector<double> &mu_r_tet,
+    ElementAssemblyBackend backend,
     AddFn add_global)
 {
   for (int tid = 0; tid < (int)mesh.tets.size(); ++tid)
@@ -81,41 +145,7 @@ void assemble_generic(
     double Sel[6][6] = {{0.0}};
     double Tel[6][6] = {{0.0}};
 
-    // Bloco local curl-curl (Eq. 176):
-    //   Sel_ij = int (1/mu_r) curl(W_i).curl(W_j) dV
-    // Em tetraedros lineares, curl(W_i) e constante em cada elemento:
-    // avaliacao exata por multiplicacao do volume.
-    Vec3d curlW[6];
-    for (int m = 0; m < 6; ++m)
-      curlW[m] = whitney_curl_local_3d(m, tg);
-
-    for (int i = 0; i < 6; ++i)
-    {
-      for (int j = 0; j < 6; ++j)
-      {
-        Sel[i][j] = (tg.V / mu_r) * dot3(curlW[i], curlW[j]);
-      }
-    }
-
-    // Bloco local de massa vetorial (Eq. 177):
-    //   Tel_ij = int eps_r W_i.W_j dV
-    // Para base de Whitney linear, W_i.W_j e polinomio de grau 2:
-    // a quadratura de 4 pontos adotada integra exatamente esse termo.
-    for (const auto &lam : kTetQuadP2)
-    {
-      const double w = tg.V / 4.0;
-      Vec3d W[6];
-      for (int m = 0; m < 6; ++m)
-        W[m] = whitney_W_local_3d(m, tg, lam);
-
-      for (int i = 0; i < 6; ++i)
-      {
-        for (int j = 0; j < 6; ++j)
-        {
-          Tel[i][j] += eps_r * w * dot3(W[i], W[j]);
-        }
-      }
-    }
+    assemble_local_3d_element_mats(tg, eps_r, mu_r, backend, Sel, Tel);
 
     for (int li = 0; li < 6; ++li)
     {
@@ -155,12 +185,13 @@ void assemble_generic(
 EdgeSystem3D build_helm3d_edge_system(
     const Mesh3D &mesh,
     double eps_r,
-    double mu_r)
+    double mu_r,
+    ElementAssemblyBackend backend)
 {
   // Wrapper para meio homogeneo: expande eps_r/mu_r para vetores por tetra.
   auto eps = uniform_data((int)mesh.tets.size(), eps_r);
   auto mu = uniform_data((int)mesh.tets.size(), mu_r);
-  return build_helm3d_edge_system(mesh, Edge3DBC::PEC_TangentialZero, eps, mu);
+  return build_helm3d_edge_system(mesh, Edge3DBC::PEC_TangentialZero, eps, mu, backend);
 }
 
 /******************************************************************************/
@@ -174,18 +205,20 @@ EdgeSystem3D build_helm3d_edge_system(
     const Mesh3D &mesh,
     Edge3DBC bc,
     double eps_r,
-    double mu_r)
+    double mu_r,
+    ElementAssemblyBackend backend)
 {
   // Wrapper homogeneo com BC explicita.
   auto eps = uniform_data((int)mesh.tets.size(), eps_r);
   auto mu = uniform_data((int)mesh.tets.size(), mu_r);
-  return build_helm3d_edge_system(mesh, bc, eps, mu);
+  return build_helm3d_edge_system(mesh, bc, eps, mu, backend);
 }
 
 /******************************************************************************/
 /* FUNCAO: build_helm3d_edge_system                                           */
 /* DESCRICAO: Monta o sistema vetorial 3D de aresta para autovalores de       */
 /* cavidades em meio heterogeneo, conforme formulacao vetorial da Secao 3.1.  */
+/* Esta rotina e o ponto de montagem global da Eq. (178) no fluxo denso.      */
 /* ENTRADA: mesh: const Mesh3D &; bc: Edge3DBC; eps_r_tet: const              */
 /* std::vector<double> &; mu_r_tet: const std::vector<double> &.              */
 /* SAIDA: EdgeSystem3D.                                                       */
@@ -194,7 +227,8 @@ EdgeSystem3D build_helm3d_edge_system(
     const Mesh3D &mesh,
     Edge3DBC bc,
     const std::vector<double> &eps_r_tet,
-    const std::vector<double> &mu_r_tet)
+    const std::vector<double> &mu_r_tet,
+    ElementAssemblyBackend backend)
 {
   if ((int)eps_r_tet.size() != (int)mesh.tets.size())
     throw std::runtime_error("eps_r_tet.size() != mesh.tets.size()");
@@ -207,11 +241,13 @@ EdgeSystem3D build_helm3d_edge_system(
   out.T = DenseMat(out.ed.ndof);
 
   // Montagem global densa do problema Sx=lambdaTx.
+  // Na numeracao do artigo, a matriz final resultante corresponde a Eq. (178).
   assemble_generic(
       mesh,
       out.ed,
       eps_r_tet,
       mu_r_tet,
+      backend,
       [&](int I, int J, double s_ij, double t_ij)
       {
         out.S(I, J) += s_ij;
@@ -225,6 +261,7 @@ EdgeSystem3D build_helm3d_edge_system(
 /* FUNCAO: build_helm3d_edge_system_sparse                                    */
 /* DESCRICAO: Monta o sistema vetorial 3D em formato esparso simetrico        */
 /* (triangulo inferior). Implementa a formulacao vetorial 3D da Secao 3.1.    */
+/* Esta rotina tambem representa a Eq. (178), mas no formato esparso.         */
 /* ENTRADA: mesh: const Mesh3D &; bc: Edge3DBC; eps_r_tet: const              */
 /* std::vector<double> &; mu_r_tet: const std::vector<double> &.              */
 /* SAIDA: EdgeSystem3DSparse.                                                 */
@@ -233,7 +270,8 @@ EdgeSystem3DSparse build_helm3d_edge_system_sparse(
     const Mesh3D &mesh,
     Edge3DBC bc,
     const std::vector<double> &eps_r_tet,
-    const std::vector<double> &mu_r_tet)
+    const std::vector<double> &mu_r_tet,
+    ElementAssemblyBackend backend)
 {
   if ((int)eps_r_tet.size() != (int)mesh.tets.size())
     throw std::runtime_error("eps_r_tet.size() != mesh.tets.size()");
@@ -251,6 +289,7 @@ EdgeSystem3DSparse build_helm3d_edge_system_sparse(
       out.ed,
       eps_r_tet,
       mu_r_tet,
+      backend,
       [&](int I, int J, double s_ij, double t_ij)
       {
         // assemble_generic visita (I,J) e (J,I); no armazenamento simetrico

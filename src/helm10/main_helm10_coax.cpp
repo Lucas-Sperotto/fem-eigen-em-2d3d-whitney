@@ -12,7 +12,10 @@
 /* Artigo base: NASA 19950011772. Referencias principais: Secao 2.1, Tabelas  */
 /* 1-3.                                                                       */
 /*****************************************************************************/
-/* Observacao: Comentarios priorizam didatica, rastreabilidade e validacao.   */
+/* Observacao: Este driver desempenha o papel do programa HELM10 do apendice  */
+/* em FORTRAN. A montagem global correspondente a Eq. (43) ocorre em          */
+/* src/core/helm10_scalar_system.cpp. Comentarios priorizam didatica,         */
+/* rastreabilidade e validacao.                                               */
 /*****************************************************************************/
 
 #include "core/helm10_scalar_system.hpp"
@@ -21,6 +24,9 @@
 #include "core/mesh2d_coax.hpp"
 #include "core/mode_match_coax.hpp"
 #include "core/output_paths.hpp"
+#include "core/timing_utils.hpp"
+#include "helm10/scalar_cli_options.hpp"
+#include "helm10/scalar_debug.hpp"
 #include "helm10/scalar_mode_post.hpp"
 
 #include <algorithm>
@@ -41,24 +47,40 @@
 /******************************************************************************/
 int main(int argc, char **argv)
 {
+    timing::Breakdown perf;
+    timing::Stopwatch total_watch;
     const double r1 = 1.0;
     const double r2 = 4.0;
 
     int nr = 10;
     int nt = 48;
     int export_modes = 8;
-    if (argc >= 3)
+    helm10::ScalarCliOptions cli;
+    try
     {
-        nr = std::atoi(argv[1]);
-        nt = std::atoi(argv[2]);
+        cli = helm10::parse_scalar_cli_options(argc, argv);
     }
-    if (argc >= 4)
+    catch (const std::exception &e)
     {
-        export_modes = std::max(1, std::atoi(argv[3]));
+        std::cerr << "Erro ao interpretar argumentos: " << e.what() << "\n";
+        std::cerr << "Uso: ./helm10_coax [nr nt [nmodos]] [--backend gauss|closed-form]"
+                  << " [--debug-local-blocks] [--debug-candidates]\n";
+        return 2;
+    }
+
+    if (cli.positionals.size() >= 2)
+    {
+        nr = std::atoi(cli.positionals[0].c_str());
+        nt = std::atoi(cli.positionals[1].c_str());
+    }
+    if (cli.positionals.size() >= 3)
+    {
+        export_modes = std::max(0, std::atoi(cli.positionals[2].c_str()));
     }
 
     const auto out_dir = output_paths::ensure_case_dir("2d/2.1_scalar/coax");
     std::cout << "Output dir: " << out_dir << "\n";
+    std::cout << "Backend escalar: " << element_assembly_backend_name(cli.backend) << "\n";
 
     const Mesh2D mesh = make_coax_mesh(r1, r2, nr, nt);
     std::cout << "Coax mesh: nodes=" << mesh.nodes.size()
@@ -66,9 +88,18 @@ int main(int argc, char **argv)
               << " r1=" << r1 << " r2=" << r2
               << " nr=" << nr << " nt=" << nt << "\n\n";
 
+    if (cli.debug_local_blocks)
+        helm10_debug::print_first_triangle_closed_form_debug(mesh, 1.0, 1.0);
+
     // Modos TE da formulacao escalar com Neumann.
-    const auto sys_te = build_helm10_scalar_system(mesh, ScalarBC::TE_Neumann);
+    timing::Stopwatch stage;
+    const auto sys_te = build_helm10_scalar_system(mesh, ScalarBC::TE_Neumann, cli.backend);
+    perf.assembly_ms += stage.elapsed_ms();
+    stage.reset();
     const auto te = generalized_eigs_sym_vec(sys_te.S, sys_te.T);
+    perf.solve_ms += stage.elapsed_ms();
+    if (cli.debug_candidates)
+        helm10_debug::print_positive_kc_candidates_debug(te.w, 1e-9);
     std::cout << "[TE scalar (Neumann) - coax]\n";
     helm10_post::print_positive_kc(te.w, 12, true);
 
@@ -102,8 +133,14 @@ int main(int argc, char **argv)
     }
 
     // Modos TM da formulacao escalar com Dirichlet.
-    const auto sys_tm = build_helm10_scalar_system(mesh, ScalarBC::TM_Dirichlet);
+    stage.reset();
+    const auto sys_tm = build_helm10_scalar_system(mesh, ScalarBC::TM_Dirichlet, cli.backend);
+    perf.assembly_ms += stage.elapsed_ms();
+    stage.reset();
     const auto tm = generalized_eigs_sym_vec(sys_tm.S, sys_tm.T);
+    perf.solve_ms += stage.elapsed_ms();
+    if (cli.debug_candidates)
+        helm10_debug::print_positive_kc_candidates_debug(tm.w, 0.0);
     std::cout << "\n[TM scalar (Dirichlet) - coax]\n";
     helm10_post::print_positive_kc(tm.w, 12, false);
 
@@ -155,6 +192,7 @@ int main(int argc, char **argv)
         std::cout << "Saved: " << vtk_name << "\n";
     };
 
+    stage.reset();
     int exported_te = 0;
     for (int i = 0; i < (int)te.w.size() && exported_te < export_modes; ++i)
     {
@@ -210,6 +248,10 @@ int main(int argc, char **argv)
         if (exported_tm == 1)
             write_mode(sys_tm, tm, i, "tm_coax_sv.vtk");
     }
+
+    perf.post_ms += stage.elapsed_ms();
+    perf.total_ms = total_watch.elapsed_ms();
+    timing::print_breakdown("helm10_coax", perf);
 
     return 0;
 }

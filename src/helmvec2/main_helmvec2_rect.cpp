@@ -11,13 +11,19 @@
 /* Artigo base: NASA 19950011772. Referencias principais: Secao 2.2.3, Eq.    */
 /* (108)-(109), Fig. 11, Tabela 8.                                            */
 /*****************************************************************************/
-/* Observacao: Comentarios priorizam didatica, rastreabilidade e validacao.   */
+/* Observacao: Este driver desempenha o papel do programa HELMVEC2 do         */
+/* apendice em FORTRAN. A montagem global correspondente a Eq. (119) ocorre em*/
+/* src/helmvec2/helmvec2_coupled_system.cpp. Comentarios priorizam didatica,  */
+/* rastreabilidade e validacao.                                               */
 /*****************************************************************************/
 
 #include "core/mesh2d.hpp"
 #include "core/mesh2d_rect.hpp"
 #include "core/lapack_eig.hpp"
+#include "core/timing_utils.hpp"
+#include "explicit/tri2d_coupled_explicit.hpp"
 #include "helmvec23_shared.hpp"
+#include "coupled_cli_options.hpp"
 #include "helmvec2_coupled_system.hpp"
 #include <algorithm>
 #include <cmath>
@@ -30,6 +36,75 @@ struct ModeCand
     double k0 = 0.0;
     double ez_ratio = 0.0; // ||Ez||^2 / (||Et||^2 + ||Ez||^2)
 };
+
+/******************************************************************************/
+/* FUNCAO: print_block_3x3                                                    */
+/* DESCRICAO: Imprime uma matriz 3x3 em formato compacto para depuracao       */
+/* didatica dos blocos locais da formulacao acoplada.                         */
+/* ENTRADA: name: const char *; M: const double[3][3].                        */
+/* SAIDA: sem retorno explicito (void).                                       */
+/******************************************************************************/
+static void print_block_3x3(const char *name, const double M[3][3])
+{
+    std::cout << "  " << name << " =\n";
+    for (int i = 0; i < 3; ++i)
+    {
+        std::cout << "   ";
+        for (int j = 0; j < 3; ++j)
+            std::cout << " " << M[i][j];
+        std::cout << "\n";
+    }
+}
+
+/******************************************************************************/
+/* FUNCAO: print_first_triangle_closed_form_debug                             */
+/* DESCRICAO: Imprime os blocos locais closed-form do primeiro triangulo para */
+/* a formulacao de 2.2.3, mostrando tanto as Eq. (120)-(125) quanto a forma  */
+/* rearranjada usada no sistema global Eq. (119).                             */
+/* ENTRADA: mesh: const Mesh2D &; beta: double; eps: const std::vector<double>*/
+/* &; mu: const std::vector<double> &.                                        */
+/* SAIDA: sem retorno explicito (void).                                       */
+/******************************************************************************/
+static void print_first_triangle_closed_form_debug(
+    const Mesh2D &mesh,
+    double beta,
+    const std::vector<double> &eps,
+    const std::vector<double> &mu)
+{
+    if (mesh.tris.empty())
+        return;
+
+    const Tri &t = mesh.tris.front();
+    const TriGeomEdge tg = tri_geom_edge(mesh, t);
+    const auto blk125 = explicit_tri2d::tri2d_wavenumber_closed_form_eq_120_125(
+        tg,
+        beta,
+        eps.front(),
+        mu.front());
+    const auto blk119 = explicit_tri2d::tri2d_wavenumber_rearranged_closed_form_eq_119(
+        tg,
+        beta,
+        eps.front(),
+        mu.front());
+
+    std::cout << "\n[debug] primeiro triangulo: blocos locais closed-form de 2.2.3\n";
+    std::cout << "  beta_amostra=" << beta << "\n";
+    std::cout << "  artigo Eq. (120)-(125):\n";
+    print_block_3x3("Sel_tt", blk125.Sel_tt);
+    print_block_3x3("Sel_tz", blk125.Sel_tz);
+    print_block_3x3("Sel_zt", blk125.Sel_zt);
+    print_block_3x3("Sel_zz", blk125.Sel_zz);
+    print_block_3x3("Tel_tt", blk125.Tel_tt);
+    print_block_3x3("Tel_zz", blk125.Tel_zz);
+
+    std::cout << "  rearranjo usado no codigo para Eq. (119):\n";
+    print_block_3x3("A_tt", blk119.A_tt);
+    print_block_3x3("A_tz", blk119.A_tz);
+    print_block_3x3("A_zt", blk119.A_zt);
+    print_block_3x3("A_zz", blk119.A_zz);
+    print_block_3x3("B_tt", blk119.B_tt);
+    print_block_3x3("B_zz", blk119.B_zz);
+}
 
 /******************************************************************************/
 /* FUNCAO: collect_mode_candidates                                            */
@@ -86,28 +161,57 @@ static std::vector<ModeCand> collect_mode_candidates(
 /******************************************************************************/
 int main(int argc, char **argv)
 {
+    timing::Breakdown perf;
+    timing::Stopwatch total_watch;
     // Secao 2.2.3.5 / Figura 11: quadrado, parte superior eps=1.0 e inferior eps=1.5.
     // Objetivo: reproduzir Tabela 8 com beta fixo e extrair k0L dos modos LSM.
     const double L = 1.0;
     int nx = 6, ny = 6; // 72 triangles
     double beta = 10.0; // beta*L = 10
-    bool debug = false;
-    if (argc >= 2)
-        beta = std::atof(argv[1]);
-    if (argc >= 4)
+    helmvec2::CoupledCliOptions cli;
+    try
     {
-        nx = std::atoi(argv[2]);
-        ny = std::atoi(argv[3]);
+        cli = helmvec2::parse_coupled_cli_options(argc, argv);
     }
-    if (argc >= 5)
-        debug = (std::atoi(argv[4]) != 0);
+    catch (const std::exception &e)
+    {
+        std::cerr << "Erro ao interpretar argumentos: " << e.what() << "\n";
+        std::cerr << "Uso: ./helmvec2_rect [beta [nx ny [debug]]]"
+                  << " [--backend gauss|closed-form]"
+                  << " [--debug-local-blocks] [--debug-candidates]\n";
+        return 2;
+    }
+
+    if (!cli.positionals.empty())
+        beta = std::atof(cli.positionals[0].c_str());
+    if (cli.positionals.size() >= 3)
+    {
+        nx = std::atoi(cli.positionals[1].c_str());
+        ny = std::atoi(cli.positionals[2].c_str());
+    }
+    if (cli.positionals.size() >= 4)
+    {
+        const bool legacy_debug = (std::atoi(cli.positionals[3].c_str()) != 0);
+        if (legacy_debug)
+        {
+            cli.debug_local_blocks = true;
+            cli.debug_candidates = true;
+        }
+    }
 
     auto mesh = make_rect_mesh(L, L, nx, ny);
     auto eps = helmvec23::eps_step_y(mesh, 0.5 * L, 1.5, 1.0);
     std::vector<double> mu(mesh.tris.size(), 1.0);
 
-    auto sys = build_coupled_wavenumber_system_E(mesh, beta, eps, mu);
+    if (cli.debug_local_blocks)
+        print_first_triangle_closed_form_debug(mesh, beta, eps, mu);
+
+    timing::Stopwatch stage;
+    auto sys = build_coupled_wavenumber_system_E(mesh, beta, eps, mu, cli.backend);
+    perf.assembly_ms += stage.elapsed_ms();
+    stage.reset();
     auto eig = generalized_eigs_real_vec(sys.A, sys.B);
+    perf.solve_ms += stage.elapsed_ms();
     auto all_modes = collect_mode_candidates(eig, sys.nt, sys.nz);
 
     double eps_max = 1.0;
@@ -134,7 +238,8 @@ int main(int argc, char **argv)
     std::cout << "L=" << L << " beta=" << beta << " beta*L=" << beta * L
               << " nx=" << nx << " ny=" << ny
               << " tris=" << mesh.tris.size()
-              << " k0_min_phys~" << k0_min_phys << "\n\n";
+              << " k0_min_phys~" << k0_min_phys
+              << " backend=" << element_assembly_backend_name(cli.backend) << "\n\n";
 
     std::cout << "first raw roots (k0L), after physical filter:\n";
     for (int i = 0; i < (int)k0_phys.size() && i < 14; ++i)
@@ -154,7 +259,7 @@ int main(int argc, char **argv)
                   << "  " << ref_hayata[i] << "\n";
     }
 
-    if (debug)
+    if (cli.debug_candidates)
     {
         std::cout << "\n[debug] candidate modes after k0_min filter:\n";
         std::cout << "k0L  ez_ratio\n";
@@ -166,5 +271,7 @@ int main(int argc, char **argv)
         }
     }
 
+    perf.total_ms = total_watch.elapsed_ms();
+    timing::print_breakdown("helmvec2_rect", perf);
     return 0;
 }

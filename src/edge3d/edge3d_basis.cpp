@@ -189,10 +189,20 @@ TetGeomEdge tet_geom_edge(const Mesh3D &mesh, const Tet &t)
   }};
   const auto Ainv = inverse4(A);
 
-  // lambda_i = a_i x + b_i y + c_i z + d_i,
-  // com grad(lambda_i) = (a_i,b_i,c_i) extraido da coluna i de A^{-1}.
+  // Eq. (162): alpha_ti = (a_ti + b_ti x + c_ti y + d_ti z)/(6V).
+  // A matriz inversa fornece diretamente os coeficientes normalizados de
+  // lambda_i; aqui reconstituimos tambem os cofatores brutos do artigo
+  // multiplicando por 6V.
+  const double sixV = 6.0 * tg.V;
   for (int i = 0; i < 4; ++i)
+  {
     tg.grad_lambda[i] = {Ainv[0][i], Ainv[1][i], Ainv[2][i]};
+    tg.lambda_coeff[i] = {
+        sixV * Ainv[3][i],
+        sixV * Ainv[0][i],
+        sixV * Ainv[1][i],
+        sixV * Ainv[2][i]};
+  }
 
   for (int m = 0; m < 6; ++m)
   {
@@ -207,7 +217,8 @@ TetGeomEdge tet_geom_edge(const Mesh3D &mesh, const Tet &t)
 /******************************************************************************/
 /* FUNCAO: whitney_W_local_3d                                                 */
 /* DESCRICAO: Avalia base vetorial de Whitney no tetraedro local; contribuicao */
-/* usada nas integrais de massa vetorial e nos coeficientes I5..I10.          */
+/* usada nas integrais de massa vetorial. Esta rotina implementa diretamente  */
+/* a Eq. (163) a partir das coordenadas simplex lambda_i.                     */
 /* ENTRADA: m: int; tg: const TetGeomEdge &; lambda: const std::array<double, */
 /* 4> &.                                                                      */
 /* SAIDA: Vec3d.                                                              */
@@ -221,7 +232,7 @@ Vec3d whitney_W_local_3d(int m, const TetGeomEdge &tg, const std::array<double, 
   const Vec3d gi = tg.grad_lambda[i];
   const Vec3d gj = tg.grad_lambda[j];
   const double Lij = tg.L[m];
-  // W_ij = L_ij * (lambda_i * grad(lambda_j) - lambda_j * grad(lambda_i)).
+  // Eq. (163): W_ij = L_ij * (lambda_i grad(lambda_j) - lambda_j grad(lambda_i)).
   return {
       Lij * (lambda[i] * gj.x - lambda[j] * gi.x),
       Lij * (lambda[i] * gj.y - lambda[j] * gi.y),

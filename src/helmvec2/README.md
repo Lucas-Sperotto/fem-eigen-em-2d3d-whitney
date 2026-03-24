@@ -37,6 +37,62 @@ onde:
 - `Mt_(1/mu)`: massa vetorial com peso `1/mu_r`,
 - `C(m,j) = int (1/mu_r) W_m . grad(N_j) dA`.
 
+## 2.1) Forma fechada implementada
+
+No caminho `--backend closed-form`, o modulo deixa explicitamente nomeadas:
+
+- `Eq. (120)` a `Eq. (125)` em
+  `src/explicit/tri2d_coupled_explicit.hpp`
+- o rearranjo local coerente com a `Eq. (119)` em
+  `tri2d_wavenumber_rearranged_closed_form_eq_119(...)`
+
+Assim, a trilha didatica fica:
+
+1. `Eq. (120)` a `Eq. (125)` -> helper local explicito
+2. rearranjo para a `Eq. (119)` -> helper local rearranjado
+3. assembleia global -> `build_coupled_wavenumber_system_E(...)`
+
+O ponto de montagem global fica em:
+
+- `src/helmvec2/helmvec2_coupled_system.cpp`
+
+### Observacao importante sobre a Eq. (120) do artigo
+
+A Eq. `(120)` impressa no artigo nao fecha algebraicamente com as Eq. `(66)`,
+`(67)` e `(113)` se tomada ao pe da letra. Ha duas incoerencias no texto
+impresso:
+
+1. falta o fator `beta^2` multiplicando o termo de massa vetorial
+   `sum_{k=1}^5 I_tk`;
+2. o termo `curl-curl`, se derivado diretamente da Eq. `(66)`, deveria trazer
+   `4 D_m D_n` dentro da forma fatorada por `1/(16 A^3)`, e nao apenas
+   `D_m D_n`.
+
+Assim, a forma coerente para o bloco local `Sel(tt)` fica:
+
+```text
+Sel(tt) = (1/mu_r) * (Ltm Ltn)/(16 A^3) * (4 Dm Dn + beta^2 * sum_{k=1}^5 I_tk)
+```
+
+ou, de forma equivalente, sem colocar tudo sob o mesmo fator:
+
+```text
+Sel(tt) = (1/mu_r) * (Ltm Ltn)/(4 A^3) * Dm Dn
+        + (beta^2/mu_r) * (Ltm Ltn)/(16 A^3) * sum_{k=1}^5 I_tk
+```
+
+O codigo deste repositorio ja esta consistente, porque a montagem nao depende
+da Eq. `(120)` impressa isoladamente. Em vez disso, o bloco `A_tt` e montado
+reaproveitando blocos locais ja validados:
+
+- o termo `curl-curl` vem da Eq. `(66)`;
+- o termo de massa vetorial vem da Eq. `(67)`;
+- a combinacao global e feita como `A_tt = St + beta^2 Mt_(1/mu)`.
+
+Em outras palavras: o artigo, nesse ponto, esta inconsistente na impressao; o
+codigo esta correto porque reconstrui `Sel(tt)` a partir dos blocos elementares
+ja separados e nao copia cegamente a Eq. `(120)` como aparece na pagina.
+
 ## 3) Implementacao (`helmvec2_coupled_system.cpp`)
 
 Pontos importantes:
@@ -83,13 +139,31 @@ Matching:
 ```bash
 ./build/helmvec2_rect 10 6 6
 ./build/helmvec2_rect 10 6 6 1
+./build/helmvec2_rect 10 6 6 --debug-local-blocks --backend closed-form
+./build/helmvec2_rect 10 6 6 --debug-candidates
 # args: beta nx ny [debug]
 ```
+
+Flags de depuracao:
+- `--debug-local-blocks`: imprime os blocos locais do primeiro triangulo
+  nas Eq. `(120)` a `(125)` e no rearranjo da Eq. `(119)`
+- `--debug-candidates`: imprime os candidatos modais apos o filtro fisico
+- `debug=1` legado: ativa os dois comportamentos ao mesmo tempo
+
+Backends disponiveis:
+- `--backend gauss`
+- `--backend closed-form`
 
 ## 7) Integracao com scripts
 
 `scripts/validate_2d_22.py` le este executavel e salva em:
 - `build/validation_2d_22.csv`
+
+Para inspecao detalhada durante a validacao:
+
+```bash
+python3 scripts/validate_2d_22.py --backend closed-form --show-output --debug-local-blocks
+```
 
 Campos relacionados:
 - `section=2.2.3`

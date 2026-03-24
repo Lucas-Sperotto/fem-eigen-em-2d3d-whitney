@@ -7,6 +7,7 @@ OUT_DIR="$ROOT_DIR/out"
 BUILD_TYPE="Release"
 PROFILE="quick"
 MODE_EXPORT=8
+BACKEND="gauss"
 SKIP_VALIDATE=0
 SKIP_IMAGES=0
 SKIP_3D=0
@@ -14,6 +15,12 @@ VERBOSE=0
 NO_LOG=0
 FORCE_VALIDATE=0
 FORCE_IMAGES=0
+RUN_BACKEND_BENCH=0
+BACKEND_BENCH_SUITE="core"
+BACKEND_BENCH_REPEATS=3
+DEBUG_LOCAL_BLOCKS=0
+DEBUG_CANDIDATES=0
+SHOW_VALIDATE_OUTPUT=0
 JOBS="$(nproc 2>/dev/null || echo 4)"
 LOG_FILE=""
 declare -a CASES=()
@@ -47,6 +54,7 @@ Options:
   --jobs <N>             Parallel build jobs (default: nproc)
   --profile <quick|full> Profile for validate_3d_31.py (default: quick)
   --mode-export <N>      Number of exported 2D modes per TE/TM block (default: 8)
+  --backend <name>       Backend: gauss|closed-form (default: gauss)
   --case <id>            Run only selected section/case (repeatable)
   --log-file <path>      Write console log to file (default: <out-dir>/run_all.log)
   --no-log               Disable log file output
@@ -55,6 +63,12 @@ Options:
   --with-validate        Force validations even in --case mode
   --skip-images          Skip plot_vtk_quiver.py --all-img
   --with-images          Force image generation even in --case mode
+  --benchmark-backends   Run gauss vs closed-form benchmark after build
+  --benchmark-suite <s>  Benchmark suite: core|all (default: core)
+  --benchmark-repeats N  Benchmark repeats per backend (default: 3)
+  --debug-local-blocks   Propagate local closed-form block debug to supported executables
+  --debug-candidates     Propagate candidate/root debug to supported executables
+  --show-validation-output  Echo raw stdout captured by validation scripts
   --verbose              Print executed commands
   --help                 Show this help
 
@@ -196,6 +210,10 @@ while [[ $# -gt 0 ]]; do
       MODE_EXPORT="$2"
       shift 2
       ;;
+    --backend)
+      BACKEND="$2"
+      shift 2
+      ;;
     --case)
       CASES+=("$2")
       shift 2
@@ -232,6 +250,30 @@ while [[ $# -gt 0 ]]; do
       FORCE_IMAGES=1
       shift
       ;;
+    --benchmark-backends)
+      RUN_BACKEND_BENCH=1
+      shift
+      ;;
+    --benchmark-suite)
+      BACKEND_BENCH_SUITE="$2"
+      shift 2
+      ;;
+    --benchmark-repeats)
+      BACKEND_BENCH_REPEATS="$2"
+      shift 2
+      ;;
+    --debug-local-blocks)
+      DEBUG_LOCAL_BLOCKS=1
+      shift
+      ;;
+    --debug-candidates)
+      DEBUG_CANDIDATES=1
+      shift
+      ;;
+    --show-validation-output)
+      SHOW_VALIDATE_OUTPUT=1
+      shift
+      ;;
     --verbose)
       VERBOSE=1
       shift
@@ -250,6 +292,21 @@ done
 
 if [[ "$PROFILE" != "quick" && "$PROFILE" != "full" ]]; then
   echo "Invalid --profile: $PROFILE (expected quick|full)" >&2
+  exit 2
+fi
+
+if [[ "$BACKEND" != "gauss" && "$BACKEND" != "closed-form" ]]; then
+  echo "Invalid --backend: $BACKEND (expected gauss|closed-form)" >&2
+  exit 2
+fi
+
+if [[ "$BACKEND_BENCH_SUITE" != "core" && "$BACKEND_BENCH_SUITE" != "all" ]]; then
+  echo "Invalid --benchmark-suite: $BACKEND_BENCH_SUITE (expected core|all)" >&2
+  exit 2
+fi
+
+if ! [[ "$BACKEND_BENCH_REPEATS" =~ ^[0-9]+$ ]] || [[ "$BACKEND_BENCH_REPEATS" -lt 1 ]]; then
+  echo "Invalid --benchmark-repeats: $BACKEND_BENCH_REPEATS (expected integer >= 1)" >&2
   exit 2
 fi
 
@@ -312,11 +369,32 @@ log "BUILD_TYPE=$BUILD_TYPE"
 log "JOBS=$JOBS"
 log "PROFILE=$PROFILE"
 log "MODE_EXPORT=$MODE_EXPORT"
+log "BACKEND=$BACKEND"
 if [[ "$NO_LOG" -eq 0 ]]; then
   log "LOG_FILE=$LOG_FILE"
 fi
+if [[ "$RUN_BACKEND_BENCH" -eq 1 ]]; then
+  log "BACKEND_BENCH=1 suite=$BACKEND_BENCH_SUITE repeats=$BACKEND_BENCH_REPEATS"
+fi
+if [[ "$DEBUG_LOCAL_BLOCKS" -eq 1 ]]; then
+  log "DEBUG_LOCAL_BLOCKS=1"
+fi
+if [[ "$DEBUG_CANDIDATES" -eq 1 ]]; then
+  log "DEBUG_CANDIDATES=1"
+fi
+if [[ "$SHOW_VALIDATE_OUTPUT" -eq 1 ]]; then
+  log "SHOW_VALIDATE_OUTPUT=1"
+fi
 if [[ "$CASE_MODE" -eq 1 ]]; then
   log "CASE_MODE=1 selected: ${CASES[*]}"
+fi
+
+declare -a DEBUG_ARGS=()
+if [[ "$DEBUG_LOCAL_BLOCKS" -eq 1 ]]; then
+  DEBUG_ARGS+=("--debug-local-blocks")
+fi
+if [[ "$DEBUG_CANDIDATES" -eq 1 ]]; then
+  DEBUG_ARGS+=("--debug-candidates")
 fi
 
 log "Configuring CMake..."
@@ -330,29 +408,29 @@ if [[ "$RUN_21" -eq 1 || "$RUN_221" -eq 1 || "$RUN_222" -eq 1 || "$RUN_223" -eq 
   (
     cd "$BUILD_DIR"
     if [[ "$RUN_21" -eq 1 ]]; then
-      run ./helm10_rect 14 14 "$MODE_EXPORT"
-      run ./helm10_circle 10 48 "$MODE_EXPORT"
-      run ./helm10_coax 10 48 "$MODE_EXPORT"
+      run ./helm10_rect 14 14 "$MODE_EXPORT" --backend "$BACKEND" "${DEBUG_ARGS[@]}"
+      run ./helm10_circle 10 48 "$MODE_EXPORT" --backend "$BACKEND" "${DEBUG_ARGS[@]}"
+      run ./helm10_coax 10 48 "$MODE_EXPORT" --backend "$BACKEND" "${DEBUG_ARGS[@]}"
     fi
 
     if [[ "$RUN_221" -eq 1 ]]; then
-      run ./edge_rect 14 14 "$MODE_EXPORT"
-      run ./edge_circle 10 48 "$MODE_EXPORT"
-      run ./edge_coax 10 48 "$MODE_EXPORT"
+      run ./edge_rect 14 14 "$MODE_EXPORT" --backend "$BACKEND" "${DEBUG_ARGS[@]}"
+      run ./edge_circle 10 48 "$MODE_EXPORT" --backend "$BACKEND" "${DEBUG_ARGS[@]}"
+      run ./edge_coax 10 48 "$MODE_EXPORT" --backend "$BACKEND" "${DEBUG_ARGS[@]}"
     fi
 
     if [[ "$RUN_222" -eq 1 ]]; then
-      run ./mixed_rect 12 6
-      run ./mixed_circle 10 48
-      run ./mixed_coax 10 48
+      run ./mixed_rect 12 6 --backend "$BACKEND" "${DEBUG_ARGS[@]}"
+      run ./mixed_circle 10 48 --backend "$BACKEND" "${DEBUG_ARGS[@]}"
+      run ./mixed_coax 10 48 --backend "$BACKEND" "${DEBUG_ARGS[@]}"
     fi
 
     if [[ "$RUN_223" -eq 1 ]]; then
-      run ./helmvec2_rect 10 6 6
+      run ./helmvec2_rect 10 6 6 --backend "$BACKEND" "${DEBUG_ARGS[@]}"
     fi
 
     if [[ "$RUN_224" -eq 1 ]]; then
-      run ./helmvec3_rect 0.20 10 5
+      run ./helmvec3_rect 0.20 10 5 --backend "$BACKEND" "${DEBUG_ARGS[@]}"
     fi
   )
 else
@@ -365,20 +443,20 @@ if [[ "$SKIP_3D" -eq 0 ]]; then
     (
       cd "$BUILD_DIR"
       if [[ "$RUN_3D_AIR" -eq 1 ]]; then
-        run ./fem3d0_rect --air
-        run ./fem3d1_rect --air
+        run ./fem3d0_rect --air --backend "$BACKEND" "${DEBUG_ARGS[@]}"
+        run ./fem3d1_rect --air --backend "$BACKEND" "${DEBUG_ARGS[@]}"
       fi
       if [[ "$RUN_3D_HALF" -eq 1 ]]; then
-        run ./fem3d0_rect --half
-        run ./fem3d1_rect --half
+        run ./fem3d0_rect --half --backend "$BACKEND" "${DEBUG_ARGS[@]}"
+        run ./fem3d1_rect --half --backend "$BACKEND" "${DEBUG_ARGS[@]}"
       fi
       if [[ "$RUN_3D_CYL" -eq 1 ]]; then
-        run ./fem3d0_rect --cyl
-        run ./fem3d1_rect --cyl
+        run ./fem3d0_rect --cyl --backend "$BACKEND" "${DEBUG_ARGS[@]}"
+        run ./fem3d1_rect --cyl --backend "$BACKEND" "${DEBUG_ARGS[@]}"
       fi
       if [[ "$RUN_3D_SPHERE" -eq 1 ]]; then
-        run ./fem3d0_rect --sphere
-        run ./fem3d1_rect --sphere
+        run ./fem3d0_rect --sphere --backend "$BACKEND" "${DEBUG_ARGS[@]}"
+        run ./fem3d1_rect --sphere --backend "$BACKEND" "${DEBUG_ARGS[@]}"
       fi
     )
   else
@@ -389,10 +467,18 @@ else
 fi
 
 if [[ "$SKIP_VALIDATE" -eq 0 ]]; then
+  declare -a VALIDATE_OUTPUT_ARGS=()
+  if [[ "$SHOW_VALIDATE_OUTPUT" -eq 1 ]]; then
+    VALIDATE_OUTPUT_ARGS+=("--show-output")
+  fi
+
   log "Running 2D validation..."
   run python3 "$ROOT_DIR/scripts/validate_2d_22.py" \
     --build-dir "$BUILD_DIR" \
-    --out-csv "$OUT_DIR/validation/validation_2d_22.csv"
+    --backend "$BACKEND" \
+    --out-csv "$OUT_DIR/validation/validation_2d_22.csv" \
+    "${VALIDATE_OUTPUT_ARGS[@]}" \
+    "${DEBUG_ARGS[@]}"
 
   if [[ "$SKIP_3D" -eq 0 ]]; then
     log "Running 3D validation..."
@@ -400,8 +486,11 @@ if [[ "$SKIP_VALIDATE" -eq 0 ]]; then
       --profile "$PROFILE" \
       --solver both \
       --build-dir "$BUILD_DIR" \
+      --backend "$BACKEND" \
       --out-modes "$OUT_DIR/validation/validation_3d_31_modes.csv" \
-      --out-summary "$OUT_DIR/validation/validation_3d_31_summary.csv"
+      --out-summary "$OUT_DIR/validation/validation_3d_31_summary.csv" \
+      "${VALIDATE_OUTPUT_ARGS[@]}" \
+      "${DEBUG_ARGS[@]}"
   else
     log "Skipping 3D validation because --skip-3d is active."
   fi
@@ -424,12 +513,24 @@ if [[ "$SKIP_IMAGES" -eq 0 ]]; then
     log "Generating 2.2.2/2.2.3/2.2.4 validation figures..."
     run python3 "$ROOT_DIR/scripts/plot_validation_2d_22.py" \
       --in-csv "$OUT_DIR/validation/validation_2d_22.csv" \
-      --out-dir "$OUT_DIR/img_all/validation_2d_22"
+      --out-dir "$OUT_DIR/img_all/validation_2d_22" \
+      --backend "$BACKEND"
   else
     log "Skipping 2.2.x validation figures (missing $OUT_DIR/validation/validation_2d_22.csv)."
   fi
 else
   log "Skipping image generation (--skip-images)."
+fi
+
+if [[ "$RUN_BACKEND_BENCH" -eq 1 ]]; then
+  log "Running gauss vs closed-form benchmark..."
+  run python3 "$ROOT_DIR/scripts/benchmark_backends.py" \
+    --build-dir "$BUILD_DIR" \
+    --out-dir "$OUT_DIR/benchmark" \
+    --suite "$BACKEND_BENCH_SUITE" \
+    --repeats "$BACKEND_BENCH_REPEATS"
+else
+  log "Skipping backend benchmark."
 fi
 
 log "Generating consolidated Markdown report..."
@@ -455,5 +556,10 @@ if [[ "$SKIP_IMAGES" -eq 0 ]]; then
 fi
 if [[ "$NO_LOG" -eq 0 ]]; then
   printf '  - %s\n' "$LOG_FILE"
+fi
+if [[ "$RUN_BACKEND_BENCH" -eq 1 ]]; then
+  printf '  - %s\n' "$OUT_DIR/benchmark/backend_benchmark_detail.csv"
+  printf '  - %s\n' "$OUT_DIR/benchmark/backend_benchmark_summary.csv"
+  printf '  - %s\n' "$OUT_DIR/benchmark/BACKEND_BENCHMARK.md"
 fi
 printf '  - %s\n' "$OUT_DIR/RESULTS_REPORT.md"

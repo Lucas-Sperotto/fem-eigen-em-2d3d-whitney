@@ -14,8 +14,10 @@
 /*****************************************************************************/
 
 #pragma once
+#include "assembly_backend.hpp"
 #include "mesh2d.hpp"
 #include "dense.hpp"
+#include "explicit/tri2d_scalar_explicit.hpp"
 #include <array>
 #include <cmath>
 
@@ -25,6 +27,15 @@ struct TriGeom
     std::array<double, 3> b; // coeficientes b_i das funcoes de forma lineares
     std::array<double, 3> c; // coeficientes c_i das funcoes de forma lineares
 };
+
+// Cubatura triangular simetrica de ordem 2.
+// Como os integrandos do elemento P1 escalar sao no maximo quadraticos, esta
+// regra integra exatamente os termos de rigidez e massa.
+constexpr std::array<std::array<double, 3>, 3> kTriGaussP2 = {{
+    {{2.0 / 3.0, 1.0 / 6.0, 1.0 / 6.0}},
+    {{1.0 / 6.0, 2.0 / 3.0, 1.0 / 6.0}},
+    {{1.0 / 6.0, 1.0 / 6.0, 2.0 / 3.0}},
+}};
 
 /******************************************************************************/
 /* FUNCAO: tri_geom                                                           */
@@ -55,29 +66,113 @@ inline TriGeom tri_geom(const Mesh2D &m, const Tri &t)
 }
 
 /******************************************************************************/
+/* FUNCAO: tri_shape_gradients_scalar                                         */
+/* DESCRICAO: Converte os coeficientes geometricos b_i e c_i nos gradientes   */
+/* constantes das funcoes de forma nodais do triangulo linear.                */
+/* ENTRADA: g: const TriGeom &; dndx: std::array<double, 3> &; dndy:          */
+/* std::array<double, 3> &.                                                   */
+/* SAIDA: sem retorno explicito (void).                                       */
+/******************************************************************************/
+inline void tri_shape_gradients_scalar(
+    const TriGeom &g,
+    std::array<double, 3> &dndx,
+    std::array<double, 3> &dndy)
+{
+    for (int i = 0; i < 3; i++)
+    {
+        dndx[i] = g.b[i] / (2.0 * g.A);
+        dndy[i] = g.c[i] / (2.0 * g.A);
+    }
+}
+
+/******************************************************************************/
+/* FUNCAO: element_mats_scalar_closed_form                                    */
+/* DESCRICAO: Calcula as matrizes elementares pela forma fechada da Secao 2.1 */
+/* usando diretamente as Eq. (30) e (33) do artigo.                           */
+/* ENTRADA: g: const TriGeom &; Sel: double[3][3]; Tel: double[3][3].         */
+/* SAIDA: sem retorno explicito (void).                                       */
+/******************************************************************************/
+inline void element_mats_scalar_closed_form(
+    const TriGeom &g,
+    double Sel[3][3],
+    double Tel[3][3])
+{
+    explicit_tri2d::tri2d_scalar_closed_form_eq_30_33(g.A, g.b, g.c, Sel, Tel);
+}
+
+/******************************************************************************/
+/* FUNCAO: element_mats_scalar_gauss                                          */
+/* DESCRICAO: Calcula as matrizes elementares via cubatura triangular de 3    */
+/* pontos. Para o elemento P1 escalar, esta regra e exata porque integra      */
+/* exatamente termos constantes e quadraticos.                                */
+/* ENTRADA: g: const TriGeom &; Sel: double[3][3]; Tel: double[3][3].         */
+/* SAIDA: sem retorno explicito (void).                                       */
+/******************************************************************************/
+inline void element_mats_scalar_gauss(
+    const TriGeom &g,
+    double Sel[3][3],
+    double Tel[3][3])
+{
+    std::array<double, 3> dndx{};
+    std::array<double, 3> dndy{};
+    tri_shape_gradients_scalar(g, dndx, dndy);
+
+    for (int i = 0; i < 3; i++)
+    {
+        for (int j = 0; j < 3; j++)
+        {
+            Sel[i][j] = 0.0;
+            Tel[i][j] = 0.0;
+        }
+    }
+
+    for (const auto &lam : kTriGaussP2)
+    {
+        constexpr double weight = 1.0 / 3.0;
+        for (int i = 0; i < 3; ++i)
+        {
+            for (int j = 0; j < 3; ++j)
+            {
+                const double grad_dot = dndx[i] * dndx[j] + dndy[i] * dndy[j];
+                const double shape_prod = lam[i] * lam[j];
+                Sel[i][j] += g.A * weight * grad_dot;
+                Tel[i][j] += g.A * weight * shape_prod;
+            }
+        }
+    }
+}
+
+/******************************************************************************/
 /* FUNCAO: element_mats_scalar                                                */
-/* DESCRICAO: Calcula as matrizes elementares de rigidez e massa do elemento triangular escalar (Secao 2.1). */
-/* ENTRADA: g: const TriGeom &; Sel: double; Tel: double.                     */
+/* DESCRICAO: Despacha o calculo das matrizes elementares escalares para o    */
+/* backend solicitado, permitindo comparar closed-form e quadratura Gauss.    */
+/* ENTRADA: g: const TriGeom &; backend: ElementAssemblyBackend; Sel:         */
+/* double[3][3]; Tel: double[3][3].                                           */
+/* SAIDA: sem retorno explicito (void).                                       */
+/******************************************************************************/
+inline void element_mats_scalar(
+    const TriGeom &g,
+    ElementAssemblyBackend backend,
+    double Sel[3][3],
+    double Tel[3][3])
+{
+    if (backend == ElementAssemblyBackend::ClosedForm)
+    {
+        element_mats_scalar_closed_form(g, Sel, Tel);
+        return;
+    }
+
+    element_mats_scalar_gauss(g, Sel, Tel);
+}
+
+/******************************************************************************/
+/* FUNCAO: element_mats_scalar                                                */
+/* DESCRICAO: Mantem compatibilidade com o codigo legado, preservando a forma */
+/* fechada como comportamento padrao quando nenhum backend e informado.       */
+/* ENTRADA: g: const TriGeom &; Sel: double[3][3]; Tel: double[3][3].         */
 /* SAIDA: sem retorno explicito (void).                                       */
 /******************************************************************************/
 inline void element_mats_scalar(const TriGeom &g, double Sel[3][3], double Tel[3][3])
 {
-    // Sel_ij = \int grad(ai)·grad(aj) dA
-    // grad(ai) = [bi, ci] / (2A)  => Sel_ij = (bi*bj+ci*cj)/(4A)
-    for (int i = 0; i < 3; i++)
-    {
-        for (int j = 0; j < 3; j++)
-        {
-            Sel[i][j] = (g.b[i] * g.b[j] + g.c[i] * g.c[j]) / (4.0 * g.A);
-        }
-    }
-
-    // Tel (massa consistente) = (A/12) * [[2,1,1],[1,2,1],[1,1,2]]
-    for (int i = 0; i < 3; i++)
-    {
-        for (int j = 0; j < 3; j++)
-        {
-            Tel[i][j] = (g.A / 12.0) * ((i == j) ? 2.0 : 1.0);
-        }
-    }
+    element_mats_scalar(g, ElementAssemblyBackend::ClosedForm, Sel, Tel);
 }

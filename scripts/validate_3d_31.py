@@ -32,10 +32,13 @@ def _resolve(path: Path) -> Path:
     return path if path.is_absolute() else ROOT / path
 
 
-def run_checked(build_dir: Path, cmd: list[str], verbose: bool) -> str:
+def run_checked(build_dir: Path, cmd: list[str], verbose: bool, show_output: bool) -> str:
     if verbose:
         print(f"Running: {' '.join(cmd)}")
-    return subprocess.check_output(cmd, cwd=build_dir, text=True)
+    out = subprocess.check_output(cmd, cwd=build_dir, text=True)
+    if show_output:
+        print(out, end="" if out.endswith("\n") else "\n")
+    return out
 
 
 def parse_mode_table(text: str) -> list[dict]:
@@ -116,6 +119,7 @@ def parse_args() -> argparse.Namespace:
     ap = argparse.ArgumentParser(description="Validate Section 3.1 and save CSV files.")
     ap.add_argument("--profile", choices=["quick", "full"], default="quick")
     ap.add_argument("--solver", choices=["fem3d0", "fem3d1", "both"], default="both")
+    ap.add_argument("--backend", choices=["gauss", "closed-form", "both"], default="gauss")
     ap.add_argument(
         "--cases",
         default="air,half,cyl,sphere",
@@ -124,6 +128,9 @@ def parse_args() -> argparse.Namespace:
     ap.add_argument("--build-dir", type=Path, default=Path("build"), help="Build directory containing executables.")
     ap.add_argument("--out-modes", type=Path, default=Path("out/validation/validation_3d_31_modes.csv"), help="Output CSV for per-mode rows.")
     ap.add_argument("--out-summary", type=Path, default=Path("out/validation/validation_3d_31_summary.csv"), help="Output CSV for grouped summary rows.")
+    ap.add_argument("--debug-local-blocks", action="store_true", help="Propaga --debug-local-blocks para fem3d0/fem3d1.")
+    ap.add_argument("--debug-candidates", action="store_true", help="Propaga --debug-candidates para fem3d0/fem3d1.")
+    ap.add_argument("--show-output", action="store_true", help="Mostra a saida bruta dos executaveis chamados durante a validacao.")
     ap.add_argument("--verbose", action="store_true", help="Print executed commands.")
     return ap.parse_args()
 
@@ -141,29 +148,38 @@ def main() -> None:
     selected_cases = parse_cases_arg(args.cases)
     selected_solvers = ["fem3d0", "fem3d1"] if args.solver == "both" else [args.solver]
     case_grids = grids_for(args.profile)
+    debug_args: list[str] = []
+    if args.debug_local_blocks:
+        debug_args.append("--debug-local-blocks")
+    if args.debug_candidates:
+        debug_args.append("--debug-candidates")
 
     mode_rows: list[dict] = []
 
+    backends = ["gauss", "closed-form"] if args.backend == "both" else [args.backend]
+
     for solver in selected_solvers:
         exe = solver_bin(solver)
-        for case in selected_cases:
-            opt = case_option(case)
-            for nx, ny, nz in case_grids[case]:
-                cmd = [exe, opt, "--nx", str(nx), "--ny", str(ny), "--nz", str(nz)]
-                out = run_checked(build_dir, cmd, args.verbose)
-                parsed = parse_mode_table(out)
-                for row in parsed:
-                    mode_rows.append(
-                        {
-                            "section": "3.1",
-                            "solver": solver,
-                            "case": case,
-                            "nx": nx,
-                            "ny": ny,
-                            "nz": nz,
-                            **row,
-                        }
-                    )
+        for backend in backends:
+            for case in selected_cases:
+                opt = case_option(case)
+                for nx, ny, nz in case_grids[case]:
+                    cmd = [exe, opt, "--nx", str(nx), "--ny", str(ny), "--nz", str(nz), "--backend", backend, *debug_args]
+                    out = run_checked(build_dir, cmd, args.verbose, args.show_output)
+                    parsed = parse_mode_table(out)
+                    for row in parsed:
+                        mode_rows.append(
+                            {
+                                "section": "3.1",
+                                "solver": solver,
+                                "backend": backend,
+                                "case": case,
+                                "nx": nx,
+                                "ny": ny,
+                                "nz": nz,
+                                **row,
+                            }
+                        )
 
     out_modes.parent.mkdir(parents=True, exist_ok=True)
     with out_modes.open("w", newline="", encoding="utf-8") as f:
@@ -172,6 +188,7 @@ def main() -> None:
             fieldnames=[
                 "section",
                 "solver",
+                "backend",
                 "case",
                 "nx",
                 "ny",
@@ -189,19 +206,20 @@ def main() -> None:
         for row in mode_rows:
             w.writerow(row)
 
-    grouped: dict[tuple[str, str, int, int, int], list[dict]] = defaultdict(list)
+    grouped: dict[tuple[str, str, str, int, int, int], list[dict]] = defaultdict(list)
     for row in mode_rows:
-        key = (row["solver"], row["case"], row["nx"], row["ny"], row["nz"])
+        key = (row["solver"], row["backend"], row["case"], row["nx"], row["ny"], row["nz"])
         grouped[key].append(row)
 
     summary_rows: list[dict] = []
-    for (solver, case, nx, ny, nz), rows in sorted(grouped.items()):
+    for (solver, backend, case, nx, ny, nz), rows in sorted(grouped.items()):
         err_ana = [abs(float(r["err_ana_pct"])) for r in rows]
         err_ref = [abs(float(r["err_ref_pct"])) for r in rows]
         summary_rows.append(
             {
                 "section": "3.1",
                 "solver": solver,
+                "backend": backend,
                 "case": case,
                 "nx": nx,
                 "ny": ny,
@@ -221,6 +239,7 @@ def main() -> None:
             fieldnames=[
                 "section",
                 "solver",
+                "backend",
                 "case",
                 "nx",
                 "ny",

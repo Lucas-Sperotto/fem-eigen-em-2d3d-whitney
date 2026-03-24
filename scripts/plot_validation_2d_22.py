@@ -245,6 +245,7 @@ def parse_args() -> argparse.Namespace:
     ap = argparse.ArgumentParser(description="Plot images for 2.2.2/2.2.3/2.2.4 from validation_2d_22.csv")
     ap.add_argument("--in-csv", type=Path, default=Path("out/validation/validation_2d_22.csv"))
     ap.add_argument("--out-dir", type=Path, default=Path("out/img_all/validation_2d_22"))
+    ap.add_argument("--backend", choices=["all", "gauss", "closed-form"], default="all")
     ap.add_argument("--dpi", type=int, default=210)
     return ap.parse_args()
 
@@ -260,6 +261,10 @@ def main() -> None:
     rows = _read_rows(in_csv)
     if not rows:
         raise SystemExit(f"Input CSV has no rows: {in_csv}")
+    if args.backend != "all":
+        rows = [r for r in rows if r.get("backend", "").strip() == args.backend]
+        if not rows:
+            raise SystemExit(f"CSV sem linhas para backend={args.backend}: {in_csv}")
 
     _plot_222(rows, out_dir / "2.2.2", args.dpi)
     _plot_223_table8(rows, out_dir / "2.2.3", args.dpi)
@@ -269,4 +274,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

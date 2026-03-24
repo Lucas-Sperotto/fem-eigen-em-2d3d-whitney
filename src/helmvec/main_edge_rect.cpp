@@ -11,15 +11,21 @@
 /*****************************************************************************/
 /* Artigo base: NASA 19950011772. Referencias principais: Secao 2.2.1.        */
 /*****************************************************************************/
-/* Observacao: Comentarios priorizam didatica, rastreabilidade e validacao.   */
+/* Observacao: Este driver desempenha o papel do programa HELMVEC do apendice */
+/* em FORTRAN. A montagem global correspondente a Eq. (65) ocorre em          */
+/* src/edge/edge_assembly.cpp. Comentarios priorizam didatica,                */
+/* rastreabilidade e validacao.                                               */
 /*****************************************************************************/
 
 #include "core/io_vtk_sv.hpp"
 #include "core/lapack_eig.hpp"
 #include "core/mesh2d_rect.hpp"
 #include "core/output_paths.hpp"
+#include "core/timing_utils.hpp"
 #include "edge/edge_assembly.hpp"
 #include "edge/mode_match_rect_edge.hpp"
+#include "helmvec/edge_cli_options.hpp"
+#include "helmvec/edge_debug.hpp"
 #include "helmvec/edge_mode_post.hpp"
 
 #include <algorithm>
@@ -37,10 +43,11 @@
 /* DESCRICAO: Executa o fluxo principal do caso (montagem, solve, comparacao analitica e escrita de saidas). */
 /* ENTRADA: tag: const char *; mesh: const Mesh2D &; a: double; b: double; bc:*/
 /* EdgeBC; is_te: bool; out_dir: const std::filesystem::path &;               */
-/* legacy_vtk_name: const char *; export_modes: int.                          */
+/* legacy_vtk_name: const char *; export_modes: int; backend:                 */
+/* ElementAssemblyBackend; debug_candidates: bool.                            */
 /* SAIDA: sem retorno explicito (void).                                       */
 /******************************************************************************/
-static void run_case(
+static timing::Breakdown run_case(
     const char *tag,
     const Mesh2D &mesh,
     double a,
@@ -49,14 +56,24 @@ static void run_case(
     bool is_te,
     const std::filesystem::path &out_dir,
     const char *legacy_vtk_name,
-    int export_modes)
+    int export_modes,
+    ElementAssemblyBackend backend,
+    bool debug_candidates)
 {
+    timing::Breakdown perf;
     std::cout << "\n[" << tag << "]\n";
-    const auto sys = build_helm10_edge_system(mesh, bc, 1.0, 1.0);
+    timing::Stopwatch stage;
+    const auto sys = build_helm10_edge_system(mesh, bc, 1.0, 1.0, backend);
+    perf.assembly_ms += stage.elapsed_ms();
     std::cout << "edges=" << sys.ed.edges.size()
               << " edge_dofs=" << sys.ed.ndof << "\n";
 
+    stage.reset();
     const auto res = generalized_eigs_sym_vec(sys.S, sys.T);
+    perf.solve_ms += stage.elapsed_ms();
+
+    if (debug_candidates)
+        helmvec_debug::print_positive_kc_candidates_debug(res.w, 1e-9, 20);
 
     std::cout << "first kc:\n";
     helmvec_post::print_positive_kc(res.w, 12);
@@ -84,6 +101,7 @@ static void run_case(
         ++shown;
     }
 
+    stage.reset();
     int exported = 0;
     for (int i = 0; i < (int)res.w.size() && exported < export_modes; ++i)
     {
@@ -125,6 +143,9 @@ static void run_case(
             std::cout << "Saved: " << legacy_vtk_name << "\n";
         }
     }
+
+    perf.post_ms += stage.elapsed_ms();
+    return perf;
 }
 
 /******************************************************************************/
@@ -136,30 +157,49 @@ static void run_case(
 /******************************************************************************/
 int main(int argc, char **argv)
 {
+    timing::Breakdown perf;
+    timing::Stopwatch total_watch;
     const double a = 1.0;
     const double b = 0.5;
 
     int nx = 14;
     int ny = 14;
     int export_modes = 8;
-    if (argc >= 3)
+    helmvec::EdgeCliOptions cli;
+    try
     {
-        nx = std::atoi(argv[1]);
-        ny = std::atoi(argv[2]);
+        cli = helmvec::parse_edge_cli_options(argc, argv);
     }
-    if (argc >= 4)
+    catch (const std::exception &e)
     {
-        export_modes = std::max(1, std::atoi(argv[3]));
+        std::cerr << "Erro ao interpretar argumentos: " << e.what() << "\n";
+        std::cerr << "Uso: ./edge_rect [nx ny [nmodos]] [--backend gauss|closed-form]"
+                  << " [--debug-local-blocks] [--debug-candidates]\n";
+        return 2;
+    }
+
+    if (cli.positionals.size() >= 2)
+    {
+        nx = std::atoi(cli.positionals[0].c_str());
+        ny = std::atoi(cli.positionals[1].c_str());
+    }
+    if (cli.positionals.size() >= 3)
+    {
+        export_modes = std::max(0, std::atoi(cli.positionals[2].c_str()));
     }
 
     const auto out_dir = output_paths::ensure_case_dir("2d/2.2.1_edge/rect");
     std::cout << "Output dir: " << out_dir << "\n";
+    std::cout << "Backend de aresta: " << element_assembly_backend_name(cli.backend) << "\n";
 
     const Mesh2D mesh = make_rect_mesh(a, b, nx, ny);
     std::cout << "Edge rect: nodes=" << mesh.nodes.size()
               << " tris=" << mesh.tris.size() << "\n";
 
-    run_case(
+    if (cli.debug_local_blocks)
+        helmvec_debug::print_first_triangle_closed_form_debug(mesh, 1.0, 1.0);
+
+    const auto te_perf = run_case(
         "TE (Edge, PEC: Et=0 on boundary)",
         mesh,
         a,
@@ -168,9 +208,14 @@ int main(int argc, char **argv)
         true,
         out_dir,
         "edge_rect_Et.vtk",
-        export_modes);
+        export_modes,
+        cli.backend,
+        cli.debug_candidates);
+    perf.assembly_ms += te_perf.assembly_ms;
+    perf.solve_ms += te_perf.solve_ms;
+    perf.post_ms += te_perf.post_ms;
 
-    run_case(
+    const auto tm_perf = run_case(
         "TM (Edge, PEC: Hn=0, keep boundary edges)",
         mesh,
         a,
@@ -179,7 +224,15 @@ int main(int argc, char **argv)
         false,
         out_dir,
         "edge_rect_Ht.vtk",
-        export_modes);
+        export_modes,
+        cli.backend,
+        cli.debug_candidates);
+    perf.assembly_ms += tm_perf.assembly_ms;
+    perf.solve_ms += tm_perf.solve_ms;
+    perf.post_ms += tm_perf.post_ms;
+
+    perf.total_ms = total_watch.elapsed_ms();
+    timing::print_breakdown("edge_rect", perf);
 
     return 0;
 }

@@ -43,15 +43,25 @@ static std::vector<int> build_dof_map(const Mesh2D &m, ScalarBC bc)
 /******************************************************************************/
 /* FUNCAO: build_helm10_scalar_system                                         */
 /* DESCRICAO: Monta o sistema escalar generalizado da secao 2.1 com materiais */
-/* e BCs informados. Implementa a formulacao escalar da Secao 2.1.            */
-/* ENTRADA: mesh: const Mesh2D &; bc: ScalarBC.                               */
+/* e BCs informados. Implementa a formulacao escalar da Secao 2.1 e permite   */
+/* selecionar o backend local de montagem do elemento triangular. Este e o    */
+/* ponto em que o repositorio realiza a montagem global da Eq. (43), no       */
+/* espirito do programa HELM10 do apendice em FORTRAN.                        */
+/* ENTRADA: mesh: const Mesh2D &; bc: ScalarBC; backend:                      */
+/* ElementAssemblyBackend.                                                    */
 /* SAIDA: ScalarSystem.                                                       */
 /******************************************************************************/
-ScalarSystem build_helm10_scalar_system(const Mesh2D &mesh, ScalarBC bc)
+ScalarSystem build_helm10_scalar_system(
+    const Mesh2D &mesh,
+    ScalarBC bc,
+    ElementAssemblyBackend backend)
 {
-    // Sistema escalar da Secao 2.1:
-    //   S u = lambda T u
-    // com S associado a grad-grad e T a massa consistente.
+    // Sistema escalar global da Secao 2.1:
+    //   S u = lambda T u, com lambda = kc^2
+    // Este e o equivalente discreto da Eq. (43) apos a soma das contribuicoes
+    // elementares dos triangulos da malha.
+    // No estilo do apendice do artigo, esta rotina faz o papel do montador
+    // global do programa HELM10.
     auto map = build_dof_map(mesh, bc);
     int ndof = 0;
     for (int v : map)
@@ -67,7 +77,7 @@ ScalarSystem build_helm10_scalar_system(const Mesh2D &mesh, ScalarBC bc)
         TriGeom g = tri_geom(mesh, tri);
 
         double Se[3][3], Te[3][3];
-        element_mats_scalar(g, Se, Te);
+        element_mats_scalar(g, backend, Se, Te);
 
         for (int a = 0; a < 3; a++)
         {
@@ -92,16 +102,20 @@ ScalarSystem build_helm10_scalar_system(const Mesh2D &mesh, ScalarBC bc)
 /******************************************************************************/
 /* FUNCAO: build_helm10_scalar_system                                         */
 /* DESCRICAO: Monta o sistema escalar generalizado da secao 2.1 com materiais */
-/* e BCs informados. Implementa a formulacao escalar da Secao 2.1.            */
+/* e BCs informados. Implementa a formulacao escalar da Secao 2.1 e permite   */
+/* selecionar o backend local de montagem do elemento triangular. Esta variante*/
+/* heterogenea continua representando a montagem global da Eq. (43).          */
 /* ENTRADA: mesh: const Mesh2D &; bc: ScalarBC; eps_r_tri: const              */
-/* std::vector<double> &; mu_r_tri: const std::vector<double> &.              */
+/* std::vector<double> &; mu_r_tri: const std::vector<double> &; backend:     */
+/* ElementAssemblyBackend.                                                    */
 /* SAIDA: ScalarSystem.                                                       */
 /******************************************************************************/
 ScalarSystem build_helm10_scalar_system(
     const Mesh2D &mesh,
     ScalarBC bc,
     const std::vector<double> &eps_r_tri,
-    const std::vector<double> &mu_r_tri
+    const std::vector<double> &mu_r_tri,
+    ElementAssemblyBackend backend
 ){
     if ((int)eps_r_tri.size() != (int)mesh.tris.size())
         throw std::runtime_error("eps_r_tri.size() != mesh.tris.size()");
@@ -127,7 +141,7 @@ ScalarSystem build_helm10_scalar_system(
         const double mu_r  = mu_r_tri[tid];
 
         double Se[3][3], Te[3][3];
-        element_mats_scalar(g, Se, Te);
+        element_mats_scalar(g, backend, Se, Te);
 
         // Aplica ponderacoes inhomogeneas conforme formulacao do artigo:
         // Sz ~ (1/mu) * grad-grad

@@ -58,6 +58,8 @@ Defaults do executavel:
 ./build/fem3d0_rect --sphere
 ./build/fem3d0_rect --all
 ./build/fem3d0_rect --all --nx 5 --ny 4 --nz 4
+./build/fem3d0_rect --air --backend closed-form --debug-local-blocks
+./build/fem3d0_rect --air --debug-candidates
 ./build/fem3d0_rect --help
 ```
 
@@ -74,6 +76,11 @@ Para cada caso:
 
 A tabela usa matching agrupado por degenerescencia para evitar trocas
 artificiais de ordem modal.
+
+Flags de depuracao:
+- `--debug-local-blocks`: imprime `Sel` e `Tel` do primeiro tetraedro
+- `--debug-candidates`: imprime as primeiras raizes positivas `k0`
+- `--debug` / `--debug-all`: ativa os dois
 
 ## 6) Dependencias internas
 

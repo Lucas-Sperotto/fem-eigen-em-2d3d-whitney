@@ -60,6 +60,17 @@ Matrizes elementares:
 
 `T_e(i,j) = int_e eps_r N_i N_j dA`
 
+## 4.1) Trilha de rastreabilidade
+
+Para conectar o artigo ao codigo, a trilha principal deste modulo e:
+
+1. Eq. `(30)` e Eq. `(33)` -> formas locais closed-form em
+   `src/explicit/tri2d_scalar_explicit.hpp`
+2. Eq. `(43)` -> sistema global escalar montado em
+   `src/core/helm10_scalar_system.cpp`
+3. funcao de montagem principal ->
+   `build_helm10_scalar_system(...)`
+
 ## 5) Solver e pos-processamento
 
 Solver:
@@ -89,20 +100,44 @@ Pos-processamento (`scalar_mode_post.hpp`):
 Retangular:
 
 ```bash
-./build/helm10_rect 14 14
+./build/helm10_rect 14 14 --backend gauss
 ```
 
 Circular:
 
 ```bash
-./build/helm10_circle 10 48
+./build/helm10_circle 10 48 --backend gauss
 ```
 
 Coaxial:
 
 ```bash
-./build/helm10_coax 10 48
+./build/helm10_coax 10 48 --backend gauss
 ```
+
+## 7.1) Backends e depuracao
+
+Flags disponiveis:
+
+- `--backend gauss`
+- `--backend closed-form`
+- `--debug-local-blocks`
+- `--debug-candidates`
+- `--debug` ou `--debug-all`
+
+Exemplos:
+
+```bash
+./build/helm10_rect 14 14 8 --backend closed-form --debug-local-blocks
+./build/helm10_circle 10 48 8 --backend gauss --debug-candidates
+./build/helm10_coax 10 48 8 --backend closed-form --debug-local-blocks --debug-candidates
+```
+
+Interpretacao:
+
+- `--debug-local-blocks`: imprime o primeiro triangulo com os blocos locais
+  ligados as Eq. `(30)` e `(33)` e sua contribuicao para a Eq. `(43)`;
+- `--debug-candidates`: imprime os primeiros `kc` positivos antes do matching.
 
 ## 8) Saidas tipicas
 

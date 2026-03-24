@@ -51,8 +51,44 @@ Evitar duplicacao de:
 - Scripts de validacao (`validate_3d_31.py`) continuam com formato de saida
   estavel mesmo apos refatoracoes internas.
 
+## 4.1) Flags de depuracao compartilhadas
+
+Os drivers `fem3d0_rect` e `fem3d1_rect` aceitam:
+
+- `--debug-local-blocks`
+  - imprime os blocos locais `Sel` e `Tel` do primeiro tetraedro,
+    correspondentes as Eq. `(181)` e `(182)`
+- `--debug-candidates`
+  - imprime as primeiras raizes positivas `k0` antes do matching com a tabela
+- `--debug` ou `--debug-all`
+  - ativa os dois comportamentos
+
+Essas flags tambem sao repassadas pelos scripts principais:
+
+- `scripts/build_and_run_all.sh`
+- `scripts/run_backend_compare.sh`
+- `scripts/validate_3d_31.py`
+
+Para acompanhar a saida completa durante a validacao automatica:
+
+```bash
+python3 scripts/validate_3d_31.py --backend closed-form --show-output --debug-candidates
+```
+
 ## 5) Relacao com a secao 3.1 do artigo
 
 Este modulo nao monta matrizes nem resolve EVP diretamente.
 Ele organiza a camada de reproducao dos experimentos numericos da Sec. 3.1,
 onde as montagens reais estao em `src/edge3d` e os solves em `fem3d0/fem3d1`.
+
+## 5.1) Trilha de rastreabilidade
+
+Para conectar o artigo ao codigo, a trilha principal dos casos 3D e:
+
+1. Eq. `(181)` e Eq. `(182)` -> formas locais closed-form em
+   `src/explicit/tet3d_edge_explicit.hpp`
+2. Eq. `(178)` -> sistema global vetorial 3D montado em
+   `src/edge3d/edge3d_assembly.cpp`
+3. funcoes de montagem principais ->
+   `build_helm3d_edge_system(...)` e
+   `build_helm3d_edge_system_sparse(...)`

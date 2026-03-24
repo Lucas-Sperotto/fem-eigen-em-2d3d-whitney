@@ -54,6 +54,8 @@ Defaults do executavel:
 ./build/fem3d1_rect --sphere
 ./build/fem3d1_rect --all
 ./build/fem3d1_rect --all --nx 6 --ny 4 --nz 4
+./build/fem3d1_rect --half --backend closed-form --debug-local-blocks
+./build/fem3d1_rect --half --debug-candidates
 ./build/fem3d1_rect --help
 ```
 
@@ -65,6 +67,11 @@ Para cada caso:
 - tabela modal com:
   - `k0_ana`, `k0_fem`, `err_ana(%)`,
   - `ref_paper`, `err_ref(%)`.
+
+Flags de depuracao:
+- `--debug-local-blocks`: imprime `Sel` e `Tel` do primeiro tetraedro
+- `--debug-candidates`: imprime as primeiras raizes positivas `k0`
+- `--debug` / `--debug-all`: ativa os dois
 
 ## 6) Dependencias internas
 
