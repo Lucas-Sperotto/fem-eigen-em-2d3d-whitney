@@ -32,6 +32,46 @@ Arquivo principal:
 4. Faz matching por degenerescencia analitica.
 5. Imprime tabela comparativa.
 
+## 2.1) Expressoes matematicas usadas
+
+Problema continuo:
+
+```text
+curl((1/mu_r) curl(E)) = k0^2 eps_r E
+```
+
+Problema discreto:
+
+```text
+S e = k0^2 T e
+```
+
+No backend `closed-form`, os blocos locais do tetraedro seguem:
+
+```text
+S_e(m,n) = (1/mu_r) * (L_m L_n)/(324 V^3) * K_mn
+T_e(m,n) = eps_r * (L_m L_n)/(1296 V^3) * sum_{k=1}^{10} I_k
+```
+
+com:
+
+```text
+lambda_i(x,y,z) = (a_i + b_i x + c_i y + d_i z) / (6V)
+grad lambda_i   = [b_i, c_i, d_i] / (6V)
+W_m             = L_m (lambda_i grad lambda_j - lambda_j grad lambda_i)
+```
+
+Na rastreabilidade do artigo:
+
+- Eq. `(181)` -> bloco local `Sel`
+- Eq. `(182)` -> bloco local `Tel`
+- Eq. `(178)` -> sistema global `S e = k0^2 T e`
+
+Os detalhes de `K_mn` e `I1..I10` ficam documentados em:
+
+- `src/fem3d/README.md`
+- `src/explicit/tet3d_edge_explicit.hpp`
+
 ## 3) Casos suportados
 
 - `--air` (Figura 15 / Tabela 12)

@@ -38,6 +38,165 @@ Observacao:
   ultima coluna;
 - as formas fechadas locais ficam organizadas em `src/explicit`.
 
+## 1.2) Resumo matematico do repositorio
+
+O repositorio cobre seis problemas generalizados principais do artigo:
+
+### Notacao comum
+
+Ao longo dos modulos, a notacao base e sempre esta:
+
+```text
+Gamma    = secao transversal 2D do guia
+T        = triangulo 2D de area A
+Tet      = tetraedro 3D de volume V
+N_i      = funcao de forma nodal linear em 2D
+lambda_i = coordenada simplex linear em 2D/3D
+W_m      = base de Whitney associada a aresta local m
+L_m      = comprimento da aresta local m
+eps_r    = permissividade relativa por elemento
+mu_r     = permeabilidade relativa por elemento
+```
+
+Nos triangulos 2D:
+
+```text
+N_i(x,y)      = (a_i + b_i x + c_i y) / (2A)
+grad N_i      = [b_i, c_i] / (2A)
+x_tri, y_tri  = coordenadas do baricentro do triangulo
+```
+
+Nos tetraedros 3D:
+
+```text
+lambda_i(x,y,z) = (a_i + b_i x + c_i y + d_i z) / (6V)
+grad lambda_i   = [b_i, c_i, d_i] / (6V)
+x_tet, y_tet, z_tet = coordenadas do baricentro do tetraedro
+```
+
+Nas formulacoes vetoriais 2D e 3D:
+
+```text
+W_m = L_m (lambda_i grad lambda_j - lambda_j grad lambda_i)
+```
+
+Por isso, quando um README fala em `St`, `Tt`, `Sz`, `Tz`, `C`, `Mt^(1/mu)` ou
+`Gz`, ele esta apenas reorganizando integrais construidas a partir desses
+blocos geometricos comuns.
+
+### Secao 2.1 - escalar 2D
+
+```text
+S phi = kc^2 T phi
+```
+
+com, por elemento triangular linear:
+
+```text
+N_i(x,y) = (a_i + b_i x + c_i y) / (2A)
+grad N_i = [b_i, c_i] / (2A)
+
+S_e(i,j) = (1/mu_r) * (b_i b_j + c_i c_j) / (4A)
+T_e(i,j) = eps_r * (A/12) * [2 1 1; 1 2 1; 1 1 2]_(i,j)
+```
+
+### Secao 2.2.1 - edge 2D transversal
+
+```text
+S e = kc^2 T e
+```
+
+com base de Whitney:
+
+```text
+W_m = L_m (lambda_i grad lambda_j - lambda_j grad lambda_i)
+lambda_i = (a_i + b_i x + c_i y) / (2A)
+```
+
+e, na forma fechada:
+
+```text
+S_e(m,n) = (1/mu_r) * (L_m L_n)/(4 A^3) * D_m D_n
+T_e(m,n) = eps_r * (L_m L_n)/(16 A^3) * sum_{k=1}^5 It_k
+```
+
+### Secao 2.2.2 - sistema misto para `kc`
+
+```text
+[ St   0 ] [et] = kc^2 [ Tt   0 ] [et]
+[  0  Sz ] [ez]        [  0  Tz ] [ez]
+```
+
+onde:
+
+```text
+St <- bloco edge 2D
+Tt <- massa edge 2D
+Sz <- grad-grad escalar
+Tz <- massa escalar
+```
+
+### Secao 2.2.3 - `k0` dado `beta`
+
+```text
+A x = k0^2 B x
+x = [Et; Ez]
+```
+
+com:
+
+```text
+A_tt = St + beta^2 Mt^(1/mu)
+A_tz = beta^2 C
+A_zt = beta^2 C^T
+A_zz = beta^2 Sz
+
+B_tt = Tt
+B_zz = beta^2 Tz
+```
+
+### Secao 2.2.4 - `beta` dado `k0`
+
+```text
+P x = beta^2 Q x
+x = [Et; Ez]
+```
+
+com:
+
+```text
+P_tt = St - k0^2 Tt
+P_zz = k0^2 Tz
+
+Q_tt = -Mt^(1/mu)
+Q_tz = C
+Q_zt = C^T
+Q_zz = Sz
+```
+
+### Secao 3.1 - edge 3D tetraedrico
+
+```text
+S e = k0^2 T e
+```
+
+com coordenadas simplex tetraedricas:
+
+```text
+lambda_i(x,y,z) = (a_i + b_i x + c_i y + d_i z) / (6V)
+W_m = L_m (lambda_i grad lambda_j - lambda_j grad lambda_i)
+```
+
+e, na forma fechada usada no repositorio:
+
+```text
+S_e(m,n) = (1/mu_r) * (L_m L_n)/(324 V^3) * (...)
+T_e(m,n) = eps_r * (L_m L_n)/(1296 V^3) * sum_{k=1}^{10} I_k
+```
+
+Os detalhes de cada bloco, incluindo coeficientes geometricos e relacao com as
+equacoes numeradas do artigo, estao nos READMEs de cada modulo.
+
 ## 2) Estrutura principal (src)
 
 - `src/core`: malhas, estruturas de matriz, solver LAPACK, utilitarios de I/O VTK
@@ -59,6 +218,7 @@ Observacao:
 - [src/helmvec1/README.md](src/helmvec1/README.md): sistema misto vetorial + escalar para `kc` (Secao 2.2.2).
 - [src/helmvec2/README.md](src/helmvec2/README.md): sistema acoplado para obter `k0` com `beta` dado (Secao 2.2.3).
 - [src/helmvec3/README.md](src/helmvec3/README.md): sistema acoplado para obter `beta` com `k0` dado (Secao 2.2.4).
+- [src/explicit/README.md](src/explicit/README.md): backend `closed-form`, mapeamento de equacoes locais e rearranjos.
 - [src/fem3d/README.md](src/fem3d/README.md): infraestrutura comum de validacao 3D (Secao 3.1).
 - [src/fem3d0/README.md](src/fem3d0/README.md): solver 3D denso (`FEM3D0`).
 - [src/fem3d1/README.md](src/fem3d1/README.md): solver 3D com montagem esparsa (`FEM3D1`).

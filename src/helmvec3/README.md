@@ -39,7 +39,67 @@ Elementos:
 - `Mt_(1/mu)`: massa vetorial com peso `1/mu_r`,
 - `C(m,j) = int (1/mu_r) W_m . grad(N_j) dA`.
 
-## 2.1) Forma fechada implementada
+Na notacao local do artigo:
+
+```text
+Sel(tt)  -> Eq. (137)
+Tel(tz)  -> Eq. (138)
+Tel(zt)  -> Eq. (139)
+Sel(zz)  -> Eq. (140)
+Tel(tt)  -> Eq. (141)
+Tel(zz)  -> Eq. (142)
+```
+
+No arranjo numerico implementado:
+
+```text
+P_tt = St - k0^2 Tt
+P_zz = k0^2 Tz
+
+Q_tt = -(1/mu_r) Mt
+Q_tz = (1/mu_r) C
+Q_zt = (1/mu_r) C^T
+Q_zz = (1/mu_r) Gz
+```
+
+onde:
+
+```text
+Gz(i,j) = int_T grad(N_i) . grad(N_j) dA
+Mt(m,n) = int_T W_m . W_n dA
+Tz(i,j) = int_T N_i N_j dA
+```
+
+## 2.1) Forma fraca por bloco
+
+Partindo das Eq. `(131)` a `(135)` do artigo, os blocos locais podem ser lidos
+como:
+
+```text
+Sel(tt)(m,n) =
+    (1/mu_r) int_T curl(W_m) curl(W_n) dA
+  - k0^2 eps_r int_T W_m . W_n dA
+
+Tel(tz)(m,j) =
+    (1/mu_r) int_T W_m . grad(N_j) dA
+
+Tel(zt)(i,n) =
+    (1/mu_r) int_T grad(N_i) . W_n dA
+
+Sel(zz)(i,j) =
+    (1/mu_r) int_T grad(N_i) . grad(N_j) dA
+
+Tel(tt)(m,n) =
+    eps_r int_T W_m . W_n dA
+
+Tel(zz)(i,j) =
+    (1/mu_r) int_T grad(N_i) . grad(N_j) dA
+  + k0^2 eps_r int_T N_i N_j dA
+```
+
+As Eq. `(137)` a `(142)` sao justamente as versoes `closed-form` desses blocos.
+
+## 2.2) Forma fechada implementada
 
 No caminho `--backend closed-form`, o modulo nao depende apenas de reuso
 implicito dos montadores base. A formulacao local de `2.2.4` foi deixada
@@ -70,7 +130,22 @@ Observacao importante:
 - por isso, o codigo privilegia a equivalencia algebraica validada e deixa os
   comentarios apontando onde cada equacao entra.
 
-## 2.2) Onde a Eq. (136) e montada no codigo
+## 2.3) Expressoes locais explicitas
+
+No backend `closed-form`, os blocos locais ficam:
+
+```text
+Sel(tt) = (1/mu_r) * curlcurl_t - k0^2 * eps_r * mass_t
+Tel(tz) = (1/mu_r) * C
+Tel(zt) = (1/mu_r) * C^T
+Sel(zz) = (1/mu_r) * gradgrad_z
+Tel(tt) = eps_r * mass_t
+Tel(zz) = (1/mu_r) * gradgrad_z + k0^2 * eps_r * mass_z
+```
+
+Depois, esses blocos sao rearranjados para a Eq. `(136)`.
+
+## 2.4) Onde a Eq. (136) e montada no codigo
 
 A montagem global da Eq. `(136)` ocorre em:
 

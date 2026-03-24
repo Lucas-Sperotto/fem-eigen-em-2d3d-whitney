@@ -33,6 +33,45 @@ Arquivo principal:
    - matching com degenerescencia,
    - tabela comparativa.
 
+## 2.1) Expressoes matematicas usadas
+
+Problema continuo:
+
+```text
+curl((1/mu_r) curl(E)) = k0^2 eps_r E
+```
+
+Problema discreto:
+
+```text
+S e = k0^2 T e
+```
+
+Mesmo com montagem esparsa, o elemento local do backend `closed-form` e o
+mesmo do `fem3d0`:
+
+```text
+S_e(m,n) = (1/mu_r) * (L_m L_n)/(324 V^3) * K_mn
+T_e(m,n) = eps_r * (L_m L_n)/(1296 V^3) * sum_{k=1}^{10} I_k
+```
+
+com a mesma base simplex:
+
+```text
+lambda_i(x,y,z) = (a_i + b_i x + c_i y + d_i z) / (6V)
+grad lambda_i   = [b_i, c_i, d_i] / (6V)
+W_m             = L_m (lambda_i grad lambda_j - lambda_j grad lambda_i)
+```
+
+Na linguagem das equacoes do artigo:
+
+- Eq. `(181)` fornece o bloco local de rigidez `Sel`
+- Eq. `(182)` fornece o bloco local de massa `Tel`
+- Eq. `(178)` e o problema global montado em formato esparso
+
+A diferenca deste modulo esta apenas na estrutura de armazenamento global
+(`SparseSymMat`), nao na formulacao matematica local.
+
 ## 3) Casos suportados
 
 - `--air` (Figura 15 / Tabela 12)

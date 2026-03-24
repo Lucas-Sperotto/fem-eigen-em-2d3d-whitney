@@ -44,6 +44,78 @@ Evitar duplicacao de:
   - `eps_r_tet`, `mu_r_tet`,
   - `rows` (referencias modais).
 
+## 3.1) Forma matematica compartilhada em 3D
+
+A formulacao vetorial 3D do repositorio parte de:
+
+```text
+curl((1/mu_r) curl(E)) = k0^2 eps_r E
+```
+
+e, apos discretizacao por elementos de aresta tetraedricos:
+
+```text
+S e = k0^2 T e
+```
+
+No tetraedro:
+
+```text
+lambda_i(x,y,z) = (a_i + b_i x + c_i y + d_i z) / (6V)
+grad lambda_i   = [b_i, c_i, d_i] / (6V)
+W_m = L_m (lambda_i grad lambda_j - lambda_j grad lambda_i)
+```
+
+O backend `closed-form` usa:
+
+```text
+S_e(m,n) = (1/mu_r) * (L_m L_n)/(324 V^3) * K_mn
+T_e(m,n) = eps_r * (L_m L_n)/(1296 V^3) * sum_{k=1}^{10} I_k
+```
+
+onde `K_mn` e os `I_k` sao construidos a partir dos coeficientes geometricos
+das Eq. `(162)` a `(172)`.
+
+Na implementacao atual:
+
+```text
+K_mn = C_zm C_zn + C_xm C_xn + B_ym B_yn
+```
+
+e os termos de massa seguem:
+
+```text
+I1  = A_xm A_xn + A_ym A_yn + A_zm A_zn
+I2  = (A_ym B_yn + A_yn B_ym + A_zm B_zn + A_zn B_zm) x_tet
+I3  = (A_xm B_xn + A_xn B_xm + A_zm C_zn + A_zn C_zm) y_tet
+I4  = (A_xm C_xn + A_xn C_xm + A_ym C_yn + A_yn C_ym) z_tet
+I5  = (B_zm C_zn + B_zn C_zm) * (1/V) int_T xy dV
+I6  = (B_xm C_xn + B_xn C_xm) * (1/V) int_T yz dV
+I7  = (B_ym C_yn + B_yn C_ym) * (1/V) int_T xz dV
+I8  = (B_ym B_yn + B_zm B_zn) * (1/V) int_T x^2 dV
+I9  = (B_xm B_xn + C_zm C_zn) * (1/V) int_T y^2 dV
+I10 = (C_xm C_xn + C_ym C_yn) * (1/V) int_T z^2 dV
+```
+
+Os momentos geometricos usados nesses termos sao os equivalentes tetraedricos
+dos momentos do triangulo 2D:
+
+```text
+x_tet = (x1 + x2 + x3 + x4) / 4
+y_tet = (y1 + y2 + y3 + y4) / 4
+z_tet = (z1 + z2 + z3 + z4) / 4
+
+(1/V) int_T x^2 dV = (sum x_i^2 + 16 x_tet^2) / 20
+(1/V) int_T y^2 dV = (sum y_i^2 + 16 y_tet^2) / 20
+(1/V) int_T z^2 dV = (sum z_i^2 + 16 z_tet^2) / 20
+(1/V) int_T xy dV  = (sum x_i y_i + 16 x_tet y_tet) / 20
+(1/V) int_T xz dV  = (sum x_i z_i + 16 x_tet z_tet) / 20
+(1/V) int_T yz dV  = (sum y_i z_i + 16 y_tet z_tet) / 20
+```
+
+Essas expressoes sao as que aparecem materializadas no backend
+`closed-form` em `src/explicit/tet3d_edge_explicit.hpp`.
+
 ## 4) Beneficios para o projeto
 
 - `main_fem3d0_rect.cpp` e `main_fem3d1_rect.cpp` ficam curtos e focados no solver.
@@ -92,3 +164,17 @@ Para conectar o artigo ao codigo, a trilha principal dos casos 3D e:
 3. funcoes de montagem principais ->
    `build_helm3d_edge_system(...)` e
    `build_helm3d_edge_system_sparse(...)`
+
+Os coeficientes locais usados pelo backend `closed-form` aparecem em:
+
+```text
+A_x, B_x, C_x, A_y, B_y, C_y, A_z, B_z, C_z
+```
+
+e alimentam os termos auxiliares:
+
+```text
+I1, I2, ..., I10
+```
+
+descritos em `src/explicit/tet3d_edge_explicit.hpp`.

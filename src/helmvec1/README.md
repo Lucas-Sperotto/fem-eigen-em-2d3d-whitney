@@ -36,6 +36,39 @@ onde:
 - `St`, `Tt` vem da montagem edge,
 - `Sz`, `Tz` vem da montagem escalar.
 
+Mais explicitamente:
+
+```text
+St(m,n) = (1/mu_r) int_T curl(W_m) curl(W_n) dA
+Tt(m,n) = eps_r int_T W_m . W_n dA
+
+Sz(i,j) = (1/mu_r) int_T grad(N_i) . grad(N_j) dA
+Tz(i,j) = eps_r int_T N_i N_j dA
+```
+
+No problema global:
+
+```text
+[ St   0 ] [et] = kc^2 [ Tt   0 ] [et]
+[  0  Sz ] [ez]        [  0  Tz ] [ez]
+```
+
+No backend `closed-form`, esses blocos sao construidos pelas expressoes:
+
+```text
+St(m,n) = (1/mu_r) * (L_m L_n)/(4 A^3) * D_m D_n
+Tt(m,n) = eps_r * (L_m L_n)/(16 A^3) * (It1 + It2 + It3 + It4 + It5)
+
+Sz(i,j) = (1/mu_r) * (b_i b_j + c_i c_j) / (4A)
+Tz(i,j) = eps_r * (A/12) * [2 1 1; 1 2 1; 1 1 2]_(i,j)
+```
+
+Ou seja, a Eq. `(92)` e montada apenas por justaposicao de dois problemas ja
+presentes nas secoes anteriores:
+
+- o problema edge transversal da Eq. `(65)`;
+- o problema escalar nodal da Eq. `(43)`.
+
 ## 2.1) Trilha de rastreabilidade
 
 Para conectar o artigo ao codigo, a trilha principal deste modulo e:
@@ -60,6 +93,13 @@ Interpretacao:
 - edge tende a familia TE,
 - escalar tende a familia TM.
 
+Em termos de operador:
+
+```text
+St <- bloco vetorial transversal com PEC tangencial
+Sz <- bloco escalar longitudinal com Dirichlet
+```
+
 ### 3.2) `build_system92_H`
 
 Operador dual por troca constitutiva:
@@ -74,6 +114,26 @@ Interpretacao:
 - edge tende a familia TM,
 - escalar tende a familia TE.
 
+Na forma dual:
+
+```text
+eps_proxy <- mu_r
+mu_proxy  <- eps_r
+```
+
+e os blocos passam a ser montados com essa troca constitutiva:
+
+```text
+St^H(m,n) = (1/eps_r) int_T curl(W_m) curl(W_n) dA
+Tt^H(m,n) = mu_r int_T W_m . W_n dA
+
+Sz^H(i,j) = (1/eps_r) int_T grad(N_i) . grad(N_j) dA
+Tz^H(i,j) = mu_r int_T N_i N_j dA
+```
+
+Assim, o repositorio consegue representar a formulacao `H` sem duplicar toda a
+infraestrutura geometrica: muda apenas o peso material e o tipo de BC.
+
 ## 4) Classificacao modal por energia de bloco
 
 `mixed_mode_utils.hpp` implementa:
@@ -83,6 +143,15 @@ Para cada autovetor:
 - calcula energia em bloco 0 e bloco 1,
 - classifica pelo bloco dominante,
 - salva `k = sqrt(lambda)` no grupo correspondente.
+
+Ou seja, para `x = [x0; x1]`, o criterio numerico e:
+
+```text
+E0 = ||x0||^2
+E1 = ||x1||^2
+```
+
+e o modo vai para o bloco com maior energia.
 
 Esse criterio evita ambiguidade de ordenacao quando o solve global mistura
 modos de familias diferentes.
