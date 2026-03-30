@@ -326,19 +326,27 @@ onde $Z_0^{TM}$ é a impedância característica de onda para o modo TM.
 
 Um código computacional HELM10 foi desenvolvido para implementar a formulação apresentada na seção 2.1. O fluxograma para a implementação da solução FEM é mostrado na figura 3. Exemplos numéricos para o guia de onda retangular, o guia de onda circular e a linha coaxial são apresentados a seguir:
 
+![Figura 3. .](figura3.png)
+
+**Figura 3.** .
+
 **Guia de onda retangular:** Os números de onda de corte $k_c$ de um guia de onda retangular foram calculados usando o HELM10 e são apresentados na tabela 1 juntamente com resultados analíticos para referência. A geometria do guia de onda retangular $(a_r/b_r = 2)$ é mostrada na figura 4. Os resultados numéricos apresentados são obtidos utilizando 400 elementos triangulares sobre a seção transversal do guia de onda. Os autovetores para alguns dos modos foram calculados e os campos elétricos dos modos correspondentes são plotados na figura 5.
 
-[Inserir Figura 3 aqui]
+![Figura 4. .](figura4.png)
 
-[Inserir Figura 4 aqui]
+**Figura 4.** .
 
 **Guia de onda circular:** Os números de onda de corte para um guia de onda circular de raio unitário foram calculados com o HELM10 e comparados com dados analíticos disponíveis da referência 9 (ver tabela 2). Uma seção transversal do guia de onda circular é mostrada na figura 6. Duzentos elementos triangulares foram utilizados para modelar a geometria. Os autovetores dos modos selecionados foram calculados e os campos elétricos desses modos são plotados na figura 7.
 
-[Inserir Figura 6 aqui]
+![Figura 6. .](figura6.png)
+
+**Figura 6.** .
 
 **Linha coaxial:** A seção transversal da linha coaxial é mostrada na figura 8. O programa HELM10 é utilizado para calcular os números de onda de corte e a intensidade correspondente do campo elétrico dos modos TE e TM de ordem superior. Uma malha triangular com 340 elementos foi utilizada para modelar a geometria. A tabela 3 apresenta os números de onda de corte calculados para $r_2/r_1 = 4$ pelo HELM10 e os valores analíticos disponíveis na literatura (ref. 10). Para os modos TM, o potencial nos condutores interno e externo é definido como zero. Os componentes do campo elétrico transversal são calculados e plotados na figura 9.
 
-[Inserir Figura 8 aqui]
+![Figura 8. .](figura8.png)
+
+**Figura 8.** .
 
 ---
 
