@@ -277,3 +277,71 @@ $$
 $$
 
 Isto resulta em matrizes de ordem $n \times n$, onde $n$ é o número total de nós. Com as equações (30), (31) e (33), a equação de autovalor (eq. (34)) é resolvida para $k_c^2$ pelos solucionadores de autovalores generalizados padrão da biblioteca EISPACK (refs. 7 e 8). Os números de corte são então dados por $\sqrt{k_c^2}$.
+
+### 2.1.3. Cálculo de Campo a partir do Potencial Escalar
+
+Uma vez que o potencial escalar é calculado em cada nó, o campo elétrico pode ser obtido para ambos os modos TE e TM pelas seguintes formulações. O potencial escalar em qualquer ponto $(x,y)$ dentro de um elemento triangular é dado por
+
+$$
+\psi = \sum_{i=1}^{3} \psi_i \alpha_i(x,y)
+$$
+
+Esses potenciais escalares podem ser diferenciados em relação a $x$ e $y$ para obter as seguintes expressões:
+
+$$
+\frac{\partial \psi}{\partial x} = \frac{1}{2A} \sum_{i=1}^{3} \psi_i b_i
+$$
+
+$$
+\frac{\partial \psi}{\partial y} = \frac{1}{2A} \sum_{i=1}^{3} \psi_i c_i
+$$
+
+Para os modos TE, os componentes do campo elétrico transversal $E_x$ e $E_y$ dentro de um elemento são dados por
+
+$$
+E_x = -\frac{\partial \psi}{\partial y}
+$$
+
+$$
+E_y = \frac{\partial \psi}{\partial x}
+$$
+
+Ao obter o potencial escalar para os modos TM, o potencial escalar é definido como zero nas paredes PEC do guia de onda para satisfazer as condições de contorno de Dirichlet para o componente longitudinal do campo elétrico. Uma maneira muito simples de implementar isso é ignorar os nós na parede PEC ao formar as matrizes dos elementos. Isso resultará em matrizes de ordem inferior para o caso TM do que para o caso TE.
+
+Uma vez que o potencial escalar é obtido, os campos elétricos transversais para os modos TM são dados por
+
+$$
+E_x = -Z_0^{TM} \frac{\partial \psi}{\partial x}
+$$
+
+$$
+E_y = -Z_0^{TM} \frac{\partial \psi}{\partial y}
+$$
+
+onde $Z_0^{TM}$ é a impedância característica de onda para o modo TM.
+
+---
+
+### 2.1.4. Exemplos Numéricos
+
+Um código computacional HELM10 foi desenvolvido para implementar a formulação apresentada na seção 2.1. O fluxograma para a implementação da solução FEM é mostrado na figura 3. Exemplos numéricos para o guia de onda retangular, o guia de onda circular e a linha coaxial são apresentados a seguir:
+
+**Guia de onda retangular:** Os números de onda de corte $k_c$ de um guia de onda retangular foram calculados usando o HELM10 e são apresentados na tabela 1 juntamente com resultados analíticos para referência. A geometria do guia de onda retangular $(a_r/b_r = 2)$ é mostrada na figura 4. Os resultados numéricos apresentados são obtidos utilizando 400 elementos triangulares sobre a seção transversal do guia de onda. Os autovetores para alguns dos modos foram calculados e os campos elétricos dos modos correspondentes são plotados na figura 5.
+
+[Inserir Figura 3 aqui]
+
+[Inserir Figura 4 aqui]
+
+**Guia de onda circular:** Os números de onda de corte para um guia de onda circular de raio unitário foram calculados com o HELM10 e comparados com dados analíticos disponíveis da referência 9 (ver tabela 2). Uma seção transversal do guia de onda circular é mostrada na figura 6. Duzentos elementos triangulares foram utilizados para modelar a geometria. Os autovetores dos modos selecionados foram calculados e os campos elétricos desses modos são plotados na figura 7.
+
+[Inserir Figura 6 aqui]
+
+**Linha coaxial:** A seção transversal da linha coaxial é mostrada na figura 8. O programa HELM10 é utilizado para calcular os números de onda de corte e a intensidade correspondente do campo elétrico dos modos TE e TM de ordem superior. Uma malha triangular com 340 elementos foi utilizada para modelar a geometria. A tabela 3 apresenta os números de onda de corte calculados para $r_2/r_1 = 4$ pelo HELM10 e os valores analíticos disponíveis na literatura (ref. 10). Para os modos TM, o potencial nos condutores interno e externo é definido como zero. Os componentes do campo elétrico transversal são calculados e plotados na figura 9.
+
+[Inserir Figura 8 aqui]
+
+---
+
+### 2.1.5. Resumo
+
+Na seção 2, foi descrito um método de elementos finitos bidimensional baseado em nós para guias de onda homogêneos utilizando a técnica de Galerkin. O procedimento apresentado aqui é válido para qualquer seção transversal arbitrária do guia de onda preenchido com materiais homogêneos. O programa computacional HELM10 fornece os números de onda de corte e os componentes do campo elétrico transversal para qualquer modo de propagação em tal guia de onda. Exemplos de um guia de onda retangular, um guia de onda circular e uma linha coaxial foram apresentados para validar os resultados numéricos obtidos. A precisão dos resultados numéricos depende do número de elementos utilizados para representar a geometria.
