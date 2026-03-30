@@ -15,13 +15,13 @@ $$
 no interior e sobre o contorno $\Gamma$ indicado na figura 1. Esta é a forma “forte” da equação escalar de Helmholtz. Na forma forte, a incógnita aparece dentro de um operador diferencial de segunda ordem. Para tornar a equação adequada à solução numérica, ela pode ser convertida para a forma “fraca” multiplicando ambos os lados por uma função de teste $T_s$ e integrando sobre a superfície $\Gamma$; isto é,
 
 $$
-\iint_{\Gamma} \left[T_s\left(\nabla_t^2 \psi\right) + k_c^2 T_s \psi\right] \, ds = 0
+\iint_{\Gamma} \left[T_s\left(\nabla_t^2 \psi\right) + k_c^2 T_s \psi\right] ds = 0
 $$
 
 O primeiro termo na equação (2) pode ser escrito como
 
 $$
-\iint_{\Gamma} T_s\left(\nabla_t^2 \psi\right) \, ds = \iint_{\Gamma} T_s\left(\nabla_t \cdot \nabla_t \psi\right) \, ds
+\iint_{\Gamma} T_s\left(\nabla_t^2 \psi\right) ds = \iint_{\Gamma} T_s\left(\nabla_t \cdot \nabla_t \psi\right) ds
 $$
 
 As seguintes identidades vetoriais podem ser usadas para modificar a equação (3):
@@ -33,20 +33,19 @@ $$
 e
 
 $$
-\iint_{\Gamma} \nabla_t \cdot \nabla_t \psi \, ds = \oint_{d\Gamma} \nabla_t \psi \cdot \hat{n} \, dl
+\iint_{\Gamma} \nabla_t \cdot \nabla_t \psi ds = \oint_{d\Gamma} \nabla_t \psi \cdot \hat{n} dl
 $$
 
 onde $\hat{n}$ é a normal unitária ao longo do contorno $d\Gamma$. A equação (2) pode agora ser escrita como
 
 $$
-\iint_{\Gamma} (\nabla_t T_s \cdot \nabla_t \psi) \, ds - k_c^2 \iint_{\Gamma} T_s \psi \, ds = \int_{d\Gamma} T_s \frac{\partial \psi}{\partial n} \, dl
-\tag{6}
+\iint_{\Gamma} (\nabla_t T_s \cdot \nabla_t \psi) ds - k_c^2 \iint_{\Gamma} T_s \psi ds = \int_{d\Gamma} T_s \frac{\partial \psi}{\partial n} dl
 $$
 
 onde $\partial \psi/\partial n$ é a derivada normal de $\psi$ ao longo do contorno $d\Gamma$. O termo no lado direito se anula quando $T_s$ se anula sobre o contorno PEC para o caso TM e $\partial \psi/\partial n$ se anula no contorno para o caso TE. Portanto, a equação (6) pode ser escrita como
 
 $$
-\iint_{\Gamma} (\nabla_t T_s \cdot \nabla_t \psi) \, ds = k_c^2 \iint_{\Gamma} T_s \psi \, ds
+\iint_{\Gamma} (\nabla_t T_s \cdot \nabla_t \psi) ds = k_c^2 \iint_{\Gamma} T_s \psi ds
 $$
 
 #### 2.1.2. Discretização
@@ -150,7 +149,7 @@ $$
 c_i = x_k - x_j
 $$
 
-onde $i$, $j$ e $k$ são cíclicos; isto é, $(i = 1,\; j = 2,\; k = 3)$, $(i = 2,\; j = 3,\; k = 1)$ e $(i = 3,\; j = 1,\; k = 2)$, e $A$ é dada por
+onde $i$, $j$ e $k$ são cíclicos; isto é, $(i = 1; j = 2; k = 3)$, $(i = 2; j = 3; k = 1)$ e $(i = 3; j = 1; k = 2)$, e $A$ é dada por
 
 $$
 A = \frac{1}{2}
@@ -165,30 +164,30 @@ Usando a função de teste (como na técnica de Galerkin (ref. 1)),
 
 $$
 T_s = \alpha_j(x,y)
-\qquad (j = 1,2,3)
+\qquad (j = 1, 2, 3)
 $$
 
 e a representação do elemento na equação (14), o lado esquerdo da equação (7) pode ser avaliado sobre um único elemento como
 
 $$
-\iint_{\Delta} (\nabla_t T_s \cdot \nabla_t \psi) \, dx \, dy
-= \sum_{i=1}^{3} \psi_i \iint_{\Delta} (\nabla \alpha_i \cdot \nabla \alpha_j) \, dx \, dy
-\qquad (j = 1,2,3)
+\iint_{\Delta} (\nabla_t T_s \cdot \nabla_t \psi) dx dy
+= \sum_{i=1}^{3} \psi_i \iint_{\Delta} (\nabla \alpha_i \cdot \nabla \alpha_j) dx dy
+\qquad (j = 1, 2, 3)
 $$
 
 e o lado direito como
 
 $$
-\int_{\Delta} T_s \psi \, dx \, dy = \sum_{i=1}^{3} \psi_i \iint_{\Delta} \alpha_i \alpha_j \, dx \, dy
-\qquad (j = 1,2,3)
+\int_{\Delta} T_s \psi dx dy = \sum_{i=1}^{3} \psi_i \iint_{\Delta} \alpha_i \alpha_j dx dy
+\qquad (j = 1, 2, 3)
 $$
 
 Portanto, para cada elemento, a equação (7) torna-se
 
 $$
-\sum_{i=1}^{3} \psi_i \iint_{\Delta} (\nabla \alpha_i \cdot \nabla \alpha_j) \, dx \, dy
-= k_c^2 \sum_{i=1}^{3} \psi_i \iint_{\Delta} \alpha_i \alpha_j \, dx \, dy
-\qquad (j = 1,2,3)
+\sum_{i=1}^{3} \psi_i \iint_{\Delta} (\nabla \alpha_i \cdot \nabla \alpha_j) dx dy
+= k_c^2 \sum_{i=1}^{3} \psi_i \iint_{\Delta} \alpha_i \alpha_j dx dy
+\qquad (j = 1, 2, 3)
 $$
 
 E isto pode ser escrito em forma matricial como
@@ -200,11 +199,11 @@ $$
 onde
 
 $$
-[S_{el}] = \iint_{\Delta} (\nabla \alpha_i \cdot \nabla \alpha_j) \, dx \, dy
+[S_{el}] = \iint_{\Delta} (\nabla \alpha_i \cdot \nabla \alpha_j) dx dy
 $$
 
 $$
-[T_{el}] = \iint_{\Delta} (\alpha_i \alpha_j) \, dx \, dy
+[T_{el}] = \iint_{\Delta} (\alpha_i \alpha_j) dx dy
 $$
 
 $$
