@@ -180,7 +180,7 @@ $$
 e o lado direito como
 
 $$
-\int_{\Delta} T_s \psi dx dy = \sum_{i=1}^{3} \psi_i \iint_{\Delta} \alpha_i \alpha_j dx dy
+\iint_{\Delta} T_s \psi dx dy = \sum_{i=1}^{3} \psi_i \iint_{\Delta} \alpha_i \alpha_j dx dy
 \qquad (j = 1, 2, 3)
 $$
 
