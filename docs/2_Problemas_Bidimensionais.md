@@ -243,11 +243,11 @@ $$
 A matriz $[S_{el}]$ pode ser avaliada usando a equação (30) para obter
 
 $$
-[S_{el}] = \left[ \iint_{\Delta} (\nabla \alpha_i \cdot \nabla \alpha_j) \, dx \, dy \right] = A [\nabla \alpha_i \cdot \nabla \alpha_j]
+[S_{el}] = \left[ \iint_{\Delta} (\nabla \alpha_i \cdot \nabla \alpha_j) dx dy \right] = A [\nabla \alpha_i \cdot \nabla \alpha_j]
 $$
 
 $$
-[T_{el}] = \left[ \iint_{\Delta} \alpha_i \alpha_j \, dx \, dy \right]
+[T_{el}] = \left[ \iint_{\Delta} \alpha_i \alpha_j dx dy \right]
 $$
 
 A matriz $[T_{el}]$ foi avaliada por Silvester (ref. 6) e é dada de forma simples como
