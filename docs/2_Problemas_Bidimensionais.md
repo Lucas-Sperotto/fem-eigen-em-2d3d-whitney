@@ -12,7 +12,13 @@ $$
 \nabla_t^2 \psi + k_c^2 \psi = 0
 $$
 
-no interior e sobre o contorno $\Gamma$ indicado na figura 1. Esta é a forma “forte” da equação escalar de Helmholtz. Na forma forte, a incógnita aparece dentro de um operador diferencial de segunda ordem. Para tornar a equação adequada à solução numérica, ela pode ser convertida para a forma “fraca” multiplicando ambos os lados por uma função de teste $T_s$ e integrando sobre a superfície $\Gamma$; isto é,
+no interior e sobre o contorno $\Gamma$ indicado na figura 1. 
+
+![Figura 1. Geometria do problema.](figura1.png)
+
+**Figura 1.** Geometria do problema.
+
+Esta é a forma “forte” da equação escalar de Helmholtz. Na forma forte, a incógnita aparece dentro de um operador diferencial de segunda ordem. Para tornar a equação adequada à solução numérica, ela pode ser convertida para a forma “fraca” multiplicando ambos os lados por uma função de teste $T_s$ e integrando sobre a superfície $\Gamma$; isto é,
 
 $$
 \iint_{\Gamma} \left[T_s\left(\nabla_t^2 \psi\right) + k_c^2 T_s \psi\right] ds = 0
@@ -69,10 +75,6 @@ $$
 $$
 \psi_3 = a + bx_3 + cy_3
 $$
-
-![Figura 1. Geometria do problema.](figura1.png)
-
-**Figura 1.** Geometria do problema.
 
 ![Figura 2. Elemento triangular simples.](figura2.png)
 
