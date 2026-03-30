@@ -62,6 +62,10 @@ $$
 \psi = a + bx + cy
 $$
 
+![Figura 2. Elemento triangular simples.](figura2.png)
+
+**Figura 2.** Elemento triangular simples.
+
 A solução é planar por partes, mas contínua em toda parte. Nos vértices 1, 2 e 3, o potencial pode ser expresso como
 
 $$
@@ -75,10 +79,6 @@ $$
 $$
 \psi_3 = a + bx_3 + cy_3
 $$
-
-![Figura 2. Elemento triangular simples.](figura2.png)
-
-**Figura 2.** Elemento triangular simples.
 
 Das equações (9), (10) e (11), os coeficientes $a$, $b$ e $c$ são avaliados como
 
