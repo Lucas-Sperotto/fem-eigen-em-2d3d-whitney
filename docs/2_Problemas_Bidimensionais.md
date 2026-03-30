@@ -89,11 +89,13 @@ b \\
 c
 \end{bmatrix}
 =
-\begin{bmatrix}
+\left[
+\begin{matrix}
 1 & x_1 & y_1 \\
 1 & x_2 & y_2 \\
 1 & x_3 & y_3
-\end{bmatrix}^{-1}
+\end{matrix}
+\right]^{-1}
 \begin{bmatrix}
 \psi_1 \\
 \psi_2 \\
@@ -104,19 +106,26 @@ $$
 Portanto, a equação (8) pode ser reescrita substituindo-se $a$, $b$ e $c$ por
 
 $$
-\psi = [1 \quad x \quad y]
+\psi =
+\begin{bmatrix}
+1 & x & y
+\end{bmatrix}
 \begin{bmatrix}
 a \\
 b \\
 c
 \end{bmatrix}
 =
-[1 \quad x \quad y]
 \begin{bmatrix}
+1 & x & y
+\end{bmatrix}
+\left[
+\begin{matrix}
 1 & x_1 & y_1 \\
 1 & x_2 & y_2 \\
 1 & x_3 & y_3
-\end{bmatrix}^{-1}
+\end{matrix}
+\right]^{-1}
 \begin{bmatrix}
 \psi_1 \\
 \psi_2 \\
