@@ -245,10 +245,6 @@ $$
 V_4 = \frac{1}{6} \begin{vmatrix} 1 & x_1 & y_1 & z_1 \ 1 & x_2 & y_2 & z_2 \ 1 & x_3 & y_3 & z_3 \ 1 & x & y & z \end{vmatrix}
 $$
 
----
-
-## Forma Geral das Coordenadas Simplex
-
 Para qualquer nó $i = 1, 2, 3, 4$:
 
 ### (162)
@@ -258,17 +254,12 @@ $$
 $$
 
 onde $a_{ti}, b_{ti}, c_{ti}, d_{ti}$ são coeficientes obtidos dos determinantes de $V_1, V_2, V_3, V_4$.
-
----
-
-## Forma Explícita dos Elementos de Aresta
-
 Substituindo (152) e (162):
 
 ### (163)
 
 $$
-\mathbf{W}*m = \frac{L_m}{36V^2} \left[ (A*{xm} + B_{xm} x + C_{xm} z)\hat{x} + (A_{ym} + B_{ym} x + C_{ym} z)\hat{y} + (A_{zm} + B_{zm} x + C_{zm} z)\hat{z} \right]
+\mathbf{W}*m = \frac{L_m}{36V^2} \left[ (A*{xm} + B_{xm} y + C_{xm} z)\hat{x} + (A_{ym} + B_{ym} x + C_{ym} z)\hat{y} + (A_{zm} + B_{zm} x + C_{zm} y)\hat{z} \right]
 $$
 
 ---
