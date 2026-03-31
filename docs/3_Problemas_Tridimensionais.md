@@ -82,9 +82,9 @@ $$
 
 onde:
 
-* ( V ): volume da cavidade
-* ( S ): superfície externa
-* ( \hat{n} ): vetor normal unitário externo
+* $V$: volume da cavidade
+* $S$: superfície externa
+* $\hat{n}$: vetor normal unitário externo
 
 ---
 
