@@ -51,7 +51,7 @@ Utilizando a identidade vetorial:
 ### (145)
 
 $$
-\mathbf{A} \cdot (\nabla \times \mathbf{B}) = (\nabla \times \mathbf{A}) \cdot \mathbf{B} \nabla \cdot (\mathbf{A} \times \mathbf{B}) 
+\mathbf{A} \cdot (\nabla \times \mathbf{B}) = (\nabla \times \mathbf{A}) \cdot \mathbf{B} - \nabla \cdot (\mathbf{A} \times \mathbf{B}) 
 $$
 
 a equação (144) pode ser reescrita como:
