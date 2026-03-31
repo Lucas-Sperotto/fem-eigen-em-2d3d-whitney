@@ -1,10 +1,10 @@
-## 2. Problemas Bidimensionais
+# 2. Problemas Bidimensionais
 
-### 2.1. Guias de Onda Homogêneos — Formulação Escalar
+## 2.1. Guias de Onda Homogêneos — Formulação Escalar
 
 Esta seção trata da solução de problemas bidimensionais de guias de onda com contornos fechados, utilizando o método dos elementos finitos de Galerkin. A equação de onda é resolvida para um problema generalizado de autovalor/não autovalor para elementos triangulares arbitrários (ref. 1). É apresentada uma matriz de elementos finitos derivada e um programa computacional para calcular os autovalores e as distribuições do campo elétrico.
 
-#### 2.1.1. Formulação
+### 2.1.1. Formulação
 
 A função potencial escalar $\psi$ satisfaz a equação de Helmholtz com número de onda $k_c$
 
@@ -54,7 +54,7 @@ $$
 \iint_{\Gamma} (\nabla_t T_s \cdot \nabla_t \psi) ds = k_c^2 \iint_{\Gamma} T_s \psi ds
 $$
 
-#### 2.1.2. Discretização
+### 2.1.2. Discretização
 
 A região do problema é discretizada com elementos triangulares de primeira ordem. Dentro do elemento triangular dado na figura 2, $\psi$ é adequadamente aproximado pela expressão (ref. 1)
 
@@ -278,7 +278,7 @@ $$
 
 Isto resulta em matrizes de ordem $n \times n$, onde $n$ é o número total de nós. Com as equações (30), (31) e (33), a equação de autovalor (eq. (34)) é resolvida para $k_c^2$ pelos solucionadores de autovalores generalizados padrão da biblioteca EISPACK (refs. 7 e 8). Os números de corte são então dados por $\sqrt{k_c^2}$.
 
-### 2.1.3. Cálculo de Campo a partir do Potencial Escalar
+## 2.1.3. Cálculo de Campo a partir do Potencial Escalar
 
 Uma vez que o potencial escalar é calculado em cada nó, o campo elétrico pode ser obtido para ambos os modos TE e TM pelas seguintes formulações. O potencial escalar em qualquer ponto $(x,y)$ dentro de um elemento triangular é dado por
 
@@ -322,7 +322,7 @@ onde $Z_0^{TM}$ é a impedância característica de onda para o modo TM.
 
 ---
 
-### 2.1.4. Exemplos Numéricos
+## 2.1.4. Exemplos Numéricos
 
 Um código computacional HELM10 foi desenvolvido para implementar a formulação apresentada na seção 2.1. O fluxograma para a implementação da solução FEM é mostrado na figura 3. Exemplos numéricos para o guia de onda retangular, o guia de onda circular e a linha coaxial são apresentados a seguir:
 

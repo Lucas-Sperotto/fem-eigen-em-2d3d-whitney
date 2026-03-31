@@ -1,4 +1,4 @@
-## 1. Introdução
+# 1. Introdução
 
 O método dos elementos finitos (FEM) tem sido amplamente utilizado como ferramenta de análise e projeto em muitas disciplinas de engenharia, como estruturas e dinâmica computacional. Embora o FEM tenha sido aplicado ao eletromagnetismo, permaneceu principalmente confinado a máquinas elétricas e ímãs (ref. 1). Nos últimos 20 anos, tem havido grande interesse na aplicação deste método a componentes de micro-ondas, como guias de onda e antenas. Porém, por muitos anos, seu uso foi restrito devido às chamadas soluções espúrias associadas aos elementos de aresta (ref. 2).
 
