@@ -19,11 +19,7 @@ Considere a equação vetorial de onda:
 ### (143)
 
 $$
-\nabla \times \left( \frac{1}{\mu_r} \nabla \times \mathbf{E} \right)
----------------------------------------------------------------------
-
-k_0^2 \varepsilon_r \mathbf{E}
-= 0
+\nabla \times \left( \frac{1}{\mu_r} \nabla \times \mathbf{E} \right) - k_0^2 \varepsilon_r \mathbf{E} = 0
 $$
 
 onde:
@@ -45,14 +41,7 @@ Para aplicar o método de Galerkin, multiplica-se a equação (143) por ( \mathb
 ### (144)
 
 $$
-\iiint_V
-\left[
-\mathbf{T} \cdot \nabla \times \left( \frac{1}{\mu_r} \nabla \times \mathbf{E} \right)
---------------------------------------------------------------------------------------
-
-k_0^2 \varepsilon_r \mathbf{T} \cdot \mathbf{E}
-\right] dv
-= 0
+\iiint_V \left[ \mathbf{T} \cdot \nabla \times \left( \frac{1}{\mu_r} \nabla \times \mathbf{E} \right) - k_0^2 \varepsilon_r \mathbf{T} \cdot \mathbf{E} \right] dv = 0
 $$
 
 ---
@@ -62,12 +51,7 @@ Utilizando a identidade vetorial:
 ### (145)
 
 $$
-\mathbf{A} \cdot (\nabla \times \mathbf{B})
-===========================================
-
-## (\nabla \times \mathbf{A}) \cdot \mathbf{B}
-
-\nabla \cdot (\mathbf{A} \times \mathbf{B})
+\mathbf{A} \cdot (\nabla \times \mathbf{B}) = ## (\nabla \times \mathbf{A}) \cdot \mathbf{B} \nabla \cdot (\mathbf{A} \times \mathbf{B}) 
 $$
 
 a equação (144) pode ser reescrita como:
@@ -75,27 +59,7 @@ a equação (144) pode ser reescrita como:
 ### (146)
 
 $$
-\iiint_V
-(\nabla \times \mathbf{T}) \cdot
-\left( \frac{1}{\mu_r} \nabla \times \mathbf{E} \right)
-dv
-==
-
-k_0^2 \varepsilon_r
-\iiint_V
-\mathbf{T} \cdot \mathbf{E}
-dv
-$$
-
-$$
-+
-\iiint_V
-\nabla \cdot
-\left[
-\mathbf{T} \times
-\left( \frac{1}{\mu_r} \nabla \times \mathbf{E} \right)
-\right]
-dv
+\iiint_V (\nabla \times \mathbf{T}) \cdot \left( \frac{1}{\mu_r} \nabla \times \mathbf{E} \right) dv = k_0^2 \varepsilon_r \iiint_V \mathbf{T} \cdot \mathbf{E} dv + \iiint_V \nabla \cdot \left[ \mathbf{T} \times \left( \frac{1}{\mu_r} \nabla \times \mathbf{E} \right) \right] dv
 $$
 
 ---
@@ -105,10 +69,7 @@ Aplicando o **teorema da divergência**:
 ### (147)
 
 $$
-\iiint_V \nabla \cdot \mathbf{A}, dv
-====================================
-
-\iint_S \mathbf{A} \cdot \hat{n}, ds
+\iiint_V \nabla \cdot \mathbf{A} dv = \iint_S \mathbf{A} \cdot \hat{n} ds
 $$
 
 e a identidade:
@@ -116,10 +77,7 @@ e a identidade:
 ### (148)
 
 $$
-(\mathbf{A} \times \mathbf{B}) \cdot \hat{n}
-============================================
-
-\mathbf{A} \cdot (\hat{n} \times \mathbf{B})
+(\mathbf{A} \times \mathbf{B}) \cdot \hat{n} = \mathbf{A} \cdot (\hat{n} \times \mathbf{B})
 $$
 
 onde:
@@ -135,27 +93,11 @@ A equação (146) torna-se:
 ### (149)
 
 $$
-\iiint_V
-(\nabla \times \mathbf{T}) \cdot
-\left( \frac{1}{\mu_r} \nabla \times \mathbf{E} \right)
-dv
-==
-
-k_0^2 \varepsilon_r
-\iiint_V
-\mathbf{T} \cdot \mathbf{E}
-dv
+\iiint_V (\nabla \times \mathbf{T}) \cdot \left( \frac{1}{\mu_r} \nabla \times \mathbf{E} \right) dv = k_0^2 \varepsilon_r \iiint_V \mathbf{T} \cdot \mathbf{E} dv
 $$
 
-## $$
-
-\iint_S
-\mathbf{T} \cdot
-\left[
-\hat{n} \times
-\left( \frac{1}{\mu_r} \nabla \times \mathbf{E} \right)
-\right]
-ds
+$$
+\iint_S \mathbf{T} \cdot \left[ \hat{n} \times \left( \frac{1}{\mu_r} \nabla \times \mathbf{E} \right) \right] ds
 $$
 
 ---
@@ -174,16 +116,7 @@ Logo, o termo de superfície desaparece.
 ### (150)
 
 $$
-\iiint_V
-(\nabla \times \mathbf{T}) \cdot
-\left( \frac{1}{\mu_r} \nabla \times \mathbf{E} \right)
-dv
-==
-
-k_0^2 \varepsilon_r
-\iiint_V
-\mathbf{T} \cdot \mathbf{E}
-dv
+\iiint_V (\nabla \times \mathbf{T}) \cdot \left( \frac{1}{\mu_r} \nabla \times \mathbf{E} \right) dv = k_0^2 \varepsilon_r \iiint_V \mathbf{T} \cdot \mathbf{E} dv
 $$
 
 ---
