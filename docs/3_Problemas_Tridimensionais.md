@@ -12,7 +12,7 @@ Nesta seção, formula-se o método de elementos finitos de Galerkin para cavida
 
 ## 3.1.1 Formulação
 
-Essa formulação pode ser desenvolvida utilizando o campo elétrico ( \mathbf{E} ) ou o campo magnético ( \mathbf{H} ). Aqui, será utilizada a formulação em termos do campo elétrico.
+Essa formulação pode ser desenvolvida utilizando o campo elétrico $\mathbf{E}$ ou o campo magnético $\mathbf{H}$. Aqui, será utilizada a formulação em termos do campo elétrico.
 
 Considere a equação vetorial de onda:
 
@@ -36,7 +36,7 @@ $$
 \mathbf{T} = T_x \hat{x} + T_y \hat{y} + T_z \hat{z}
 $$
 
-Para aplicar o método de Galerkin, multiplica-se a equação (143) por ( \mathbf{T} ) e integra-se sobre o volume da cavidade:
+Para aplicar o método de Galerkin, multiplica-se a equação (143) por $\mathbf{T}$ e integra-se sobre o volume da cavidade:
 
 ### (144)
 
@@ -101,7 +101,7 @@ $$
 Para uma cavidade delimitada por um **condutor elétrico perfeito (PEC)**:
 
 👉 o campo elétrico tangencial na superfície é nulo
-👉 a função teste ( \mathbf{T} ) também é nula na superfície
+👉 a função teste $\mathbf{T}$ também é nula na superfície
 
 Logo, o termo de superfície desaparece.
 
