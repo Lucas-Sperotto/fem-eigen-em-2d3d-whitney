@@ -175,7 +175,7 @@ O campo total é obtido avaliando a equação (151).
 
 ## Elementos de Aresta Tangenciais
 
-Os elementos de aresta vetoriais ( \mathbf{W}_m ) são dados por:
+Os elementos de aresta vetoriais $\mathbf{W}_m$ são dados por:
 
 ### (152)
 
