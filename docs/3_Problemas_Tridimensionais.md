@@ -116,3 +116,235 @@ $$
 $$
 
 ---
+
+# 📄 3.1.2 — Discretização
+
+O volume da cavidade é discretizado utilizando **elementos tetraédricos de primeira ordem**, como o mostrado na Figura 14.
+
+Um tetraedro de primeira ordem possui:
+
+* **4 nós**
+* **6 arestas**
+
+As seis arestas são formadas conforme apresentado na Tabela 11.
+
+---
+
+## 📌 Figura (salvar como `fig14_tetrahedron.png`)
+
+```markdown
+![Elemento tetraédrico de primeira ordem](images/fig14_tetrahedron.png)
+```
+
+Legenda:
+
+**Figura 14. Elemento tetraédrico de primeira ordem.**
+
+---
+
+## 📊 Tabela 11 — Formação das Arestas do Elemento Tetraédrico
+
+| Aresta ( m ) | Nó ( i ) | Nó ( j ) |
+| ------------ | -------- | -------- |
+| 1            | 1        | 2        |
+| 2            | 2        | 3        |
+| 3            | 1        | 3        |
+| 4            | 1        | 4        |
+| 5            | 2        | 4        |
+| 6            | 3        | 4        |
+
+---
+
+O campo elétrico em um único elemento tetraédrico é representado por:
+
+### (151)
+
+$$
+\mathbf{E} = \sum_{m=1}^{6} e_m \mathbf{W}_m
+$$
+
+onde os seis parâmetros desconhecidos associados a cada aresta são:
+
+$$
+e_1, e_2, \dots, e_6
+$$
+
+O campo total é obtido avaliando a equação (151).
+
+---
+
+## Elementos de Aresta Tangenciais
+
+Os elementos de aresta vetoriais ( \mathbf{W}_m ) são dados por:
+
+### (152)
+
+$$
+\mathbf{W}*m = L_m \left( \alpha*{ti} \nabla \alpha_{tj} - \alpha_{tj} \nabla \alpha_{ti} \right)
+$$
+
+onde:
+
+* $i$ e $j$: nós que definem a aresta $m$
+* $L_m$: comprimento da aresta
+* $\alpha_{ti}, \alpha_{tj}$: coordenadas simplex associadas aos nós
+
+---
+
+## Coordenadas Simplex
+
+As coordenadas simplex dos nós do tetraedro são:
+
+### (153)–(156)
+
+$$
+\alpha_{t1} = \frac{V_1}{V}, \quad \alpha_{t2} = \frac{V_2}{V}, \quad \alpha_{t3} = \frac{V_3}{V}, \quad \alpha_{t4} = \frac{V_4}{V}
+$$
+
+---
+
+### Volume do tetraedro
+
+### (157)
+
+$$ 
+V = \frac{1}{6} \begin{vmatrix} 1 & x_1 & y_1 & z_1 \ 1 & x_2 & y_2 & z_2 \ 1 & x_3 & y_3 & z_3 \ 1 & x_4 & y_4 & z_4 \end{vmatrix}
+$$
+
+---
+
+### Subvolumes
+
+### (158)
+
+$$
+V_1 = \frac{1}{6} \begin{vmatrix} 1 & x & y & z \ 1 & x_2 & y_2 & z_2 \ 1 & x_3 & y_3 & z_3 \ 1 & x_4 & y_4 & z_4 \end{vmatrix}
+$$
+
+---
+
+### (159)
+
+$$
+V_2 = \frac{1}{6} \begin{vmatrix} 1 & x_1 & y_1 & z_1 \ 1 & x & y & z \ 1 & x_3 & y_3 & z_3 \ 1 & x_4 & y_4 & z_4 \end{vmatrix}
+$$
+
+---
+
+### (160)
+
+$$
+V_3 = \frac{1}{6} \begin{vmatrix} 1 & x_1 & y_1 & z_1 \ 1 & x_2 & y_2 & z_2 \ 1 & x & y & z \ 1 & x_4 & y_4 & z_4 \end{vmatrix}
+$$
+
+---
+
+### (161)
+
+$$ 
+V_4 = \frac{1}{6} \begin{vmatrix} 1 & x_1 & y_1 & z_1 \ 1 & x_2 & y_2 & z_2 \ 1 & x_3 & y_3 & z_3 \ 1 & x & y & z \end{vmatrix}
+$$
+
+---
+
+## Forma Geral das Coordenadas Simplex
+
+Para qualquer nó $i = 1, 2, 3, 4$:
+
+### (162)
+
+$$
+\alpha_{ti} = \frac{ a_{ti} + b_{ti} x + c_{ti} y + d_{ti} z }{6V}
+$$
+
+onde $a_{ti}, b_{ti}, c_{ti}, d_{ti}$ são coeficientes obtidos dos determinantes de $V_1, V_2, V_3, V_4$.
+
+---
+
+## Forma Explícita dos Elementos de Aresta
+
+Substituindo (152) e (162):
+
+### (163)
+
+$$
+\mathbf{W}*m = \frac{L_m}{36V^2} \left[ (A*{xm} + B_{xm} x + C_{xm} z)\hat{x} + (A_{ym} + B_{ym} x + C_{ym} z)\hat{y} + (A_{zm} + B_{zm} x + C_{zm} z)\hat{z} \right]
+$$
+
+---
+
+### Coeficientes
+
+#### (164)
+
+$$
+A_{xm} = a_{ti} b_{tj} - a_{tj} b_{ti}
+$$
+
+#### (165)
+
+$$
+B_{xm} = c_{ti} b_{tj} - c_{tj} b_{ti}
+$$
+
+#### (166)
+
+$$
+C_{xm} = d_{ti} b_{tj} - d_{tj} b_{ti}
+$$
+
+---
+
+#### (167)
+
+$$
+A_{ym} = a_{ti} c_{tj} - a_{tj} c_{ti}
+$$
+
+#### (168)
+
+$$
+B_{ym} = b_{ti} c_{tj} - b_{tj} c_{ti} = -B_{xm}
+$$
+
+#### (169)
+
+$$
+C_{ym} = d_{ti} c_{tj} - d_{tj} c_{ti}
+$$
+
+---
+
+#### (170)
+
+$$
+A_{zm} = a_{ti} d_{tj} - a_{tj} d_{ti}
+$$
+
+#### (171)
+
+$$
+B_{zm} = b_{ti} d_{tj} - b_{tj} d_{ti} = -C_{xm}
+$$
+
+#### (172)
+
+$$
+C_{zm} = c_{ti} d_{tj} - c_{tj} d_{ti} = -C_{ym}
+$$
+
+---
+
+## Propriedade Fundamental dos Elementos de Aresta
+
+Os elementos $\mathbf{W}_m$ satisfazem:
+
+### (173)
+
+$$
+\hat{t}_m \cdot \mathbf{W}_m = \begin{cases} 1, & \text{na aresta } m \ 0, & \text{nas demais arestas} \end{cases}
+$$
+
+onde $\hat{t}_m$ é o vetor unitário ao longo da aresta.
+
+---
