@@ -35,6 +35,7 @@ O principio adotado nesta revisao foi simples: preservar o texto traduzido e ape
 ## Materiais de apoio
 
 - [19950011772.pdf](19950011772.pdf): PDF original do artigo usado como referencia de confronto.
+- [Casos_de_Teste_do_Artigo.md](Casos_de_Teste_do_Artigo.md): tabela consolidada com todos os casos numéricos apresentados pelo autor.
 - [results/README.md](results/README.md): resultados curados, validacoes e figuras do projeto.
 - Arquivos `figura*.png` nesta pasta: imagens extraidas/associadas a partes da documentacao original.
 
