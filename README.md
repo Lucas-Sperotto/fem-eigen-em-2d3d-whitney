@@ -10,6 +10,16 @@ com foco em:
 - comparacao com tabelas de referencia,
 - fluxo reprodutivel via executaveis C++ e scripts Python.
 
+## 0) Trilha teorica e documentacao
+
+Antes de entrar no codigo, a trilha teorica revisada do artigo esta em:
+
+- [docs/README.md](docs/README.md): indice geral da documentacao, em ordem de estudo.
+- [docs/19950011772.pdf](docs/19950011772.pdf): PDF original do paper.
+- [docs/results/README.md](docs/results/README.md): resultados curados, figuras e validacoes preservadas no repositorio.
+
+Os arquivos principais em `docs/` preservam a traducao-base do artigo e receberam comentarios complementares, explicacoes intermediarias entre equacoes e notas de consistencia para estudo.
+
 ## 1) Mapa do artigo para o codigo
 
 - Sec. 2.1 (escalar 2D, cutoff `kc`): `src/helm10`
