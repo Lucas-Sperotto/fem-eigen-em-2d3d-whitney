@@ -109,7 +109,7 @@ enquanto a arvore pesada continua local em `out/sweeps/...`.
 ### Melhor erro medio por solver/caso - legado
 
 | Solver | Caso | Configs | Melhor mean err ana (%) | Melhor mean err ref (%) |
-|---|---|---:|---:|---:|
+| --- | --- | ---: | ---: | ---: |
 | `fem3d0` | `air` | 3 | 0.955 | 1.531 |
 | `fem3d0` | `cyl` | 3 | 2.152 | 1.777 |
 | `fem3d0` | `half` | 3 | 0.312 | 0.613 |
@@ -128,7 +128,7 @@ Nesta curadoria, foi preservado o resumo `closed-form` do caso `air`, suficiente
 ## Benchmark de backends
 
 | Caso | total_ms_mean gauss | total_ms_mean closed-form | Mais rapido |
-|---|---:|---:|---|
+| --- | ---: | ---: | --- |
 | `edge_rect` | 1121.341 | 1428.645 | `gauss` |
 | `fem3d0_air` | 1145.094 | 1074.070 | `closed-form` |
 | `fem3d1_air` | 1053.529 | 1215.174 | `gauss` |

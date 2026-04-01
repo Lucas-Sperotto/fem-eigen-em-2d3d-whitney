@@ -155,7 +155,7 @@ $$
 
 ---
 
-# 📄 3.1.2 — Discretização
+## 📄 3.1.2 — Discretização
 
 O volume da cavidade é discretizado utilizando **elementos tetraédricos de primeira ordem**, como o mostrado na Figura 14.
 
