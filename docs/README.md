@@ -36,8 +36,34 @@ O principio adotado nesta revisao foi simples: preservar o texto traduzido e ape
 
 - [19950011772.pdf](19950011772.pdf): PDF original do artigo usado como referencia de confronto.
 - [Casos_de_Teste_do_Artigo.md](Casos_de_Teste_do_Artigo.md): tabela consolidada com todos os casos numéricos apresentados pelo autor.
+- [Matriz_Casos_Executaveis_Arvore_de_Chamada.md](Matriz_Casos_Executaveis_Arvore_de_Chamada.md): ponte entre casos do artigo, executáveis atuais e raízes da árvore de chamada.
+- [diagramas_execucao/README.md](diagramas_execucao/README.md): caderno de navegacao da colecao de diagramas de execucao.
+- [diagramas_execucao/Diagrama_Mestre_R1_a_R7.md](diagramas_execucao/Diagrama_Mestre_R1_a_R7.md): visao global resumida da colecao `R1 -> R7`.
+- [Diagrama_R1_HELM10_Sequencia_e_Arvore.md](Diagrama_R1_HELM10_Sequencia_e_Arvore.md): primeiro diagrama-base, cobrindo a família `HELM10`.
+- [Diagrama_R2_HELMVEC_Sequencia_e_Arvore.md](Diagrama_R2_HELMVEC_Sequencia_e_Arvore.md): segundo diagrama-base, cobrindo a família `HELMVEC`.
+- [Diagrama_R3_HELMVEC1_Sequencia_e_Arvore.md](Diagrama_R3_HELMVEC1_Sequencia_e_Arvore.md): terceiro diagrama-base, cobrindo a família mista `HELMVEC1`.
+- [Diagrama_R4_HELMVEC2_Sequencia_e_Arvore.md](Diagrama_R4_HELMVEC2_Sequencia_e_Arvore.md): quarto diagrama-base, cobrindo a família acoplada `HELMVEC2`.
+- [Diagrama_R5_HELMVEC3_Sequencia_e_Arvore.md](Diagrama_R5_HELMVEC3_Sequencia_e_Arvore.md): quinto diagrama-base, cobrindo a família de dispersão `HELMVEC3`.
+- [Diagrama_R6_FEM3D0_Sequencia_e_Arvore.md](Diagrama_R6_FEM3D0_Sequencia_e_Arvore.md): sexto diagrama-base, cobrindo a família tridimensional densa `FEM3D0`.
+- [Diagrama_R7_FEM3D1_Sequencia_e_Arvore.md](Diagrama_R7_FEM3D1_Sequencia_e_Arvore.md): sétimo diagrama-base, cobrindo a família tridimensional esparsa `FEM3D1`.
 - [results/README.md](results/README.md): resultados curados, validacoes e figuras do projeto.
 - Arquivos `figura*.png` nesta pasta: imagens extraidas/associadas a partes da documentacao original.
+
+## Colecao dos diagramas-base
+
+Os sete diagramas de chamada agora formam uma trilha única de leitura do projeto, indo da formulação mais elementar até a variante 3D esparsa:
+
+| Raiz | Arquivo | Cobertura | Ideia central da transicao |
+| --- | --- | --- | --- |
+| `R1` | [Diagrama_R1_HELM10_Sequencia_e_Arvore.md](Diagrama_R1_HELM10_Sequencia_e_Arvore.md) | Casos 1 a 3 | base escalar nodal 2D, matching analítico e reconstrução de campo |
+| `R2` | [Diagrama_R2_HELMVEC_Sequencia_e_Arvore.md](Diagrama_R2_HELMVEC_Sequencia_e_Arvore.md) | Casos 4 e 5 | troca de nós por arestas e entrada na linguagem de Whitney |
+| `R3` | [Diagrama_R3_HELMVEC1_Sequencia_e_Arvore.md](Diagrama_R3_HELMVEC1_Sequencia_e_Arvore.md) | Casos 6 e 7 | sistema misto em blocos no cutoff |
+| `R4` | [Diagrama_R4_HELMVEC2_Sequencia_e_Arvore.md](Diagrama_R4_HELMVEC2_Sequencia_e_Arvore.md) | Caso 8 | problema acoplado para `k0` com `beta` dado |
+| `R5` | [Diagrama_R5_HELMVEC3_Sequencia_e_Arvore.md](Diagrama_R5_HELMVEC3_Sequencia_e_Arvore.md) | Casos 9 e 10 | problema acoplado para `beta` com `k0` dado e curvas de dispersão |
+| `R6` | [Diagrama_R6_FEM3D0_Sequencia_e_Arvore.md](Diagrama_R6_FEM3D0_Sequencia_e_Arvore.md) | Casos 11 a 14 | entrada 3D com montagem densa e matching com degenerescência |
+| `R7` | [Diagrama_R7_FEM3D1_Sequencia_e_Arvore.md](Diagrama_R7_FEM3D1_Sequencia_e_Arvore.md) | Casos 11 a 14 | mesma física 3D com armazenamento esparso simétrico |
+
+Se a ideia for estudar a implementação como um livro técnico, esta é a ordem mais natural de leitura depois da teoria do artigo.
 
 ## Estado atual da revisao
 
