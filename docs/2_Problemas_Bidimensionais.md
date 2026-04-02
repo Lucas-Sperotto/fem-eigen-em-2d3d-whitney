@@ -10,11 +10,13 @@ Esta seção trata da solução de problemas bidimensionais de guias de onda com
 
 A função potencial escalar $\psi$ satisfaz a equação de Helmholtz com número de onda $k_c$
 
+### (1)
+
 $$
 \nabla_t^2 \psi + k_c^2 \psi = 0
 $$
 
-no interior e sobre o contorno $\Gamma$ indicado na figura 1.
+no interior e sobre o contorno $d\Gamma$ indicado na figura 1.
 
 ![Figura 1. Geometria do problema.](figura1.png)
 
@@ -22,11 +24,15 @@ no interior e sobre o contorno $\Gamma$ indicado na figura 1.
 
 Esta é a forma “forte” da equação escalar de Helmholtz. Na forma forte, a incógnita aparece dentro de um operador diferencial de segunda ordem. Para tornar a equação adequada à solução numérica, ela pode ser convertida para a forma “fraca” multiplicando ambos os lados por uma função de teste $T_s$ e integrando sobre a superfície $\Gamma$; isto é,
 
+### (2)
+
 $$
 \iint_{\Gamma} \left[T_s\left(\nabla_t^2 \psi\right) + k_c^2 T_s \psi\right] ds = 0
 $$
 
 O primeiro termo na equação (2) pode ser escrito como
+
+### (3)
 
 $$
 \iint_{\Gamma} T_s\left(\nabla_t^2 \psi\right) ds = \iint_{\Gamma} T_s\left(\nabla_t \cdot \nabla_t \psi\right) ds
@@ -34,11 +40,15 @@ $$
 
 As seguintes identidades vetoriais podem ser usadas para modificar a equação (3):
 
+### (4)
+
 $$
-\nabla_t \cdot [T_s(\nabla_t \psi)] = \nabla T_s \cdot \nabla_t \psi + T_s(\nabla_t \cdot \nabla_s \psi)
+\nabla_t \cdot [T_s(\nabla_t \psi)] = \nabla_t T_s \cdot \nabla_t \psi + T_s(\nabla_t \cdot \nabla_t \psi)
 $$
 
 e
+
+### (5)
 
 $$
 \iint_{\Gamma} \nabla_t \cdot \nabla_t \psi ds = \oint_{d\Gamma} \nabla_t \psi \cdot \hat{n} dl
@@ -46,11 +56,15 @@ $$
 
 onde $\hat{n}$ é a normal unitária ao longo do contorno $d\Gamma$. A equação (2) pode agora ser escrita como
 
+### (6)
+
 $$
-\iint_{\Gamma} (\nabla_t T_s \cdot \nabla_t \psi) ds - k_c^2 \iint_{\Gamma} T_s \psi ds = \int_{d\Gamma} T_s \frac{\partial \psi}{\partial n} dl
+\iint_{\Gamma} (\nabla_t T_s \cdot \nabla_t \psi) ds - k_c^2 \iint_{\Gamma} T_s \psi ds = \oint_{d\Gamma} T_s \frac{\partial \psi}{\partial n} dl
 $$
 
 onde $\partial \psi/\partial n$ é a derivada normal de $\psi$ ao longo do contorno $d\Gamma$. O termo no lado direito se anula quando $T_s$ se anula sobre o contorno PEC para o caso TM e $\partial \psi/\partial n$ se anula no contorno para o caso TE. Portanto, a equação (6) pode ser escrita como
+
+### (7)
 
 $$
 \iint_{\Gamma} (\nabla_t T_s \cdot \nabla_t \psi) ds = k_c^2 \iint_{\Gamma} T_s \psi ds
@@ -61,13 +75,13 @@ $$
 Para que essa passagem não pareça um salto brusco, convém escrever o raciocínio em etapas. Partimos de
 
 $$
-T_s \, \nabla_t^2 \psi = T_s \, \nabla_t \cdot (\nabla_t \psi)
+T_s \nabla_t^2 \psi = T_s \nabla_t \cdot (\nabla_t \psi)
 $$
 
 e aplicamos a regra do produto vetorial escalar na forma
 
 $$
-\nabla_t \cdot \bigl(T_s \nabla_t \psi\bigr) = (\nabla_t T_s)\cdot(\nabla_t \psi) + T_s \, \nabla_t \cdot (\nabla_t \psi)
+\nabla_t \cdot \bigl(T_s \nabla_t \psi\bigr) = (\nabla_t T_s)\cdot(\nabla_t \psi) + T_s \nabla_t \cdot (\nabla_t \psi)
 $$
 
 Para acompanhar corretamente esta álgebra, o leitor deve manter em mente que o operador relevante aqui continua sendo o transversal. Se em algum ponto da escrita aparecer uma troca de índice no operador, a estrutura matemática da passagem ainda é esta.
@@ -81,7 +95,7 @@ $$
 Integrando sobre a região transversal, obtemos
 
 $$
-\iint_{\Gamma} T_s \, \nabla_t \cdot (\nabla_t \psi) ds = \iint_{\Gamma} \nabla_t \cdot \bigl(T_s \nabla_t \psi\bigr) ds - \iint_{\Gamma} (\nabla_t T_s)\cdot(\nabla_t \psi) ds
+\iint_{\Gamma} T_s \nabla_t \cdot (\nabla_t \psi) ds = \iint_{\Gamma} \nabla_t \cdot \bigl(T_s \nabla_t \psi\bigr) ds - \iint_{\Gamma} (\nabla_t T_s)\cdot(\nabla_t \psi) ds
 $$
 
 e, pelo teorema da divergência no plano,
@@ -108,6 +122,8 @@ que é precisamente a estrutura da equação (6). O grande benefício desta etap
 
 A região do problema é discretizada com elementos triangulares de primeira ordem. Dentro do elemento triangular dado na figura 2, $\psi$ é adequadamente aproximado pela expressão (ref. 1)
 
+### (8)
+
 $$
 \psi = a + bx + cy
 $$
@@ -118,13 +134,19 @@ $$
 
 A solução é planar por partes, mas contínua em toda parte. Nos vértices 1, 2 e 3, o potencial pode ser expresso como
 
+### (9)
+
 $$
 \psi_1 = a + bx_1 + cy_1
 $$
 
+### (10)
+
 $$
 \psi_2 = a + bx_2 + cy_2
 $$
+
+### (11)
 
 $$
 \psi_3 = a + bx_3 + cy_3
@@ -132,17 +154,45 @@ $$
 
 Das equações (9), (10) e (11), os coeficientes $a$, $b$ e $c$ são avaliados como
 
+### (12)
+
 $$
-\begin{bmatrix} a \\ b \\ c \end{bmatrix} = \left[ \begin{matrix} 1 & x_1 & y_1 \\ 1 & x_2 & y_2 \\ 1 & x_3 & y_3 \end{matrix} \right]^{-1} \begin{bmatrix} \psi_1 \\ \psi_2 \\ \psi_3 \end{bmatrix}
+\begin{bmatrix}
+a \\ b \\ c
+\end{bmatrix} =
+\left[\begin{matrix}
+1 & x_1 & y_1 \\ 1 & x_2 & y_2 \\ 1 & x_3 & y_3
+\end{matrix} \right]^{-1}
+\begin{bmatrix} \psi_1 \\ \psi_2 \\ \psi_3
+\end{bmatrix}
 $$
 
 Portanto, a equação (8) pode ser reescrita substituindo-se $a$, $b$ e $c$ por
 
+### (13)
+
 $$
-\psi = \begin{bmatrix} 1 & x & y \end{bmatrix} \begin{bmatrix} a \\ b \\ c\end{bmatrix} = \begin{bmatrix} 1 & x & y \end{bmatrix} \left[ \begin{matrix} 1 & x_1 & y_1 \\ 1 & x_2 & y_2 \\ 1 & x_3 & y_3 \end{matrix} \right]^{-1} begin{bmatrix} psi_1 \\ \psi_2 \\ \psi_3 \end{bmatrix}
+\psi =
+\begin{bmatrix}
+1 & x & y
+\end{bmatrix}
+\begin{bmatrix}
+a \\ b \\ c
+\end{bmatrix} =
+\begin{bmatrix}
+1 & x & y
+\end{bmatrix} 
+\left[ \begin{matrix} 
+1 & x_1 & y_1 \\ 1 & x_2 & y_2 \\ 1 & x_3 & y_3
+\end{matrix} \right]^{-1}
+begin{bmatrix}
+psi_1 \\ \psi_2 \\ \psi_3
+\end{bmatrix}
 $$
 
 A equação (13) pode ser escrita como
+
+### (14)
 
 $$
 \psi = \sum_{i=1}^{3} \psi_i \alpha_i(x,y)
@@ -150,10 +200,47 @@ $$
 
 onde $\alpha_i(x,y)$ é dada por
 
+### (15)
+
 $$
 \alpha_i(x,y) = \frac{1}{2A}(a_i + b_i x + c_i y)
 \qquad (i = 1,2,3)
 $$
+
+e $a_i$, $b_i$ e $c_i$ são dados por
+
+### (16)
+
+$$
+a_i = x_j y_k - x_k y_j
+$$
+
+### (17)
+
+$$
+b_i = y_j - y_k
+$$
+
+### (18)
+
+$$
+c_i = x_k - x_j
+$$
+
+onde $i$, $j$ e $k$ são cíclicos; isto é, $(i = 1; j = 2; k = 3)$, $(i = 2; j = 3; k = 1)$ e $(i = 3; j = 1; k = 2)$, e $A$ é dada por
+
+### (19)
+
+$$
+A = \frac{1}{2}
+\begin{vmatrix}
+1 & x_1 & y_1 \\
+1 & x_2 & y_2 \\
+1 & x_3 & y_3
+\end{vmatrix}
+$$
+
+---
 
 #### Passagem intermediária: da forma afim local às funções de forma
 
@@ -218,32 +305,11 @@ $$
 
 Essas duas identidades explicam por que a interpolação é ao mesmo tempo nodal e conservativa dentro do elemento.
 
-e $a_i$, $b_i$ e $c_i$ são dados por
-
-$$
-a_i = x_j y_k - x_k y_j
-$$
-
-$$
-b_i = y_j - y_k
-$$
-
-$$
-c_i = x_k - x_j
-$$
-
-onde $i$, $j$ e $k$ são cíclicos; isto é, $(i = 1; j = 2; k = 3)$, $(i = 2; j = 3; k = 1)$ e $(i = 3; j = 1; k = 2)$, e $A$ é dada por
-
-$$
-A = \frac{1}{2}
-\begin{vmatrix}
-1 & x_1 & y_1 \\
-1 & x_2 & y_2 \\
-1 & x_3 & y_3
-\end{vmatrix}
-$$
+---
 
 Usando a função de teste (como na técnica de Galerkin (ref. 1)),
+
+### (20)
 
 $$
 T_s = \alpha_j(x,y)
@@ -251,6 +317,8 @@ T_s = \alpha_j(x,y)
 $$
 
 e a representação do elemento na equação (14), o lado esquerdo da equação (7) pode ser avaliado sobre um único elemento como
+
+### (21)
 
 $$
 \iint_{\Delta} (\nabla_t T_s \cdot \nabla_t \psi) dx dy
@@ -260,12 +328,16 @@ $$
 
 e o lado direito como
 
+### (22)
+
 $$
 \iint_{\Delta} T_s \psi dx dy = \sum_{i=1}^{3} \psi_i \iint_{\Delta} \alpha_i \alpha_j dx dy
 \qquad (j = 1, 2, 3)
 $$
 
 Portanto, para cada elemento, a equação (7) torna-se
+
+### (23)
 
 $$
 \sum_{i=1}^{3} \psi_i \iint_{\Delta} (\nabla \alpha_i \cdot \nabla \alpha_j) dx dy
@@ -275,19 +347,27 @@ $$
 
 E isto pode ser escrito em forma matricial como
 
+### (24)
+
 $$
 [S_{el}]\{\psi\} = k_c^2 [T_{el}]\{\psi\}
 $$
 
 onde
 
+### (25)
+
 $$
 [S_{el}] = \iint_{\Delta} (\nabla \alpha_i \cdot \nabla \alpha_j) dx dy
 $$
 
+### (26)
+
 $$
 [T_{el}] = \iint_{\Delta} (\alpha_i \alpha_j) dx dy
 $$
+
+### (27)
 
 $$
 \nabla \alpha_i = \frac{\partial \alpha_i}{\partial x} \hat{x} + \frac{\partial \alpha_i}{\partial y} \hat{y}
@@ -295,9 +375,13 @@ $$
 
 Da equação (15), $\nabla \alpha_i$ pode ser escrita como
 
+### (28)
+
 $$
 \nabla \alpha_i = \frac{1}{2A}(b_i \hat{x} + c_i \hat{y})
 $$
+
+---
 
 #### Passagem intermediária: por que o gradiente é constante no triângulo
 
@@ -323,7 +407,11 @@ $$
 
 Esta pequena fórmula concentra toda a estrutura da matriz de rigidez escalar.
 
+---
+
 e, portanto,
+
+### (29)
 
 $$
 [\nabla \alpha_i \cdot \nabla \alpha_j] =
@@ -336,6 +424,8 @@ $$
 
 Substituindo-se a equação (28) na equação (29), obtém-se
 
+### (30)
+
 $$
 [\nabla \alpha_i \cdot \nabla \alpha_j] = \frac{1}{4A^2}
 \begin{bmatrix}
@@ -347,9 +437,13 @@ $$
 
 A matriz $[S_{el}]$ pode ser avaliada usando a equação (30) para obter
 
+### (31)
+
 $$
 [S_{el}] = \left[ \iint_{\Delta} (\nabla \alpha_i \cdot \nabla \alpha_j) dx dy \right] = A [\nabla \alpha_i \cdot \nabla \alpha_j]
 $$
+
+---
 
 Daqui se obtém imediatamente a forma fechada mais útil para implementação:
 
@@ -362,11 +456,17 @@ b_3 b_1 + c_3 c_1 & b_3 b_2 + c_3 c_2 & b_3^2 + c_3^2
 \end{bmatrix}
 $$
 
+---
+
+### (32)
+
 $$
 [T_{el}] = \left[ \iint_{\Delta} \alpha_i \alpha_j dx dy \right]
 $$
 
 A matriz $[T_{el}]$ foi avaliada por Silvester (ref. 6) e é dada de forma simples como
+
+### (33)
 
 $$
 [T_{el}] = \frac{A}{12}
@@ -376,6 +476,8 @@ $$
 1 & 1 & 2
 \end{bmatrix}
 $$
+
+---
 
 Esta expressão pode ser lida elemento a elemento como
 
@@ -389,11 +491,17 @@ $$
 
 Em outras palavras, a matriz de massa local distribui peso maior na diagonal e metade desse valor fora dela, preservando a simetria natural do elemento linear.
 
+---
+
 As matrizes $[S_{el}]$ e $[T_{el}]$ são avaliadas para cada elemento e montadas sobre toda a região de acordo com a numeração dos nós globais para obter uma equação matricial global (ref. 1), da seguinte forma:
+
+### (34)
 
 $$
 [S]\{\psi\} = k_c^2 [T]\{\psi\}
 $$
+
+---
 
 #### Passagem intermediária: da matriz local à matriz global
 
@@ -405,7 +513,9 @@ $$
 [T] = \sum_{e=1}^{N_{el}} \mathcal{A}_e^{T} [T_{el}] \mathcal{A}_e
 $$
 
-onde `\mathcal{A}_e` representa, em linguagem matricial, o operador que conecta os nós locais do elemento aos nós globais da malha. Esta é uma das ideias mais centrais do método dos elementos finitos.
+onde $\mathcal{A}_e$ representa, em linguagem matricial, o operador que conecta os nós locais do elemento aos nós globais da malha. Esta é uma das ideias mais centrais do método dos elementos finitos.
+
+---
 
 Isto resulta em matrizes de ordem $n \times n$, onde $n$ é o número total de nós. Com as equações (30), (31) e (33), a equação de autovalor (eq. (34)) é resolvida para $k_c^2$ pelos solucionadores de autovalores generalizados padrão da biblioteca EISPACK (refs. 7 e 8). Os números de corte são então dados por $\sqrt{k_c^2}$.
 
@@ -413,19 +523,27 @@ Isto resulta em matrizes de ordem $n \times n$, onde $n$ é o número total de n
 
 Uma vez que o potencial escalar é calculado em cada nó, o campo elétrico pode ser obtido para ambos os modos TE e TM pelas seguintes formulações. O potencial escalar em qualquer ponto $(x,y)$ dentro de um elemento triangular é dado por
 
+### (35)
+
 $$
 \psi = \sum_{i=1}^{3} \psi_i \alpha_i(x,y)
 $$
 
 Esses potenciais escalares podem ser diferenciados em relação a $x$ e $y$ para obter as seguintes expressões:
 
+### (36)
+
 $$
 \frac{\partial \psi}{\partial x} = \frac{1}{2A} \sum_{i=1}^{3} \psi_i b_i
 $$
 
+### (37)
+
 $$
 \frac{\partial \psi}{\partial y} = \frac{1}{2A} \sum_{i=1}^{3} \psi_i c_i
 $$
+
+---
 
 ### Passagem intermediária: diferenciação do potencial interpolado
 
@@ -449,15 +567,23 @@ $$
 
 Este é um resultado muito importante do elemento linear: o gradiente do potencial é constante dentro de cada triângulo.
 
+---
+
 Para os modos TE, os componentes do campo elétrico transversal $E_x$ e $E_y$ dentro de um elemento são dados por
+
+### (38)
 
 $$
 E_x = -\frac{\partial \psi}{\partial y}
 $$
 
+### (39)
+
 $$
 E_y = \frac{\partial \psi}{\partial x}
 $$
+
+---
 
 Em notação vetorial compacta, para os modos TE, isso pode ser visto como
 
@@ -467,17 +593,25 @@ $$
 
 Isto mostra que o campo transversal é obtido por uma rotação do gradiente escalar no plano.
 
+---
+
 Ao obter o potencial escalar para os modos TM, o potencial escalar é definido como zero nas paredes PEC do guia de onda para satisfazer as condições de contorno de Dirichlet para o componente longitudinal do campo elétrico. Uma maneira muito simples de implementar isso é ignorar os nós na parede PEC ao formar as matrizes dos elementos. Isso resultará em matrizes de ordem inferior para o caso TM do que para o caso TE.
 
 Uma vez que o potencial escalar é obtido, os campos elétricos transversais para os modos TM são dados por
+
+### (40)
 
 $$
 E_x = -Z_0^{TM} \frac{\partial \psi}{\partial x}
 $$
 
+### (41)
+
 $$
 E_y = -Z_0^{TM} \frac{\partial \psi}{\partial y}
 $$
+
+---
 
 Em forma vetorial, a reconstrução para TM pode ser escrita como
 
@@ -486,6 +620,8 @@ $$
 $$
 
 Neste caso, o gradiente do potencial aparece diretamente, escalado pela impedância característica modal.
+
+---
 
 onde $Z_0^{TM}$ é a impedância característica de onda para o modo TM.
 
@@ -538,17 +674,15 @@ Na seção 2, foi descrito um método de elementos finitos bidimensional baseado
 
 - Entre as equações (3), (4), (5) e (6), o ponto central é a integração por partes no plano transversal. É exatamente essa etapa que reduz a ordem diferencial exigida da incógnita e permite trabalhar com funções lineares por elemento.
 - A passagem da equação (6) para a equação (7) merece sempre ser lida separando os casos TE e TM: o termo de contorno não desaparece pelo mesmo motivo físico nos dois casos.
-- A sequência (12) -> (13) -> (14) é a ponte entre a forma afim local `a + bx + cy` e a forma padrão de elementos finitos baseada em graus de liberdade nodais.
+- A sequência (12) -> (13) -> (14) é a ponte entre a forma afim local $a + bx + cy$ e a forma padrão de elementos finitos baseada em graus de liberdade nodais.
 - As equações (30) a (33) concentram a parte mais útil da seção para implementação: ali aparecem as expressões fechadas das matrizes locais de rigidez e massa.
 
 ### Comentários conceituais importantes
 
 - Mesmo sendo a parte "mais simples" do artigo, esta seção define praticamente todo o vocabulário variacional reutilizado depois: função de teste, matriz elemental, montagem global e interpretação física do autovetor.
-- A reconstrução dos campos transversais a partir de `\psi` mostra por que o problema escalar ainda é suficiente em guias homogêneos com separação modal clássica.
+- A reconstrução dos campos transversais a partir de $\psi$ mostra por que o problema escalar ainda é suficiente em guias homogêneos com separação modal clássica.
 - O caso TM exige mais cuidado operacional no tratamento dos nós de fronteira porque a condição essencial incide diretamente sobre o potencial escalar.
 
 ### Pontos de conferência e irregularidades prováveis
 
-- Na identidade vetorial logo após a equação (3), aparece `\nabla_s` no termo `T_s(\nabla_t \cdot \nabla_s \psi)`. Pela consistência interna do desenvolvimento e pela forma padrão da identidade, este é um ponto que merece releitura, porque o operador esperado ali continua sendo o transversal.
 - As figuras 3, 4, 6 e 8 estão com legenda vazia no Markdown atual. Isso não invalida a derivação, mas enfraquece a rastreabilidade entre texto e figuras.
-- O uso de `\Gamma` como domínio de integração e `d\Gamma` como contorno está funcional no texto, mas exige atenção para não se confundir região com fronteira durante a leitura das passagens variacionais.

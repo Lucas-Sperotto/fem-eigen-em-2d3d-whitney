@@ -282,6 +282,17 @@ def parse_args() -> argparse.Namespace:
         help="3D profile used to scaffold per-grid configuration folders.",
     )
     ap.add_argument(
+        "--article-only",
+        action="store_true",
+        help="Use only the article baseline configuration for each selected case.",
+    )
+    ap.add_argument(
+        "--node-scale",
+        type=float,
+        default=1.0,
+        help="Approximate nodal-count multiplier relative to each article baseline mesh.",
+    )
+    ap.add_argument(
         "--mode-export",
         type=int,
         default=8,
@@ -413,68 +424,181 @@ def validation_grids(profile: str) -> dict[str, list[tuple[int, int, int]]]:
     return full if profile == "full" else quick
 
 
-def config_specs_for_case(case: CaseSpec, *, mode_export: int, profile: str) -> list[ConfigSpec]:
+def snap_even_at_least(value: float, minimum: int = 4) -> int:
+    out = max(minimum, int(round(value)))
+    if out % 2:
+        out += 1
+    return out
+
+
+def scale_rect_grid_2d(nx: int, ny: int, node_scale: float) -> tuple[int, int]:
+    factor = math.sqrt(node_scale)
+    return (
+        max(1, int(round((nx + 1) * factor - 1))),
+        max(1, int(round((ny + 1) * factor - 1))),
+    )
+
+
+def scale_rect_grid_3d(nx: int, ny: int, nz: int, node_scale: float) -> tuple[int, int, int]:
+    factor = node_scale ** (1.0 / 3.0)
+    return (
+        max(1, int(round((nx + 1) * factor - 1))),
+        max(1, int(round((ny + 1) * factor - 1))),
+        max(1, int(round((nz + 1) * factor - 1))),
+    )
+
+
+def scale_circle_grid(nr: int, nt: int, node_scale: float) -> tuple[int, int]:
+    factor = math.sqrt(node_scale)
+    return (
+        max(1, int(round(nr * factor))),
+        snap_even_at_least(nt * factor),
+    )
+
+
+def scale_coax_grid(nr: int, nt: int, node_scale: float) -> tuple[int, int]:
+    factor = math.sqrt(node_scale)
+    return (
+        max(1, int(round((nr + 1) * factor - 1))),
+        snap_even_at_least(nt * factor),
+    )
+
+
+def config_id_for_case(case_id: str, params: dict[str, object]) -> str:
+    if case_id in {"helm10_rect", "edge_rect"}:
+        return f"nx{params['nx']}_ny{params['ny']}_modes{params['mode_export']}"
+    if case_id in {"helm10_circle", "helm10_coax", "edge_circle", "edge_coax"}:
+        return f"nr{params['nr']}_nt{params['nt']}_modes{params['mode_export']}"
+    if case_id == "mixed_rect":
+        return f"nx{params['nx']}_ny{params['ny']}"
+    if case_id in {"mixed_circle", "mixed_coax"}:
+        return f"nr{params['nr']}_nt{params['nt']}"
+    if case_id == "helmvec2_rect":
+        return f"beta{format_number_tag(float(params['beta']))}_nx{params['nx']}_ny{params['ny']}"
+    if case_id == "helmvec3_rect":
+        return f"d_over_a{format_number_tag(float(params['d_over_a']))}_nx{params['nx']}_ny{params['ny']}"
+    if case_id.startswith("fem3d"):
+        return f"nx{params['nx']}_ny{params['ny']}_nz{params['nz']}"
+    raise SystemExit(f"Missing config id formatter for case: {case_id}")
+
+
+def scale_config_params(case_id: str, params: dict[str, object], node_scale: float) -> dict[str, object]:
+    scaled = dict(params)
+    if math.isclose(node_scale, 1.0, rel_tol=0.0, abs_tol=1e-12):
+        return scaled
+
+    if case_id in {"helm10_rect", "edge_rect", "mixed_rect", "helmvec2_rect", "helmvec3_rect"}:
+        scaled["nx"], scaled["ny"] = scale_rect_grid_2d(int(params["nx"]), int(params["ny"]), node_scale)
+        return scaled
+
+    if case_id in {"helm10_circle", "edge_circle", "mixed_circle"}:
+        scaled["nr"], scaled["nt"] = scale_circle_grid(int(params["nr"]), int(params["nt"]), node_scale)
+        return scaled
+
+    if case_id in {"helm10_coax", "edge_coax", "mixed_coax"}:
+        scaled["nr"], scaled["nt"] = scale_coax_grid(int(params["nr"]), int(params["nt"]), node_scale)
+        return scaled
+
+    if case_id.startswith("fem3d"):
+        scaled["nx"], scaled["ny"], scaled["nz"] = scale_rect_grid_3d(
+            int(params["nx"]),
+            int(params["ny"]),
+            int(params["nz"]),
+            node_scale,
+        )
+        return scaled
+
+    raise SystemExit(f"Missing node scaling rule for case: {case_id}")
+
+
+def finalize_config_specs(case: CaseSpec, configs: list[ConfigSpec], node_scale: float) -> list[ConfigSpec]:
+    if math.isclose(node_scale, 1.0, rel_tol=0.0, abs_tol=1e-12):
+        return configs
+
+    out: list[ConfigSpec] = []
+    for config in configs:
+        scaled_params = scale_config_params(case.case_id, config.params, node_scale)
+        out.append(
+            ConfigSpec(
+                config_id=config_id_for_case(case.case_id, scaled_params),
+                label=config.label,
+                purposes=config.purposes,
+                params=scaled_params,
+            )
+        )
+    return out
+
+
+def config_specs_for_case(
+    case: CaseSpec,
+    *,
+    mode_export: int,
+    profile: str,
+    article_only: bool,
+    node_scale: float,
+) -> list[ConfigSpec]:
     if case.case_id in {"helm10_rect", "edge_rect"}:
-        return [
+        return finalize_config_specs(case, [
             ConfigSpec(
                 config_id=f"nx14_ny14_modes{mode_export}",
                 label="Primary rectangular 2D run",
                 purposes=("direct_default",),
                 params={"nx": 14, "ny": 14, "mode_export": mode_export},
             )
-        ]
+        ], node_scale)
     if case.case_id in {"helm10_circle", "helm10_coax", "edge_circle", "edge_coax"}:
-        return [
+        return finalize_config_specs(case, [
             ConfigSpec(
                 config_id=f"nr10_nt48_modes{mode_export}",
                 label="Primary polar 2D run",
                 purposes=("direct_default",),
                 params={"nr": 10, "nt": 48, "mode_export": mode_export},
             )
-        ]
+        ], node_scale)
     if case.case_id == "mixed_rect":
-        return [
+        return finalize_config_specs(case, [
             ConfigSpec(
                 config_id="nx12_ny6",
                 label="Mixed rectangular cutoff run",
                 purposes=("direct_default",),
                 params={"nx": 12, "ny": 6},
             )
-        ]
+        ], node_scale)
     if case.case_id in {"mixed_circle", "mixed_coax"}:
-        return [
+        return finalize_config_specs(case, [
             ConfigSpec(
                 config_id="nr10_nt48",
                 label="Mixed polar cutoff run",
                 purposes=("direct_default",),
                 params={"nr": 10, "nt": 48},
             )
-        ]
+        ], node_scale)
     if case.case_id == "helmvec2_rect":
-        return [
+        return finalize_config_specs(case, [
             ConfigSpec(
                 config_id="beta10_nx6_ny6",
                 label="Figure 11 / Table 8 default run",
                 purposes=("direct_default", "validation_default"),
                 params={"beta": 10.0, "nx": 6, "ny": 6, "legacy_debug": 0},
             )
-        ]
+        ], node_scale)
     if case.case_id == "helmvec3_rect":
-        return [
+        return finalize_config_specs(case, [
             ConfigSpec(
                 config_id=f"d_over_a{format_number_tag(0.20)}_nx10_ny5",
                 label="Figure 12-13 / Table 9-10 default run",
                 purposes=("direct_default", "validation_default"),
                 params={"d_over_a": 0.20, "nx": 10, "ny": 5, "legacy_debug": 0},
             )
-        ]
+        ], node_scale)
     if case.case_id.startswith("fem3d0_") or case.case_id.startswith("fem3d1_"):
         case_name = case.case_id.split("_", 1)[1]
         by_grid: dict[tuple[int, int, int], list[str]] = {}
         default_grid = default_grid_3d(case_name)
         by_grid.setdefault(default_grid, []).append("direct_default")
-        for idx, grid in enumerate(validation_grids(profile)[case_name], start=1):
-            by_grid.setdefault(grid, []).append(f"validation_{profile}_{idx:02d}")
+        if not article_only:
+            for idx, grid in enumerate(validation_grids(profile)[case_name], start=1):
+                by_grid.setdefault(grid, []).append(f"validation_{profile}_{idx:02d}")
         out: list[ConfigSpec] = []
         for grid in sorted(by_grid.keys()):
             nx, ny, nz = grid
@@ -486,7 +610,7 @@ def config_specs_for_case(case: CaseSpec, *, mode_export: int, profile: str) -> 
                     params={"nx": nx, "ny": ny, "nz": nz, "profile": profile},
                 )
             )
-        return out
+        return finalize_config_specs(case, out, node_scale)
     raise SystemExit(f"Missing configuration scaffold for case: {case.case_id}")
 
 
@@ -496,12 +620,20 @@ def build_entries(
     selected_cases: list[CaseSpec],
     mode_export: int,
     profile: str,
+    article_only: bool,
+    node_scale: float,
 ) -> list[ConfigEntry]:
     entries: list[ConfigEntry] = []
     for backend in backends:
         backend_dir = backend_dirname(backend)
         for case in selected_cases:
-            for config in config_specs_for_case(case, mode_export=mode_export, profile=profile):
+            for config in config_specs_for_case(
+                case,
+                mode_export=mode_export,
+                profile=profile,
+                article_only=article_only,
+                node_scale=node_scale,
+            ):
                 entries.append(
                     ConfigEntry(
                         backend=backend,
@@ -550,6 +682,8 @@ def build_manifest(
         "requested_cases": args.case if args.case else ["all"],
         "sections": sections,
         "profile": args.profile,
+        "article_only": args.article_only,
+        "node_scale": args.node_scale,
         "mode_export": args.mode_export,
         "skip_images": args.skip_images,
         "skip_validate": args.skip_validate,
@@ -570,7 +704,15 @@ def build_manifest(
                 "family": spec.family,
                 "program": spec.program,
                 "label": spec.label,
-                "config_count": len(config_specs_for_case(spec, mode_export=args.mode_export, profile=args.profile)),
+                "config_count": len(
+                    config_specs_for_case(
+                        spec,
+                        mode_export=args.mode_export,
+                        profile=args.profile,
+                        article_only=args.article_only,
+                        node_scale=args.node_scale,
+                    )
+                ),
             }
             for spec in selected_cases
         ],
@@ -625,6 +767,8 @@ def render_run_md(
     lines.append(f"- Backends: `{', '.join(backends)}`")
     lines.append(f"- Requested cases: `{', '.join(args.case) if args.case else 'all'}`")
     lines.append(f"- 3D profile: `{args.profile}`")
+    lines.append(f"- Article-only configs: `{'yes' if args.article_only else 'no'}`")
+    lines.append(f"- Node scale: `{args.node_scale:g}x`")
     lines.append(f"- 2D mode export target: `{args.mode_export}`")
     lines.append(f"- Skip images: `{'yes' if args.skip_images else 'no'}`")
     lines.append(f"- Skip validations: `{'yes' if args.skip_validate else 'no'}`")
@@ -650,7 +794,15 @@ def render_run_md(
     lines.append("| Case ID | Section | Family | Program | Description | Configs |")
     lines.append("|---|---|---|---|---|---:|")
     for spec in selected_cases:
-        cfg_count = len(config_specs_for_case(spec, mode_export=args.mode_export, profile=args.profile))
+        cfg_count = len(
+            config_specs_for_case(
+                spec,
+                mode_export=args.mode_export,
+                profile=args.profile,
+                article_only=args.article_only,
+                node_scale=args.node_scale,
+            )
+        )
         lines.append(
             f"| `{spec.case_id}` | `{spec.section}` | `{spec.family}` | "
             f"`{spec.program}` | {spec.label} | {cfg_count} |"
@@ -1545,6 +1697,8 @@ def main() -> int:
 
     if args.mode_export < 1:
         raise SystemExit("Invalid --mode-export: expected integer >= 1.")
+    if args.node_scale <= 0:
+        raise SystemExit("Invalid --node-scale: expected a positive number.")
 
     out_base = args.out_base.resolve()
     build_dir = args.build_dir.resolve()
@@ -1555,6 +1709,8 @@ def main() -> int:
         selected_cases=selected_cases,
         mode_export=args.mode_export,
         profile=args.profile,
+        article_only=args.article_only,
+        node_scale=args.node_scale,
     )
     run_name, run_root = ensure_execution_root(
         out_base=out_base,
