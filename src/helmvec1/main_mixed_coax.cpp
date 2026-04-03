@@ -4,7 +4,7 @@
 /* Arquivo: src/helmvec1/main_mixed_coax.cpp                                  */
 /* Autor: Prof. Lucas Kriesel Sperotto                                        */
 /* E-mail: speroto@unemat.br                                                  */
-/* Versao: 1.0 | Ano: 2026                                                    */
+/* Versao: 2.0 | Ano: 2026                                                    */
 /*****************************************************************************/
 /* Descricao: Sistema misto vetorial+escalar para kc, separando blocos        */
 /* transverso/longitudinal.                                                   */
@@ -18,6 +18,7 @@
 /* rastreabilidade e validacao.                                               */
 /*****************************************************************************/
 
+#include "article/tp3485_systems.hpp"
 #include "core/lapack_eig.hpp"
 #include "core/mesh2d_coax.hpp"
 #include "core/timing_utils.hpp"
@@ -52,7 +53,7 @@ int main(int argc, char **argv)
     catch (const std::exception &e)
     {
         std::cerr << "Erro ao interpretar argumentos: " << e.what() << "\n";
-        std::cerr << "Uso: ./mixed_coax [nr nt] [--backend gauss|closed-form]"
+        std::cerr << "Uso: ./mixed_coax [nr nt] [--backend closed-form|gauss]"
                   << " [--debug-local-blocks] [--debug-candidates]\n";
         return 2;
     }
@@ -78,7 +79,7 @@ int main(int argc, char **argv)
         helmvec1_debug::print_first_triangle_closed_form_debug(mesh, 1.0, 1.0);
 
     timing::Stopwatch stage;
-    auto sys_e = build_system92_E(mesh, eps, mu, cli.backend);
+    auto sys_e = tp3485::build_eq92_helmvec1_system_E(mesh, eps, mu, cli.backend);
     perf.assembly_ms += stage.elapsed_ms();
     stage.reset();
     auto res_e = generalized_eigs_sym_vec(sys_e.S, sys_e.T);
@@ -99,7 +100,7 @@ int main(int argc, char **argv)
     print_first_modes("TM (scalar block), first 8 kc:", k_tm_scalar_e, 8);
 
     stage.reset();
-    auto sys_h = build_system92_H(mesh, eps, mu, cli.backend);
+    auto sys_h = tp3485::build_eq92_helmvec1_system_H(mesh, eps, mu, cli.backend);
     perf.assembly_ms += stage.elapsed_ms();
     stage.reset();
     auto res_h = generalized_eigs_sym_vec(sys_h.S, sys_h.T);

@@ -4,7 +4,7 @@
 /* Arquivo: src/fem3d0/main_fem3d0_rect.cpp                                   */
 /* Autor: Prof. Lucas Kriesel Sperotto                                        */
 /* E-mail: speroto@unemat.br                                                  */
-/* Versao: 1.0 | Ano: 2026                                                    */
+/* Versao: 2.0 | Ano: 2026                                                    */
 /*****************************************************************************/
 /* Descricao: Driver FEM3D0 (montagem densa) para cavidades 3D.               */
 /*****************************************************************************/
@@ -17,6 +17,7 @@
 /* rastreabilidade e validacao.                                               */
 /*****************************************************************************/
 
+#include "article/tp3485_systems.hpp"
 #include "core/lapack_eig.hpp"
 #include "core/timing_utils.hpp"
 #include "edge3d/edge3d_assembly.hpp"
@@ -48,7 +49,7 @@ timing::Breakdown run_dense_case(
   // 2) resolve S x = lambda T x;
   // 3) converte lambda -> k0 = sqrt(lambda) e compara com as tabelas 12-15.
   timing::Stopwatch stage;
-  const auto sys = build_helm3d_edge_system(
+  const auto sys = tp3485::build_eq178_fem3d_system_dense(
       c.mesh,
       Edge3DBC::PEC_TangentialZero,
       c.eps_r_tet,

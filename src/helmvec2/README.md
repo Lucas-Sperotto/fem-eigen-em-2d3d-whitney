@@ -96,11 +96,19 @@ Assim, a trilha didatica fica:
 
 1. `Eq. (120)` a `Eq. (125)` -> helper local explicito
 2. rearranjo para a `Eq. (119)` -> helper local rearranjado
-3. assembleia global -> `build_coupled_wavenumber_system_E(...)`
+3. blocos globais nomeados -> `A_tt`, `A_tz`, `A_zt`, `A_zz`, `B_tt`, `B_zz`
+4. fechamento global explicito -> `assemble_eq119_global_from_named_blocks(...)`
+5. entrada publica didatica -> `tp3485::build_eq119_helmvec2_system_E(...)`
+6. assembleia global subjacente -> `build_coupled_wavenumber_system_E(...)`
 
 O ponto de montagem global fica em:
 
 - `src/helmvec2/helmvec2_coupled_system.cpp`
+
+Os blocos nomeados ficam preservados em:
+
+- `CoupledWaveNumberSystem::{A_tt, A_tz, A_zt, A_zz, B_tt, B_zz}`
+- arquivo `src/helmvec2/helmvec2_coupled_system.hpp`
 
 ### Observacao importante sobre a Eq. (120) do artigo
 
@@ -177,6 +185,15 @@ Pontos importantes:
 - contexto comum `CoupledContextE` para evitar duplicacao,
 - montagem de acoplamento com quadratura triangular `P2`,
 - correcoes de orientacao local/global de aresta no bloco cruzado.
+- preservacao didatica dos sub-blocos globais da `Eq. (119)` antes do
+  fechamento final em `A` e `B`.
+
+Trilha de montagem global mais rastreavel:
+
+- `initialize_named_eq119_global_blocks(...)`
+- `assemble_wavenumber_system_closed_form(...)`
+- `assemble_coupling_block_C_named(...)`
+- `assemble_eq119_global_from_named_blocks(...)`
 
 BCs usados:
 - edge: `EdgeBC::TE_PEC_TangentialZero`
@@ -228,8 +245,10 @@ Flags de depuracao:
 - `debug=1` legado: ativa os dois comportamentos ao mesmo tempo
 
 Backends disponiveis:
-- `--backend gauss`
 - `--backend closed-form`
+- `--backend gauss`
+
+Sem `--backend`, o padrao publico do executavel e `closed-form`.
 
 ## 7) Integracao com scripts
 

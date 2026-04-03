@@ -108,9 +108,11 @@ Para conectar o artigo ao codigo, a trilha principal deste modulo e:
 
 1. Eq. `(66)` e Eq. `(67)` -> formas locais closed-form em
    `src/explicit/tri2d_edge_explicit.hpp`
-2. Eq. `(65)` -> sistema global vetorial montado em
+2. entrada publica didatica da Eq. `(65)` ->
+   `tp3485::build_eq65_helmvec_system(...)` em `src/article/tp3485_systems.hpp`
+3. Eq. `(65)` -> sistema global vetorial montado em
    `src/edge/edge_assembly.cpp`
-3. funcao de montagem principal ->
+4. funcao de montagem principal subjacente ->
    `build_helm10_edge_system(...)`
 
 ## 4) Condicoes de contorno
@@ -150,36 +152,38 @@ Exportacao:
 Retangular:
 
 ```bash
-./build/edge_rect 14 14 --backend gauss
+./build/edge_rect 14 14
 ```
 
 Circular:
 
 ```bash
-./build/edge_circle 10 48 --backend gauss
+./build/edge_circle 10 48
 ```
 
 Coaxial:
 
 ```bash
-./build/edge_coax 10 48 --backend gauss
+./build/edge_coax 10 48
 ```
 
 ## 7.1) Backends e depuracao
 
 Flags disponiveis:
 
-- `--backend gauss`
 - `--backend closed-form`
+- `--backend gauss`
 - `--debug-local-blocks`
 - `--debug-candidates`
 - `--debug` ou `--debug-all`
+
+Sem `--backend`, o padrao publico do executavel e `closed-form`.
 
 Exemplos:
 
 ```bash
 ./build/edge_rect 14 14 8 --backend closed-form --debug-local-blocks
-./build/edge_circle 10 48 8 --backend gauss --debug-candidates
+./build/edge_circle 10 48 8 --debug-candidates
 ./build/edge_coax 10 48 8 --backend closed-form --debug-local-blocks --debug-candidates
 ```
 

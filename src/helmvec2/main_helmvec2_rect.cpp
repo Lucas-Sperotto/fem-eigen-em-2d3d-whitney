@@ -4,7 +4,7 @@
 /* Arquivo: src/helmvec2/main_helmvec2_rect.cpp                               */
 /* Autor: Prof. Lucas Kriesel Sperotto                                        */
 /* E-mail: speroto@unemat.br                                                  */
-/* Versao: 1.0 | Ano: 2026                                                    */
+/* Versao: 2.0 | Ano: 2026                                                    */
 /*****************************************************************************/
 /* Descricao: Sistema acoplado vetorial+escalar para obter k0 dado beta.      */
 /*****************************************************************************/
@@ -17,6 +17,7 @@
 /* rastreabilidade e validacao.                                               */
 /*****************************************************************************/
 
+#include "article/tp3485_systems.hpp"
 #include "core/mesh2d.hpp"
 #include "core/mesh2d_rect.hpp"
 #include "core/lapack_eig.hpp"
@@ -177,7 +178,7 @@ int main(int argc, char **argv)
     {
         std::cerr << "Erro ao interpretar argumentos: " << e.what() << "\n";
         std::cerr << "Uso: ./helmvec2_rect [beta [nx ny [debug]]]"
-                  << " [--backend gauss|closed-form]"
+                  << " [--backend closed-form|gauss]"
                   << " [--debug-local-blocks] [--debug-candidates]\n";
         return 2;
     }
@@ -207,7 +208,7 @@ int main(int argc, char **argv)
         print_first_triangle_closed_form_debug(mesh, beta, eps, mu);
 
     timing::Stopwatch stage;
-    auto sys = build_coupled_wavenumber_system_E(mesh, beta, eps, mu, cli.backend);
+    auto sys = tp3485::build_eq119_helmvec2_system_E(mesh, beta, eps, mu, cli.backend);
     perf.assembly_ms += stage.elapsed_ms();
     stage.reset();
     auto eig = generalized_eigs_real_vec(sys.A, sys.B);

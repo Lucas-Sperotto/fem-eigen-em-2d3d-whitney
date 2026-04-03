@@ -4,7 +4,7 @@
 /* Arquivo: src/helmvec1/helmvec1_mixed_system.cpp                            */
 /* Autor: Prof. Lucas Kriesel Sperotto                                        */
 /* E-mail: speroto@unemat.br                                                  */
-/* Versao: 1.0 | Ano: 2026                                                    */
+/* Versao: 2.0 | Ano: 2026                                                    */
 /*****************************************************************************/
 /* Descricao: Sistema misto vetorial+escalar para kc, separando blocos        */
 /* transverso/longitudinal.                                                   */
@@ -20,18 +20,33 @@
 namespace
 {
 /******************************************************************************/
-/* FUNCAO: finalize_block_diagonal_system                                     */
-/* DESCRICAO: Consolida dimensoes e monta os blocos diagonais globais (S,T)   */
-/* do sistema misto vetorial+escalar da Eq. (92).                             */
+/* FUNCAO: load_named_eq92_blocks_from_subsystems                             */
+/* DESCRICAO: Copia, com nomes explicitos da Eq. (92), os blocos locais ja    */
+/* montados dos subproblemas de aresta e escalar para dentro de MixedSystem92.*/
 /* ENTRADA: ms: MixedSystem92 &.                                              */
 /* SAIDA: sem retorno explicito (void).                                       */
 /******************************************************************************/
-inline void finalize_block_diagonal_system(MixedSystem92 &ms)
+inline void load_named_eq92_blocks_from_subsystems(MixedSystem92 &ms)
 {
     ms.nt = ms.edge.ed.ndof;
     ms.nz = ms.scal.ndof;
-    ms.S = block_diag(ms.edge.S, ms.scal.S);
-    ms.T = block_diag(ms.edge.T, ms.scal.T);
+    ms.St = ms.edge.S;
+    ms.Tt = ms.edge.T;
+    ms.Sz = ms.scal.S;
+    ms.Tz = ms.scal.T;
+}
+
+/******************************************************************************/
+/* FUNCAO: assemble_eq92_global_from_named_blocks                             */
+/* DESCRICAO: Monta explicitamente a Eq. (92) a partir dos blocos nomeados    */
+/* St, Tt, Sz e Tz, preservando a leitura didatica do sistema block-diagonal. */
+/* ENTRADA: ms: MixedSystem92 &.                                              */
+/* SAIDA: sem retorno explicito (void).                                       */
+/******************************************************************************/
+inline void assemble_eq92_global_from_named_blocks(MixedSystem92 &ms)
+{
+    ms.S = block_diag(ms.St, ms.Sz);
+    ms.T = block_diag(ms.Tt, ms.Tz);
 }
 } // namespace
 
@@ -76,7 +91,8 @@ MixedSystem92 build_system92_E(
         mu_r_tri,
         backend);
 
-    finalize_block_diagonal_system(ms);
+    load_named_eq92_blocks_from_subsystems(ms);
+    assemble_eq92_global_from_named_blocks(ms);
     return ms;
 }
 
@@ -119,6 +135,7 @@ MixedSystem92 build_system92_H(
         /*mu_proxy */ eps_r_tri,
         backend);
 
-    finalize_block_diagonal_system(ms);
+    load_named_eq92_blocks_from_subsystems(ms);
+    assemble_eq92_global_from_named_blocks(ms);
     return ms;
 }

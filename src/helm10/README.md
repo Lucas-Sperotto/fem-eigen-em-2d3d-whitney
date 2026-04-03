@@ -106,9 +106,11 @@ Para conectar o artigo ao codigo, a trilha principal deste modulo e:
 
 1. Eq. `(30)` e Eq. `(33)` -> formas locais closed-form em
    `src/explicit/tri2d_scalar_explicit.hpp`
-2. Eq. `(43)` -> sistema global escalar montado em
+2. entrada publica didatica da Eq. `(43)` ->
+   `tp3485::build_eq43_helm10_system(...)` em `src/article/tp3485_systems.hpp`
+3. Eq. `(43)` -> sistema global escalar montado em
    `src/core/helm10_scalar_system.cpp`
-3. funcao de montagem principal ->
+4. funcao de montagem principal subjacente ->
    `build_helm10_scalar_system(...)`
 
 ## 5) Solver e pos-processamento
@@ -140,36 +142,38 @@ Pos-processamento (`scalar_mode_post.hpp`):
 Retangular:
 
 ```bash
-./build/helm10_rect 14 14 --backend gauss
+./build/helm10_rect 14 14
 ```
 
 Circular:
 
 ```bash
-./build/helm10_circle 10 48 --backend gauss
+./build/helm10_circle 10 48
 ```
 
 Coaxial:
 
 ```bash
-./build/helm10_coax 10 48 --backend gauss
+./build/helm10_coax 10 48
 ```
 
 ## 7.1) Backends e depuracao
 
 Flags disponiveis:
 
-- `--backend gauss`
 - `--backend closed-form`
+- `--backend gauss`
 - `--debug-local-blocks`
 - `--debug-candidates`
 - `--debug` ou `--debug-all`
+
+Sem `--backend`, o padrao publico do executavel e `closed-form`.
 
 Exemplos:
 
 ```bash
 ./build/helm10_rect 14 14 8 --backend closed-form --debug-local-blocks
-./build/helm10_circle 10 48 8 --backend gauss --debug-candidates
+./build/helm10_circle 10 48 8 --debug-candidates
 ./build/helm10_coax 10 48 8 --backend closed-form --debug-local-blocks --debug-candidates
 ```
 

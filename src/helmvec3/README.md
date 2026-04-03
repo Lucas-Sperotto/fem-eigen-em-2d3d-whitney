@@ -129,6 +129,8 @@ Observacao importante:
   implementacao global;
 - por isso, o codigo privilegia a equivalencia algebraica validada e deixa os
   comentarios apontando onde cada equacao entra.
+- nesta etapa, essa rastreabilidade tambem passou a existir diretamente na
+  estrutura do sistema global, antes do fechamento final de `P` e `Q`.
 
 ## 2.3) Expressoes locais explicitas
 
@@ -164,7 +166,22 @@ Ou seja, a cadeia didatica fica:
 
 1. `Eq. (137)` a `Eq. (142)` -> helper local explicito
 2. rearranjo para `Eq. (136)` -> helper local rearranjado
-3. assembleia global -> `build_coupled_beta_system_E(...)`
+3. blocos globais nomeados -> `P_tt`, `P_zz`, `Q_tt`, `Q_tz`, `Q_zt`, `Q_zz`
+4. fechamento global explicito -> `assemble_eq136_global_from_named_blocks(...)`
+5. entrada publica didatica -> `tp3485::build_eq136_helmvec3_system_E(...)`
+6. assembleia global subjacente -> `build_coupled_beta_system_E(...)`
+
+Os blocos nomeados ficam preservados em:
+
+- `CoupledBetaSystem::{P_tt, P_zz, Q_tt, Q_tz, Q_zt, Q_zz}`
+- arquivo `src/helmvec2/helmvec2_coupled_system.hpp`
+
+O fechamento global explicito passa por:
+
+- `initialize_named_eq136_global_blocks(...)`
+- `assemble_beta_system_closed_form(...)`
+- `assemble_coupling_block_C_named(...)`
+- `assemble_eq136_global_from_named_blocks(...)`
 
 ## 3) Geometrias/casos de validacao
 
@@ -263,8 +280,10 @@ algebrico entre operador da esquerda/direita no EVP generalizado.
 
 O executavel aceita:
 
-- `--backend gauss`
 - `--backend closed-form`
+- `--backend gauss`
+
+Sem `--backend`, o padrao publico do executavel e `closed-form`.
 
 Isso permite comparar:
 
@@ -275,6 +294,7 @@ Isso permite comparar:
 
 Na pratica:
 
-- `gauss` e util para manter continuidade com a montagem numerica tradicional;
 - `closed-form` e util para rastreabilidade matematica e comparacao direta com
-  as equacoes do artigo.
+  as equacoes do artigo;
+- `gauss` e util para manter continuidade com a montagem numerica tradicional
+  como referencia auxiliar.

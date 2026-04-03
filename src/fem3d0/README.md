@@ -1,5 +1,7 @@
 # `fem3d0` - Solver vetorial 3D denso para cavidades (Sec. 3.1)
 
+Versao didatica: `2.0`
+
 `fem3d0` e a implementacao baseline 3D:
 - elementos de aresta tetraedricos,
 - montagem global densa,
@@ -25,7 +27,10 @@ Arquivo principal:
 ## 2) Pipeline numerico
 
 1. Monta sistema edge 3D denso:
-   - `build_helm3d_edge_system(...)`
+   - `tp3485::build_eq178_fem3d_system_dense(...)`
+   - chamada interna: `build_helm3d_edge_system(...)`
+   - inicializacao: `initialize_eq178_dense_global_system(...)`
+   - fechamento: `assemble_eq178_global_dense(...)`
 2. Resolve EVP simetrico:
    - `generalized_eigs_sym_vec(S, T)`
 3. Extrai primeiras raizes positivas `k0`.
@@ -65,7 +70,11 @@ Na rastreabilidade do artigo:
 
 - Eq. `(181)` -> bloco local `Sel`
 - Eq. `(182)` -> bloco local `Tel`
+- Eq. `(178)` no tetraedro -> `build_eq178_local_tet_blocks(...)`
+- Eq. `(178)` na montagem compartilhada -> `assemble_eq178_global_generic(...)`
+- Eq. `(178)` no fechamento denso -> `assemble_eq178_global_dense(...)`
 - Eq. `(178)` -> sistema global `S e = k0^2 T e`
+- entrada pública didática -> `tp3485::build_eq178_fem3d_system_dense(...)`
 
 Os detalhes de `K_mn` e `I1..I10` ficam documentados em:
 
@@ -88,6 +97,7 @@ Os detalhes de `K_mn` e `I1..I10` ficam documentados em:
 Defaults do executavel:
 - sem flags: roda apenas `--air`.
 - com `--nx --ny --nz`: sobrescreve malha padrao do caso selecionado.
+- sem `--backend`: usa `closed-form` como fluxo publico padrao.
 
 ## 4) Uso
 

@@ -4,7 +4,7 @@
 /* Arquivo: src/edge/edge_assembly.hpp                                        */
 /* Autor: Prof. Lucas Kriesel Sperotto                                        */
 /* E-mail: speroto@unemat.br                                                  */
-/* Versao: 1.0 | Ano: 2026                                                    */
+/* Versao: 2.0 | Ano: 2026                                                    */
 /*****************************************************************************/
 /* Descricao: Nucleo 2D de elementos de aresta (DOFs, base de Whitney e       */
 /* montagem).                                                                 */
@@ -49,7 +49,7 @@ EdgeSystem build_helm10_edge_system(
     const Mesh2D &mesh,
     double eps_r = 1.0,
     double mu_r = 1.0,
-    ElementAssemblyBackend backend = ElementAssemblyBackend::GaussianQuadrature);
+    ElementAssemblyBackend backend = ElementAssemblyBackend::ClosedForm);
 
 // Material homogeneo com politica explicita de condicao de contorno.
 EdgeSystem build_helm10_edge_system(
@@ -57,7 +57,7 @@ EdgeSystem build_helm10_edge_system(
     EdgeBC bc,
     double eps_r = 1.0,
     double mu_r = 1.0,
-    ElementAssemblyBackend backend = ElementAssemblyBackend::GaussianQuadrature);
+    ElementAssemblyBackend backend = ElementAssemblyBackend::ClosedForm);
 
 // Material nao homogeneo definido por triangulo.
 EdgeSystem build_helm10_edge_system(
@@ -65,4 +65,4 @@ EdgeSystem build_helm10_edge_system(
     EdgeBC bc,
     const std::vector<double> &eps_r_tri,
     const std::vector<double> &mu_r_tri,
-    ElementAssemblyBackend backend = ElementAssemblyBackend::GaussianQuadrature);
+    ElementAssemblyBackend backend = ElementAssemblyBackend::ClosedForm);

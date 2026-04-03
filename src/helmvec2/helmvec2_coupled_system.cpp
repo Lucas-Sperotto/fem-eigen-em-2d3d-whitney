@@ -4,7 +4,7 @@
 /* Arquivo: src/helmvec2/helmvec2_coupled_system.cpp                          */
 /* Autor: Prof. Lucas Kriesel Sperotto                                        */
 /* E-mail: speroto@unemat.br                                                  */
-/* Versao: 1.0 | Ano: 2026                                                    */
+/* Versao: 2.0 | Ano: 2026                                                    */
 /*****************************************************************************/
 /* Descricao: Sistema acoplado vetorial+escalar para obter k0 dado beta.      */
 /*****************************************************************************/
@@ -107,6 +107,26 @@ void add_block_scaled(
 }
 
 /******************************************************************************/
+/* FUNCAO: add_rect_block_to_dense                                            */
+/* DESCRICAO: Espalha um bloco retangular nomeado dentro de uma matriz densa  */
+/* quadrada maior, preservando a leitura em blocos do sistema global.         */
+/* ENTRADA: dst: DenseMat &; row0: int; col0: int; src: const DenseRectMat &; */
+/* alpha: double.                                                             */
+/* SAIDA: sem retorno explicito (void).                                       */
+/******************************************************************************/
+void add_rect_block_to_dense(
+    DenseMat &dst,
+    int row0,
+    int col0,
+    const DenseRectMat &src,
+    double alpha = 1.0)
+{
+    for (int i = 0; i < src.nr; ++i)
+        for (int j = 0; j < src.nc; ++j)
+            dst(row0 + i, col0 + j) += alpha * src(i, j);
+}
+
+/******************************************************************************/
 /* FUNCAO: build_edge_mass_with_inverse_mu                                    */
 /* DESCRICAO: Constroi matriz de massa vetorial ponderada por 1/mu_r, isto e, */
 /* M_t^(1/mu)=int_T (1/mu_r) W_i.W_j dA, usada nos termos com beta^2 das      */
@@ -171,19 +191,99 @@ CoupledContextE build_context_E(
 }
 
 /******************************************************************************/
-/* FUNCAO: assemble_coupling_block_C                                          */
-/* DESCRICAO: Monta o bloco de acoplamento vetorial-escalar e aplica          */
-/* orientacao local/global. Este bloco representa int(1/mu) W_m.grad(N_j)dA   */
-/* que aparece nos termos mistos das Eq. (114)-(115) e Eq. (126)-(127).       */
-/* ENTRADA: full: DenseMat &; nt: int; coeff_top_right: double;               */
-/* coeff_bottom_left: double; mesh: const Mesh2D &; ed: const EdgeDofs &;     */
-/* node_to_dof: const std::vector<int> &; mu_r_tri: const std::vector<double> */
-/* &.                                                                         */
+/* FUNCAO: initialize_named_eq119_global_blocks                               */
+/* DESCRICAO: Dimensiona explicitamente os sub-blocos globais da Eq. (119),   */
+/* preservando A_tt, A_tz, A_zt, A_zz, B_tt e B_zz antes do fechamento do     */
+/* sistema completo.                                                          */
+/* ENTRADA: out: CoupledWaveNumberSystem &.                                   */
 /* SAIDA: sem retorno explicito (void).                                       */
 /******************************************************************************/
-void assemble_coupling_block_C(
-    DenseMat &full,
-    int nt,
+inline void initialize_named_eq119_global_blocks(CoupledWaveNumberSystem &out)
+{
+    out.A_tt = DenseMat(out.nt);
+    out.A_tz = DenseRectMat(out.nt, out.nz);
+    out.A_zt = DenseRectMat(out.nz, out.nt);
+    out.A_zz = DenseMat(out.nz);
+    out.B_tt = DenseMat(out.nt);
+    out.B_zz = DenseMat(out.nz);
+}
+
+/******************************************************************************/
+/* FUNCAO: assemble_eq119_global_from_named_blocks                            */
+/* DESCRICAO: Fecha explicitamente a Eq. (119) a partir dos blocos nomeados,  */
+/* preservando a leitura didatica A=[tt tz; zt zz] e B=[tt 0; 0 zz].          */
+/* ENTRADA: out: CoupledWaveNumberSystem &.                                   */
+/* SAIDA: sem retorno explicito (void).                                       */
+/******************************************************************************/
+inline void assemble_eq119_global_from_named_blocks(CoupledWaveNumberSystem &out)
+{
+    const int N = out.nt + out.nz;
+    out.A = DenseMat(N);
+    out.B = DenseMat(N);
+
+    add_block_scaled(out.A, 0, 0, out.A_tt, +1.0);
+    add_rect_block_to_dense(out.A, 0, out.nt, out.A_tz, +1.0);
+    add_rect_block_to_dense(out.A, out.nt, 0, out.A_zt, +1.0);
+    add_block_scaled(out.A, out.nt, out.nt, out.A_zz, +1.0);
+
+    add_block_scaled(out.B, 0, 0, out.B_tt, +1.0);
+    add_block_scaled(out.B, out.nt, out.nt, out.B_zz, +1.0);
+}
+
+/******************************************************************************/
+/* FUNCAO: initialize_named_eq136_global_blocks                               */
+/* DESCRICAO: Dimensiona explicitamente os sub-blocos globais da Eq. (136),   */
+/* preservando P_tt, P_zz, Q_tt, Q_tz, Q_zt e Q_zz antes do fechamento do     */
+/* sistema completo.                                                          */
+/* ENTRADA: out: CoupledBetaSystem &.                                         */
+/* SAIDA: sem retorno explicito (void).                                       */
+/******************************************************************************/
+inline void initialize_named_eq136_global_blocks(CoupledBetaSystem &out)
+{
+    out.P_tt = DenseMat(out.nt);
+    out.P_zz = DenseMat(out.nz);
+    out.Q_tt = DenseMat(out.nt);
+    out.Q_tz = DenseRectMat(out.nt, out.nz);
+    out.Q_zt = DenseRectMat(out.nz, out.nt);
+    out.Q_zz = DenseMat(out.nz);
+}
+
+/******************************************************************************/
+/* FUNCAO: assemble_eq136_global_from_named_blocks                            */
+/* DESCRICAO: Fecha explicitamente a Eq. (136) a partir dos blocos nomeados,  */
+/* preservando a leitura didatica P=[tt 0; 0 zz] e Q=[tt tz; zt zz].          */
+/* ENTRADA: out: CoupledBetaSystem &.                                         */
+/* SAIDA: sem retorno explicito (void).                                       */
+/******************************************************************************/
+inline void assemble_eq136_global_from_named_blocks(CoupledBetaSystem &out)
+{
+    const int N = out.nt + out.nz;
+    out.P = DenseMat(N);
+    out.Q = DenseMat(N);
+
+    add_block_scaled(out.P, 0, 0, out.P_tt, +1.0);
+    add_block_scaled(out.P, out.nt, out.nt, out.P_zz, +1.0);
+
+    add_block_scaled(out.Q, 0, 0, out.Q_tt, +1.0);
+    add_rect_block_to_dense(out.Q, 0, out.nt, out.Q_tz, +1.0);
+    add_rect_block_to_dense(out.Q, out.nt, 0, out.Q_zt, +1.0);
+    add_block_scaled(out.Q, out.nt, out.nt, out.Q_zz, +1.0);
+}
+
+/******************************************************************************/
+/* FUNCAO: assemble_coupling_block_C_named                                    */
+/* DESCRICAO: Monta explicitamente os blocos retangulares Et-Ez e Ez-Et do    */
+/* acoplamento vetorial-escalar, preservando a estrutura nomeada do sistema   */
+/* global antes do fechamento das matrizes completas.                         */
+/* ENTRADA: top_right: DenseRectMat &; bottom_left: DenseRectMat &;           */
+/* coeff_top_right: double; coeff_bottom_left: double; mesh: const Mesh2D &;  */
+/* ed: const EdgeDofs &; node_to_dof: const std::vector<int> &; mu_r_tri:     */
+/* const std::vector<double> &; backend: ElementAssemblyBackend.              */
+/* SAIDA: sem retorno explicito (void).                                       */
+/******************************************************************************/
+void assemble_coupling_block_C_named(
+    DenseRectMat &top_right,
+    DenseRectMat &bottom_left,
     double coeff_top_right,
     double coeff_bottom_left,
     const Mesh2D &mesh,
@@ -194,9 +294,9 @@ void assemble_coupling_block_C(
 {
     // Monta o bloco C e seu acoplamento transposto com orientacao:
     //   C_mj = int (1/mu_r) W_m . grad(N_j) dA
-    // e escreve:
-    //   bloco sup-dir  += coeff_top_right  * C
-    //   bloco inf-esq  += coeff_bottom_left* C_orientado^T
+    // e escreve explicitamente:
+    //   bloco Et-Ez += coeff_top_right   * C
+    //   bloco Ez-Et += coeff_bottom_left * C_orientado^T
     for (int tid = 0; tid < (int)mesh.tris.size(); ++tid)
     {
         const Tri &t = mesh.tris[(size_t)tid];
@@ -264,8 +364,8 @@ void assemble_coupling_block_C(
                     continue;
 
                 const double cij = (double)sgn * C_loc[m][j];
-                full(I, nt + J) += coeff_top_right * cij;
-                full(nt + J, I) += coeff_bottom_left * cij;
+                top_right(I, J) += coeff_top_right * cij;
+                bottom_left(J, I) += coeff_bottom_left * cij;
             }
         }
     }
@@ -328,8 +428,8 @@ void assemble_wavenumber_system_closed_form(
                     continue;
 
                 const double sign = static_cast<double>(sgn_m * sgn_n);
-                out.A(I, J) += sign * blk.A_tt[m][n];
-                out.B(I, J) += sign * blk.B_tt[m][n];
+                out.A_tt(I, J) += sign * blk.A_tt[m][n];
+                out.B_tt(I, J) += sign * blk.B_tt[m][n];
             }
         }
 
@@ -346,8 +446,8 @@ void assemble_wavenumber_system_closed_form(
                 if (J < 0)
                     continue;
 
-                out.A(out.nt + I, out.nt + J) += blk.A_zz[i][j];
-                out.B(out.nt + I, out.nt + J) += blk.B_zz[i][j];
+                out.A_zz(I, J) += blk.A_zz[i][j];
+                out.B_zz(I, J) += blk.B_zz[i][j];
             }
         }
 
@@ -366,7 +466,7 @@ void assemble_wavenumber_system_closed_form(
                 if (J < 0)
                     continue;
 
-                out.A(I, out.nt + J) += static_cast<double>(sgn_m) * blk.A_tz[m][j];
+                out.A_tz(I, J) += static_cast<double>(sgn_m) * blk.A_tz[m][j];
             }
         }
 
@@ -385,7 +485,7 @@ void assemble_wavenumber_system_closed_form(
                 if (J < 0)
                     continue;
 
-                out.A(out.nt + I, J) += static_cast<double>(sgn_n) * blk.A_zt[i][n];
+                out.A_zt(I, J) += static_cast<double>(sgn_n) * blk.A_zt[i][n];
             }
         }
     }
@@ -448,8 +548,8 @@ void assemble_beta_system_closed_form(
                     continue;
 
                 const double sign = static_cast<double>(sgn_m * sgn_n);
-                out.P(I, J) += sign * blk.P_tt[m][n];
-                out.Q(I, J) += sign * blk.Q_tt[m][n];
+                out.P_tt(I, J) += sign * blk.P_tt[m][n];
+                out.Q_tt(I, J) += sign * blk.Q_tt[m][n];
             }
         }
 
@@ -466,8 +566,8 @@ void assemble_beta_system_closed_form(
                 if (J < 0)
                     continue;
 
-                out.P(out.nt + I, out.nt + J) += blk.P_zz[i][j];
-                out.Q(out.nt + I, out.nt + J) += blk.Q_zz[i][j];
+                out.P_zz(I, J) += blk.P_zz[i][j];
+                out.Q_zz(I, J) += blk.Q_zz[i][j];
             }
         }
 
@@ -486,7 +586,7 @@ void assemble_beta_system_closed_form(
                 if (J < 0)
                     continue;
 
-                out.Q(I, out.nt + J) += static_cast<double>(sgn_m) * blk.Q_tz[m][j];
+                out.Q_tz(I, J) += static_cast<double>(sgn_m) * blk.Q_tz[m][j];
             }
         }
 
@@ -505,7 +605,7 @@ void assemble_beta_system_closed_form(
                 if (J < 0)
                     continue;
 
-                out.Q(out.nt + I, J) += static_cast<double>(sgn_n) * blk.Q_zt[i][n];
+                out.Q_zt(I, J) += static_cast<double>(sgn_n) * blk.Q_zt[i][n];
             }
         }
     }
@@ -539,10 +639,7 @@ CoupledWaveNumberSystem build_coupled_wavenumber_system_E(
     out.scal = std::move(ctx.scal);
     out.nt = ctx.nt;
     out.nz = ctx.nz;
-
-    const int N = out.nt + out.nz;
-    out.A = DenseMat(N);
-    out.B = DenseMat(N);
+    initialize_named_eq119_global_blocks(out);
 
     const double beta2 = beta * beta;
 
@@ -550,6 +647,7 @@ CoupledWaveNumberSystem build_coupled_wavenumber_system_E(
     {
         // Caminho explicitamente rastreavel pelas Eq. (120)-(125).
         assemble_wavenumber_system_closed_form(out, mesh, beta, eps_r_tri, mu_r_tri);
+        assemble_eq119_global_from_named_blocks(out);
         return out;
     }
 
@@ -563,22 +661,22 @@ CoupledWaveNumberSystem build_coupled_wavenumber_system_E(
     // Na numeracao do artigo, este e o sistema global da Eq. (119).
 
     // Eq. (120): Sel(tt) = (1/mu)curlcurl + beta^2 (1/mu) massa_t.
-    add_block_scaled(out.A, 0, 0, out.edge.S, +1.0);
-    add_block_scaled(out.A, 0, 0, Bt, +beta2);
+    add_block_scaled(out.A_tt, 0, 0, out.edge.S, +1.0);
+    add_block_scaled(out.A_tt, 0, 0, Bt, +beta2);
 
     // Eq. (124): Tel(tt) = eps_r * massa_t.
-    add_block_scaled(out.B, 0, 0, out.edge.T, +1.0);
+    add_block_scaled(out.B_tt, 0, 0, out.edge.T, +1.0);
 
     // Eq. (123): Sel(zz) = beta^2 (1/mu) * grad-grad.
-    add_block_scaled(out.A, out.nt, out.nt, out.scal.S, +beta2);
+    add_block_scaled(out.A_zz, 0, 0, out.scal.S, +beta2);
 
     // Eq. (125): Tel(zz) = beta^2 * eps_r * massa_z.
-    add_block_scaled(out.B, out.nt, out.nt, out.scal.T, +beta2);
+    add_block_scaled(out.B_zz, 0, 0, out.scal.T, +beta2);
 
     // Eq. (121)-(122): Sel(tz) e Sel(zt) com acoplamento +beta^2/mu.
-    assemble_coupling_block_C(
-        out.A,
-        out.nt,
+    assemble_coupling_block_C_named(
+        out.A_tz,
+        out.A_zt,
         +beta2,
         +beta2,
         mesh,
@@ -587,6 +685,7 @@ CoupledWaveNumberSystem build_coupled_wavenumber_system_E(
         mu_r_tri,
         backend);
 
+    assemble_eq119_global_from_named_blocks(out);
     return out;
 }
 
@@ -622,10 +721,7 @@ CoupledBetaSystem build_coupled_beta_system_E(
     out.scal = std::move(ctx.scal);
     out.nt = ctx.nt;
     out.nz = ctx.nz;
-
-    const int N = out.nt + out.nz;
-    out.P = DenseMat(N);
-    out.Q = DenseMat(N);
+    initialize_named_eq136_global_blocks(out);
 
     const double k02 = k0 * k0;
 
@@ -634,6 +730,7 @@ CoupledBetaSystem build_coupled_beta_system_E(
         // Caminho explicitamente rastreavel pela Eq. (136) e pelos blocos
         // locais Eq. (137)-(142), no rearranjo validado do repositorio.
         assemble_beta_system_closed_form(out, mesh, k0, eps_r_tri, mu_r_tri);
+        assemble_eq136_global_from_named_blocks(out);
         return out;
     }
 
@@ -662,22 +759,22 @@ CoupledBetaSystem build_coupled_beta_system_E(
 
     // Eq. (137), rearranjada para P_tt:
     //   (1/mu)curlcurl - k0^2 eps_r Mt.
-    add_block_scaled(out.P, 0, 0, out.edge.S, +1.0);
-    add_block_scaled(out.P, 0, 0, out.edge.T, -k02);
+    add_block_scaled(out.P_tt, 0, 0, out.edge.S, +1.0);
+    add_block_scaled(out.P_tt, 0, 0, out.edge.T, -k02);
 
     // Eq. (142), termo de massa escalar com k0^2 eps_r, levado para P_zz.
-    add_block_scaled(out.P, out.nt, out.nt, out.scal.T, +k02);
+    add_block_scaled(out.P_zz, 0, 0, out.scal.T, +k02);
 
     // Eq. (141), rearranjada para Q_tt com sinal negativo.
-    add_block_scaled(out.Q, 0, 0, ctx.mt_muinv, -1.0);
+    add_block_scaled(out.Q_tt, 0, 0, ctx.mt_muinv, -1.0);
 
     // Eq. (140), rearranjada para Q_zz = (1/mu) grad-grad.
-    add_block_scaled(out.Q, out.nt, out.nt, out.scal.S, +1.0);
+    add_block_scaled(out.Q_zz, 0, 0, out.scal.S, +1.0);
 
     // Eq. (138)-(139): blocos mistos Q_tz e Q_zt.
-    assemble_coupling_block_C(
-        out.Q,
-        out.nt,
+    assemble_coupling_block_C_named(
+        out.Q_tz,
+        out.Q_zt,
         +1.0,
         +1.0,
         mesh,
@@ -686,5 +783,6 @@ CoupledBetaSystem build_coupled_beta_system_E(
         mu_r_tri,
         backend);
 
+    assemble_eq136_global_from_named_blocks(out);
     return out;
 }

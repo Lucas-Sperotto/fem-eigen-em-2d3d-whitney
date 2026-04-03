@@ -4,7 +4,7 @@
 /* Arquivo: src/helmvec/edge_cli_options.hpp                                  */
 /* Autor: Prof. Lucas Kriesel Sperotto                                        */
 /* E-mail: speroto@unemat.br                                                  */
-/* Versao: 1.0 | Ano: 2026                                                    */
+/* Versao: 2.0 | Ano: 2026                                                    */
 /*****************************************************************************/
 /* Descricao: Utilitarios de linha de comando para os executaveis vetoriais   */
 /* transversais da Secao 2.2.1.                                               */
@@ -28,7 +28,7 @@ namespace helmvec
 
 struct EdgeCliOptions
 {
-    ElementAssemblyBackend backend = ElementAssemblyBackend::GaussianQuadrature;
+    ElementAssemblyBackend backend = ElementAssemblyBackend::ClosedForm;
     bool debug_local_blocks = false;
     bool debug_candidates = false;
     std::vector<std::string> positionals;

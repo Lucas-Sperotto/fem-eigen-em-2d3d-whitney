@@ -4,7 +4,7 @@
 /* Arquivo: src/helm10/main_helm10_coax.cpp                                   */
 /* Autor: Prof. Lucas Kriesel Sperotto                                        */
 /* E-mail: speroto@unemat.br                                                  */
-/* Versao: 1.0 | Ano: 2026                                                    */
+/* Versao: 2.0 | Ano: 2026                                                    */
 /*****************************************************************************/
 /* Descricao: Executavel da formulacao escalar 2D para kc (guia               */
 /* retangular/circular/coaxial).                                              */
@@ -18,7 +18,7 @@
 /* rastreabilidade e validacao.                                               */
 /*****************************************************************************/
 
-#include "core/helm10_scalar_system.hpp"
+#include "article/tp3485_systems.hpp"
 #include "core/io_vtk_sv.hpp"
 #include "core/lapack_eig.hpp"
 #include "core/mesh2d_coax.hpp"
@@ -63,7 +63,7 @@ int main(int argc, char **argv)
     catch (const std::exception &e)
     {
         std::cerr << "Erro ao interpretar argumentos: " << e.what() << "\n";
-        std::cerr << "Uso: ./helm10_coax [nr nt [nmodos]] [--backend gauss|closed-form]"
+        std::cerr << "Uso: ./helm10_coax [nr nt [nmodos]] [--backend closed-form|gauss]"
                   << " [--debug-local-blocks] [--debug-candidates]\n";
         return 2;
     }
@@ -93,7 +93,7 @@ int main(int argc, char **argv)
 
     // Modos TE da formulacao escalar com Neumann.
     timing::Stopwatch stage;
-    const auto sys_te = build_helm10_scalar_system(mesh, ScalarBC::TE_Neumann, cli.backend);
+    const auto sys_te = tp3485::build_eq43_helm10_system(mesh, ScalarBC::TE_Neumann, cli.backend);
     perf.assembly_ms += stage.elapsed_ms();
     stage.reset();
     const auto te = generalized_eigs_sym_vec(sys_te.S, sys_te.T);
@@ -134,7 +134,7 @@ int main(int argc, char **argv)
 
     // Modos TM da formulacao escalar com Dirichlet.
     stage.reset();
-    const auto sys_tm = build_helm10_scalar_system(mesh, ScalarBC::TM_Dirichlet, cli.backend);
+    const auto sys_tm = tp3485::build_eq43_helm10_system(mesh, ScalarBC::TM_Dirichlet, cli.backend);
     perf.assembly_ms += stage.elapsed_ms();
     stage.reset();
     const auto tm = generalized_eigs_sym_vec(sys_tm.S, sys_tm.T);

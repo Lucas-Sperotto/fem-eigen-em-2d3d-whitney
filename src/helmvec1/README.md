@@ -77,9 +77,14 @@ Para conectar o artigo ao codigo, a trilha principal deste modulo e:
    `src/explicit/tri2d_edge_explicit.hpp`
 2. Eq. `(30)` e Eq. `(33)` -> bloco escalar longitudinal em
    `src/explicit/tri2d_scalar_explicit.hpp`
-3. Eq. `(92)` -> sistema global misto montado em
+3. Eq. `(92)` -> blocos nomeados `St`, `Tt`, `Sz`, `Tz` preservados em
+   `MixedSystem92`, em `src/helmvec1/helmvec1_mixed_system.hpp`
+4. entrada publica didatica da Eq. `(92)` ->
+   `tp3485::build_eq92_helmvec1_system_E/H(...)` em
+   `src/article/tp3485_systems.hpp`
+5. Eq. `(92)` -> sistema global misto montado em
    `src/helmvec1/helmvec1_mixed_system.cpp`
-4. funcoes de montagem principais ->
+6. funcoes de montagem principais subjacentes ->
    `build_system92_E(...)` e `build_system92_H(...)`
 
 ## 3) Formulacao E e formulacao H
@@ -180,36 +185,38 @@ Como os sistemas montados sao simetricos:
 Retangular:
 
 ```bash
-./build/mixed_rect 12 6 --backend gauss
+./build/mixed_rect 12 6
 ```
 
 Circular:
 
 ```bash
-./build/mixed_circle 10 48 --backend gauss
+./build/mixed_circle 10 48
 ```
 
 Coaxial:
 
 ```bash
-./build/mixed_coax 10 48 --backend gauss
+./build/mixed_coax 10 48
 ```
 
 ## 7.1) Backends e depuracao
 
 Flags disponiveis:
 
-- `--backend gauss`
 - `--backend closed-form`
+- `--backend gauss`
 - `--debug-local-blocks`
 - `--debug-candidates`
 - `--debug` ou `--debug-all`
+
+Sem `--backend`, o padrao publico do executavel e `closed-form`.
 
 Exemplos:
 
 ```bash
 ./build/mixed_rect 12 6 --backend closed-form --debug-local-blocks --debug-candidates
-./build/mixed_circle 10 48 --backend gauss --debug-candidates
+./build/mixed_circle 10 48 --debug-candidates
 ./build/mixed_coax 10 48 --backend closed-form --debug-local-blocks
 ```
 
@@ -219,6 +226,8 @@ Interpretacao:
   triangulo que alimentam a Eq. `(92)`;
 - `--debug-candidates`: imprime os candidatos separados por bloco dominante
   antes da tabela final.
+- os blocos globais nomeados `St`, `Tt`, `Sz` e `Tz` permanecem disponiveis em
+  `MixedSystem92` para leitura didatica direta da Eq. `(92)`.
 
 ## 8) Saidas tipicas
 

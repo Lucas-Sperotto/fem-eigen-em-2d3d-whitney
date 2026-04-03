@@ -1,5 +1,7 @@
 # `fem3d1` - Solver vetorial 3D com montagem esparsa simetrica (Sec. 3.1)
 
+Versao didatica: `2.0`
+
 `fem3d1` usa a mesma formulacao de `fem3d0`, mas com acumulacao em
 armazenamento esparso simetrico (`SparseSymMat`).
 
@@ -22,7 +24,10 @@ Arquivo principal:
 ## 2) Pipeline numerico
 
 1. Montagem esparsa:
-   - `build_helm3d_edge_system_sparse(...)`
+   - `tp3485::build_eq178_fem3d_system_sparse(...)`
+   - chamada interna: `build_helm3d_edge_system_sparse(...)`
+   - inicializacao: `initialize_eq178_sparse_global_system(...)`
+   - fechamento: `assemble_eq178_global_sparse(...)`
 2. Conversao para denso:
    - `S = sparse.S.to_dense()`,
    - `T = sparse.T.to_dense()`.
@@ -67,7 +72,11 @@ Na linguagem das equacoes do artigo:
 
 - Eq. `(181)` fornece o bloco local de rigidez `Sel`
 - Eq. `(182)` fornece o bloco local de massa `Tel`
+- Eq. `(178)` no tetraedro -> `build_eq178_local_tet_blocks(...)`
+- Eq. `(178)` na montagem compartilhada -> `assemble_eq178_global_generic(...)`
+- Eq. `(178)` no fechamento esparso -> `assemble_eq178_global_sparse(...)`
 - Eq. `(178)` e o problema global montado em formato esparso
+- entrada pública didática -> `tp3485::build_eq178_fem3d_system_sparse(...)`
 
 A diferenca deste modulo esta apenas na estrutura de armazenamento global
 (`SparseSymMat`), nao na formulacao matematica local.
@@ -83,6 +92,7 @@ A diferenca deste modulo esta apenas na estrutura de armazenamento global
 Defaults do executavel:
 - sem flags: roda `--air` e `--half`.
 - com `--nx --ny --nz`: sobrescreve malha padrao do caso selecionado.
+- sem `--backend`: usa `closed-form` como fluxo publico padrao.
 
 ## 4) Uso
 

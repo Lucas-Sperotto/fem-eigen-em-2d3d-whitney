@@ -4,7 +4,7 @@
 /* Arquivo: src/helmvec2/coupled_cli_options.hpp                              */
 /* Autor: Prof. Lucas Kriesel Sperotto                                        */
 /* E-mail: speroto@unemat.br                                                  */
-/* Versao: 1.0 | Ano: 2026                                                    */
+/* Versao: 2.0 | Ano: 2026                                                    */
 /*****************************************************************************/
 /* Descricao: Utilitarios de linha de comando para os executaveis acoplados   */
 /* das secoes 2.2.3 e 2.2.4.                                                  */
@@ -25,7 +25,7 @@ namespace helmvec2
 
 struct CoupledCliOptions
 {
-    ElementAssemblyBackend backend = ElementAssemblyBackend::GaussianQuadrature;
+    ElementAssemblyBackend backend = ElementAssemblyBackend::ClosedForm;
     bool debug_local_blocks = false;
     bool debug_candidates = false;
     std::vector<std::string> positionals;

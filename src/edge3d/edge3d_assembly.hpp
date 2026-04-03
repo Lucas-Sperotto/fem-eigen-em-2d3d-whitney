@@ -4,7 +4,7 @@
 /* Arquivo: src/edge3d/edge3d_assembly.hpp                                    */
 /* Autor: Prof. Lucas Kriesel Sperotto                                        */
 /* E-mail: speroto@unemat.br                                                  */
-/* Versao: 1.0 | Ano: 2026                                                    */
+/* Versao: 2.0 | Ano: 2026                                                    */
 /*****************************************************************************/
 /* Descricao: Nucleo 3D de elementos de aresta tetraedricos (Whitney 1-form) e*/
 /* montagem.                                                                  */
@@ -33,7 +33,7 @@ struct EdgeSystem3D
   // (Secao 3.1; integrandos associados aos termos I1..I10).
   // Na numeracao do artigo, esta e a forma global da Eq. (178), equivalente
   // ao papel desempenhado pelos programas FEM3D0/FEM3D1 do apendice.
-  DenseMat S, T;
+  DenseMat S, T; // Eq. (178): operadores globais densos
   EdgeDofs3D ed;
 };
 
@@ -41,7 +41,7 @@ struct EdgeSystem3DSparse
 {
   // Mesmo problema Sx=lambdaTx, mas armazenado no formato esparso simetrico
   // (apenas triangular inferior) para reduzir memoria em malhas grandes.
-  SparseSymMat S, T;
+  SparseSymMat S, T; // Eq. (178): operadores globais esparsos simetricos
   EdgeDofs3D ed;
 };
 
@@ -58,7 +58,7 @@ EdgeSystem3D build_helm3d_edge_system(
     const Mesh3D &mesh,
     double eps_r = 1.0,
     double mu_r = 1.0,
-    ElementAssemblyBackend backend = ElementAssemblyBackend::GaussianQuadrature);
+    ElementAssemblyBackend backend = ElementAssemblyBackend::ClosedForm);
 
 /******************************************************************************/
 /* FUNCAO: build_helm3d_edge_system                                           */
@@ -72,7 +72,7 @@ EdgeSystem3D build_helm3d_edge_system(
     Edge3DBC bc,
     double eps_r = 1.0,
     double mu_r = 1.0,
-    ElementAssemblyBackend backend = ElementAssemblyBackend::GaussianQuadrature);
+    ElementAssemblyBackend backend = ElementAssemblyBackend::ClosedForm);
 
 /******************************************************************************/
 /* FUNCAO: build_helm3d_edge_system                                           */
@@ -87,7 +87,7 @@ EdgeSystem3D build_helm3d_edge_system(
     Edge3DBC bc,
     const std::vector<double> &eps_r_tet,
     const std::vector<double> &mu_r_tet,
-    ElementAssemblyBackend backend = ElementAssemblyBackend::GaussianQuadrature);
+    ElementAssemblyBackend backend = ElementAssemblyBackend::ClosedForm);
 
 /******************************************************************************/
 /* FUNCAO: build_helm3d_edge_system_sparse                                    */
@@ -104,4 +104,4 @@ EdgeSystem3DSparse build_helm3d_edge_system_sparse(
     Edge3DBC bc,
     const std::vector<double> &eps_r_tet,
     const std::vector<double> &mu_r_tet,
-    ElementAssemblyBackend backend = ElementAssemblyBackend::GaussianQuadrature);
+    ElementAssemblyBackend backend = ElementAssemblyBackend::ClosedForm);

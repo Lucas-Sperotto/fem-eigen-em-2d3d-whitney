@@ -4,7 +4,7 @@
 /* Arquivo: src/fem3d1/main_fem3d1_rect.cpp                                   */
 /* Autor: Prof. Lucas Kriesel Sperotto                                        */
 /* E-mail: speroto@unemat.br                                                  */
-/* Versao: 1.0 | Ano: 2026                                                    */
+/* Versao: 2.0 | Ano: 2026                                                    */
 /*****************************************************************************/
 /* Descricao: Driver FEM3D1 (montagem esparsa/simetrica) para cavidades 3D.   */
 /*****************************************************************************/
@@ -17,6 +17,7 @@
 /* rastreabilidade e validacao.                                               */
 /*****************************************************************************/
 
+#include "article/tp3485_systems.hpp"
 #include "core/lapack_eig.hpp"
 #include "core/timing_utils.hpp"
 #include "edge3d/edge3d_assembly.hpp"
@@ -48,7 +49,7 @@ timing::Breakdown run_sparse_case(
   // 2) usa estrutura esparsa para reduzir memoria;
   // 3) converte para denso no fallback LAPACK desta implementacao.
   timing::Stopwatch stage;
-  const auto sparse = build_helm3d_edge_system_sparse(
+  const auto sparse = tp3485::build_eq178_fem3d_system_sparse(
       c.mesh,
       Edge3DBC::PEC_TangentialZero,
       c.eps_r_tet,

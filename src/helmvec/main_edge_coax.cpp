@@ -4,7 +4,7 @@
 /* Arquivo: src/helmvec/main_edge_coax.cpp                                    */
 /* Autor: Prof. Lucas Kriesel Sperotto                                        */
 /* E-mail: speroto@unemat.br                                                  */
-/* Versao: 1.0 | Ano: 2026                                                    */
+/* Versao: 2.0 | Ano: 2026                                                    */
 /*****************************************************************************/
 /* Descricao: Executavel da formulacao vetorial transversal com elementos de  */
 /* aresta.                                                                    */
@@ -17,6 +17,7 @@
 /* rastreabilidade e validacao.                                               */
 /*****************************************************************************/
 
+#include "article/tp3485_systems.hpp"
 #include "core/io_vtk_sv.hpp"
 #include "core/lapack_eig.hpp"
 #include "core/mesh2d_coax.hpp"
@@ -64,7 +65,7 @@ static timing::Breakdown run_case(
     std::cout << "\n[" << title << "]\n";
 
     timing::Stopwatch stage;
-    const auto sys = build_helm10_edge_system(mesh, bc, 1.0, 1.0, backend);
+    const auto sys = tp3485::build_eq65_helmvec_system(mesh, bc, 1.0, 1.0, backend);
     perf.assembly_ms += stage.elapsed_ms();
     std::cout << "edges=" << sys.ed.edges.size()
               << " edge_dofs=" << sys.ed.ndof << "\n";
@@ -176,7 +177,7 @@ int main(int argc, char **argv)
     catch (const std::exception &e)
     {
         std::cerr << "Erro ao interpretar argumentos: " << e.what() << "\n";
-        std::cerr << "Uso: ./edge_coax [nr nt [nmodos]] [--backend gauss|closed-form]"
+        std::cerr << "Uso: ./edge_coax [nr nt [nmodos]] [--backend closed-form|gauss]"
                   << " [--debug-local-blocks] [--debug-candidates]\n";
         return 2;
     }

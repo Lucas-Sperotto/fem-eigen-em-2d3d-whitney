@@ -4,7 +4,7 @@
 /* Arquivo: src/helmvec3/main_helmvec3_rect.cpp                               */
 /* Autor: Prof. Lucas Kriesel Sperotto                                        */
 /* E-mail: speroto@unemat.br                                                  */
-/* Versao: 1.0 | Ano: 2026                                                    */
+/* Versao: 2.0 | Ano: 2026                                                    */
 /*****************************************************************************/
 /* Descricao: Sistema acoplado vetorial+escalar para obter beta dado k0.      */
 /*****************************************************************************/
@@ -17,6 +17,7 @@
 /* rastreabilidade e validacao.                                               */
 /*****************************************************************************/
 
+#include "article/tp3485_systems.hpp"
 #include "core/lapack_eig.hpp"
 #include "core/mesh2d.hpp"
 #include "core/mesh2d_rect.hpp"
@@ -129,7 +130,7 @@ std::vector<double> beta_ratio_candidates_from_k0(
     timing::Breakdown *perf = nullptr)
 {
     timing::Stopwatch stage;
-    auto sys = build_coupled_beta_system_E(mesh, k0, eps, mu, backend);
+    auto sys = tp3485::build_eq136_helmvec3_system_E(mesh, k0, eps, mu, backend);
     if (perf != nullptr)
         perf->assembly_ms += stage.elapsed_ms();
     stage.reset();
@@ -306,7 +307,7 @@ int main(int argc, char **argv)
     {
         std::cerr << "Erro ao interpretar argumentos: " << e.what() << "\n";
         std::cerr << "Uso: ./helmvec3_rect [d_over_a [nx ny [debug]]]"
-                  << " [--backend gauss|closed-form]"
+                  << " [--backend closed-form|gauss]"
                   << " [--debug-local-blocks] [--debug-candidates]\n";
         return 2;
     }

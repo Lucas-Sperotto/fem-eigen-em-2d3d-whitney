@@ -4,7 +4,7 @@
 /* Arquivo: src/edge3d/edge3d_assembly.cpp                                    */
 /* Autor: Prof. Lucas Kriesel Sperotto                                        */
 /* E-mail: speroto@unemat.br                                                  */
-/* Versao: 1.0 | Ano: 2026                                                    */
+/* Versao: 2.0 | Ano: 2026                                                    */
 /*****************************************************************************/
 /* Descricao: Nucleo 3D de elementos de aresta tetraedricos (Whitney 1-form) e*/
 /* montagem.                                                                  */
@@ -19,6 +19,7 @@
 #include "edge3d_basis.hpp"
 #include "explicit/tet3d_edge_explicit.hpp"
 #include <array>
+#include <cmath>
 #include <stdexcept>
 #include <utility>
 
@@ -42,21 +43,61 @@ constexpr std::array<std::array<double, 4>, 4> kTetQuadP2 = {{
 double dot3(Vec3d a, Vec3d b) { return a.x * b.x + a.y * b.y + a.z * b.z; }
 
 /******************************************************************************/
-/* FUNCAO: assemble_local_3d_element_mats                                     */
-/* DESCRICAO: Monta as matrizes locais do tetraedro 3D escolhendo entre       */
-/* backend por quadratura/cubatura e backend closed-form.                     */
-/* ENTRADA: tg: const TetGeomEdge &; eps_r: double; mu_r: double; backend:    */
-/* ElementAssemblyBackend; Sel: double[6][6]; Tel: double[6][6].              */
+/* ESTRUTURA: Eq178TetLocalBlocks3D                                           */
+/* DESCRICAO: Preserva explicitamente os blocos locais Sel/Tel que alimentam  */
+/* a montagem global da Eq. (178).                                            */
+/******************************************************************************/
+struct Eq178TetLocalBlocks3D
+{
+  double Sel[6][6] = {{0.0}};
+  double Tel[6][6] = {{0.0}};
+};
+
+/******************************************************************************/
+/* FUNCAO: validate_tet_material_data                                         */
+/* DESCRICAO: Valida consistencia dos vetores de material por tetraedro antes  */
+/* da montagem global da Eq. (178).                                           */
+/* ENTRADA: mesh: const Mesh3D &; eps_r_tet: const std::vector<double> &;     */
+/* mu_r_tet: const std::vector<double> &.                                     */
 /* SAIDA: sem retorno explicito (void).                                       */
 /******************************************************************************/
-void assemble_local_3d_element_mats(
+void validate_tet_material_data(
+    const Mesh3D &mesh,
+    const std::vector<double> &eps_r_tet,
+    const std::vector<double> &mu_r_tet)
+{
+  if ((int)eps_r_tet.size() != (int)mesh.tets.size())
+    throw std::runtime_error("eps_r_tet.size() != mesh.tets.size()");
+  if ((int)mu_r_tet.size() != (int)mesh.tets.size())
+    throw std::runtime_error("mu_r_tet.size() != mesh.tets.size()");
+
+  for (int i = 0; i < (int)mesh.tets.size(); ++i)
+  {
+    if (!std::isfinite(eps_r_tet[(size_t)i]) || eps_r_tet[(size_t)i] <= 0.0)
+      throw std::runtime_error("eps_r_tet deve ser finito e positivo em todo tetraedro.");
+    if (!std::isfinite(mu_r_tet[(size_t)i]) || std::abs(mu_r_tet[(size_t)i]) < 1e-14)
+      throw std::runtime_error("mu_r_tet deve ser finito e nao nulo em todo tetraedro.");
+  }
+}
+
+/******************************************************************************/
+/* FUNCAO: build_eq178_local_tet_blocks                                       */
+/* DESCRICAO: Monta os blocos locais Sel/Tel do tetraedro 3D escolhendo entre */
+/* backend por quadratura/cubatura e backend closed-form. No caminho          */
+/* closed-form, esta rotina materializa explicitamente as Eq. (181) e (182),  */
+/* que depois alimentam a Eq. (178).                                          */
+/* ENTRADA: tg: const TetGeomEdge &; eps_r: double; mu_r: double; backend:    */
+/* ElementAssemblyBackend.                                                    */
+/* SAIDA: Eq178TetLocalBlocks3D.                                              */
+/******************************************************************************/
+Eq178TetLocalBlocks3D build_eq178_local_tet_blocks(
     const TetGeomEdge &tg,
     double eps_r,
     double mu_r,
-    ElementAssemblyBackend backend,
-    double Sel[6][6],
-    double Tel[6][6])
+    ElementAssemblyBackend backend)
 {
+  Eq178TetLocalBlocks3D blk;
+
   if (backend == ElementAssemblyBackend::ClosedForm)
   {
     // Eq. (181)-(182): caminho totalmente explicito via cofatores da Eq. (162)
@@ -65,9 +106,9 @@ void assemble_local_3d_element_mats(
         tg,
         1.0 / mu_r,
         eps_r,
-        Sel,
-        Tel);
-    return;
+        blk.Sel,
+        blk.Tel);
+    return blk;
   }
 
   // Eq. (176): bloco curl-curl.
@@ -80,7 +121,7 @@ void assemble_local_3d_element_mats(
   for (int i = 0; i < 6; ++i)
   {
     for (int j = 0; j < 6; ++j)
-      Sel[i][j] = (tg.V / mu_r) * dot3(curlW[i], curlW[j]);
+      blk.Sel[i][j] = (tg.V / mu_r) * dot3(curlW[i], curlW[j]);
   }
 
   // Eq. (177): bloco de massa vetorial.
@@ -96,9 +137,11 @@ void assemble_local_3d_element_mats(
     for (int i = 0; i < 6; ++i)
     {
       for (int j = 0; j < 6; ++j)
-        Tel[i][j] += eps_r * w * dot3(W[i], W[j]);
+        blk.Tel[i][j] += eps_r * w * dot3(W[i], W[j]);
     }
   }
+
+  return blk;
 }
 
 /******************************************************************************/
@@ -115,7 +158,7 @@ std::vector<double> uniform_data(int n, double val)
 
 template <typename AddFn>
 /******************************************************************************/
-/* FUNCAO: assemble_generic                                                   */
+/* FUNCAO: assemble_eq178_global_generic                                      */
 /* DESCRICAO: Monta contribuicoes locais 3D e acumula no sistema global       */
 /* conforme politica de armazenamento. Implementa a formulacao vetorial 3D da */
 /* Secao 3.1, incluindo os termos equivalentes aos coeficientes I1..I10. Ao   */
@@ -126,7 +169,7 @@ template <typename AddFn>
 /* AddFn.                                                                     */
 /* SAIDA: sem retorno explicito (void).                                       */
 /******************************************************************************/
-void assemble_generic(
+void assemble_eq178_global_generic(
     const Mesh3D &mesh,
     const EdgeDofs3D &ed,
     const std::vector<double> &eps_r_tet,
@@ -142,10 +185,7 @@ void assemble_generic(
     const double eps_r = eps_r_tet[(size_t)tid];
     const double mu_r = mu_r_tet[(size_t)tid];
 
-    double Sel[6][6] = {{0.0}};
-    double Tel[6][6] = {{0.0}};
-
-    assemble_local_3d_element_mats(tg, eps_r, mu_r, backend, Sel, Tel);
+    const auto blk = build_eq178_local_tet_blocks(tg, eps_r, mu_r, backend);
 
     for (int li = 0; li < 6; ++li)
     {
@@ -167,10 +207,99 @@ void assemble_generic(
         // a direcao local (tetra) deve respeitar a orientacao global do DOF.
         // O fator sgn_i*sgn_j preserva continuidade tangencial entre elementos.
         const double s = (double)(sgn_i * sgn_j);
-        add_global(I, J, s * Sel[li][lj], s * Tel[li][lj]);
+        add_global(I, J, s * blk.Sel[li][lj], s * blk.Tel[li][lj]);
       }
     }
   }
+}
+
+/******************************************************************************/
+/* FUNCAO: initialize_eq178_dense_global_system                               */
+/* DESCRICAO: Dimensiona explicitamente os operadores globais S e T da        */
+/* Eq. (178) no fluxo denso.                                                  */
+/* ENTRADA: out: EdgeSystem3D &.                                              */
+/* SAIDA: sem retorno explicito (void).                                       */
+/******************************************************************************/
+inline void initialize_eq178_dense_global_system(EdgeSystem3D &out)
+{
+  out.S = DenseMat(out.ed.ndof);
+  out.T = DenseMat(out.ed.ndof);
+}
+
+/******************************************************************************/
+/* FUNCAO: initialize_eq178_sparse_global_system                              */
+/* DESCRICAO: Dimensiona explicitamente os operadores globais S e T da        */
+/* Eq. (178) no fluxo esparso simetrico.                                      */
+/* ENTRADA: out: EdgeSystem3DSparse &.                                        */
+/* SAIDA: sem retorno explicito (void).                                       */
+/******************************************************************************/
+inline void initialize_eq178_sparse_global_system(EdgeSystem3DSparse &out)
+{
+  out.S = SparseSymMat(out.ed.ndof);
+  out.T = SparseSymMat(out.ed.ndof);
+}
+
+/******************************************************************************/
+/* FUNCAO: assemble_eq178_global_dense                                        */
+/* DESCRICAO: Fecha explicitamente a Eq. (178) no fluxo denso, acumulando os  */
+/* blocos locais Sel/Tel nos operadores globais S e T.                        */
+/* ENTRADA: out: EdgeSystem3D &; mesh: const Mesh3D &; eps_r_tet: const       */
+/* std::vector<double> &; mu_r_tet: const std::vector<double> &; backend:     */
+/* ElementAssemblyBackend.                                                    */
+/* SAIDA: sem retorno explicito (void).                                       */
+/******************************************************************************/
+void assemble_eq178_global_dense(
+    EdgeSystem3D &out,
+    const Mesh3D &mesh,
+    const std::vector<double> &eps_r_tet,
+    const std::vector<double> &mu_r_tet,
+    ElementAssemblyBackend backend)
+{
+  assemble_eq178_global_generic(
+      mesh,
+      out.ed,
+      eps_r_tet,
+      mu_r_tet,
+      backend,
+      [&](int I, int J, double s_ij, double t_ij)
+      {
+        out.S(I, J) += s_ij;
+        out.T(I, J) += t_ij;
+      });
+}
+
+/******************************************************************************/
+/* FUNCAO: assemble_eq178_global_sparse                                       */
+/* DESCRICAO: Fecha explicitamente a Eq. (178) no fluxo esparso simetrico,    */
+/* acumulando apenas a metade inferior dos operadores globais S e T.          */
+/* ENTRADA: out: EdgeSystem3DSparse &; mesh: const Mesh3D &; eps_r_tet: const */
+/* std::vector<double> &; mu_r_tet: const std::vector<double> &; backend:     */
+/* ElementAssemblyBackend.                                                    */
+/* SAIDA: sem retorno explicito (void).                                       */
+/******************************************************************************/
+void assemble_eq178_global_sparse(
+    EdgeSystem3DSparse &out,
+    const Mesh3D &mesh,
+    const std::vector<double> &eps_r_tet,
+    const std::vector<double> &mu_r_tet,
+    ElementAssemblyBackend backend)
+{
+  assemble_eq178_global_generic(
+      mesh,
+      out.ed,
+      eps_r_tet,
+      mu_r_tet,
+      backend,
+      [&](int I, int J, double s_ij, double t_ij)
+      {
+        // assemble_eq178_global_generic visita (I,J) e (J,I); no
+        // armazenamento simetrico guardamos apenas a parte inferior.
+        if (I >= J)
+        {
+          out.S.add(I, J, s_ij);
+          out.T.add(I, J, t_ij);
+        }
+      });
 }
 
 } // namespace
@@ -230,29 +359,15 @@ EdgeSystem3D build_helm3d_edge_system(
     const std::vector<double> &mu_r_tet,
     ElementAssemblyBackend backend)
 {
-  if ((int)eps_r_tet.size() != (int)mesh.tets.size())
-    throw std::runtime_error("eps_r_tet.size() != mesh.tets.size()");
-  if ((int)mu_r_tet.size() != (int)mesh.tets.size())
-    throw std::runtime_error("mu_r_tet.size() != mesh.tets.size()");
+  validate_tet_material_data(mesh, eps_r_tet, mu_r_tet);
 
   EdgeSystem3D out;
   out.ed = build_edge_dofs_3d(mesh, bc);
-  out.S = DenseMat(out.ed.ndof);
-  out.T = DenseMat(out.ed.ndof);
+  initialize_eq178_dense_global_system(out);
 
   // Montagem global densa do problema Sx=lambdaTx.
   // Na numeracao do artigo, a matriz final resultante corresponde a Eq. (178).
-  assemble_generic(
-      mesh,
-      out.ed,
-      eps_r_tet,
-      mu_r_tet,
-      backend,
-      [&](int I, int J, double s_ij, double t_ij)
-      {
-        out.S(I, J) += s_ij;
-        out.T(I, J) += t_ij;
-      });
+  assemble_eq178_global_dense(out, mesh, eps_r_tet, mu_r_tet, backend);
 
   return out;
 }
@@ -273,33 +388,14 @@ EdgeSystem3DSparse build_helm3d_edge_system_sparse(
     const std::vector<double> &mu_r_tet,
     ElementAssemblyBackend backend)
 {
-  if ((int)eps_r_tet.size() != (int)mesh.tets.size())
-    throw std::runtime_error("eps_r_tet.size() != mesh.tets.size()");
-  if ((int)mu_r_tet.size() != (int)mesh.tets.size())
-    throw std::runtime_error("mu_r_tet.size() != mesh.tets.size()");
+  validate_tet_material_data(mesh, eps_r_tet, mu_r_tet);
 
   EdgeSystem3DSparse out;
   out.ed = build_edge_dofs_3d(mesh, bc);
-  out.S = SparseSymMat(out.ed.ndof);
-  out.T = SparseSymMat(out.ed.ndof);
+  initialize_eq178_sparse_global_system(out);
 
   // Montagem global esparsa simetrica (triangulo inferior).
-  assemble_generic(
-      mesh,
-      out.ed,
-      eps_r_tet,
-      mu_r_tet,
-      backend,
-      [&](int I, int J, double s_ij, double t_ij)
-      {
-        // assemble_generic visita (I,J) e (J,I); no armazenamento simetrico
-        // guardamos apenas a parte inferior para nao dobrar off-diagonais.
-        if (I >= J)
-        {
-          out.S.add(I, J, s_ij);
-          out.T.add(I, J, t_ij);
-        }
-      });
+  assemble_eq178_global_sparse(out, mesh, eps_r_tet, mu_r_tet, backend);
 
   return out;
 }

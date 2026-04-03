@@ -4,7 +4,7 @@
 /* Arquivo: src/helmvec2/helmvec2_coupled_system.hpp                          */
 /* Autor: Prof. Lucas Kriesel Sperotto                                        */
 /* E-mail: speroto@unemat.br                                                  */
-/* Versao: 1.0 | Ano: 2026                                                    */
+/* Versao: 2.0 | Ano: 2026                                                    */
 /*****************************************************************************/
 /* Descricao: Sistema acoplado vetorial+escalar para obter k0 dado beta.      */
 /*****************************************************************************/
@@ -21,6 +21,28 @@
 #include "core/mesh2d.hpp"
 #include "edge/edge_assembly.hpp"
 #include <vector>
+
+struct DenseRectMat
+{
+    int nr = 0;
+    int nc = 0;
+    std::vector<double> a; // row-major nr x nc
+
+    DenseRectMat() = default;
+    DenseRectMat(int nr_, int nc_) : nr(nr_), nc(nc_), a((size_t)nr_ * nc_, 0.0) {}
+
+    double &operator()(int i, int j)
+    {
+        assert(i >= 0 && i < nr && j >= 0 && j < nc);
+        return a[(size_t)i * nc + j];
+    }
+
+    double operator()(int i, int j) const
+    {
+        assert(i >= 0 && i < nr && j >= 0 && j < nc);
+        return a[(size_t)i * nc + j];
+    }
+};
 
 struct CoupledWaveNumberSystem
 {
@@ -40,6 +62,12 @@ struct CoupledWaveNumberSystem
     // em FORTRAN.
     DenseMat A;
     DenseMat B;
+    DenseMat A_tt;     // Eq. (120): bloco Et-Et no operador A
+    DenseRectMat A_tz; // Eq. (121): bloco Et-Ez no operador A
+    DenseRectMat A_zt; // Eq. (122): bloco Ez-Et no operador A
+    DenseMat A_zz;     // Eq. (123): bloco Ez-Ez no operador A
+    DenseMat B_tt;     // Eq. (124): bloco Et-Et no operador B
+    DenseMat B_zz;     // Eq. (125): bloco Ez-Ez no operador B
     int nt = 0; // numero de DOFs de aresta no bloco Et
     int nz = 0; // numero de DOFs nodais no bloco Ez
 
@@ -63,6 +91,12 @@ struct CoupledBetaSystem
     //        Q_zt      Q_zz]
     DenseMat P;
     DenseMat Q;
+    DenseMat P_tt;     // Eq. (137): bloco Et-Et no operador P
+    DenseMat P_zz;     // parcela de Eq. (142) levada para o operador P
+    DenseMat Q_tt;     // forma rearranjada validada do bloco Et-Et em Q
+    DenseRectMat Q_tz; // Eq. (138): bloco Et-Ez no operador Q
+    DenseRectMat Q_zt; // Eq. (139): bloco Ez-Et no operador Q
+    DenseMat Q_zz;     // Eq. (140): bloco Ez-Ez no operador Q
     int nt = 0; // numero de DOFs de aresta no bloco Et
     int nz = 0; // numero de DOFs nodais no bloco Ez
 
@@ -93,7 +127,7 @@ CoupledWaveNumberSystem build_coupled_wavenumber_system_E(
     double beta,
     const std::vector<double> &eps_r_tri,
     const std::vector<double> &mu_r_tri,
-    ElementAssemblyBackend backend = ElementAssemblyBackend::GaussianQuadrature);
+    ElementAssemblyBackend backend = ElementAssemblyBackend::ClosedForm);
 
 /******************************************************************************/
 /* FUNCAO: build_coupled_beta_system_E                                        */
@@ -112,4 +146,4 @@ CoupledBetaSystem build_coupled_beta_system_E(
     double k0,
     const std::vector<double> &eps_r_tri,
     const std::vector<double> &mu_r_tri,
-    ElementAssemblyBackend backend = ElementAssemblyBackend::GaussianQuadrature);
+    ElementAssemblyBackend backend = ElementAssemblyBackend::ClosedForm);

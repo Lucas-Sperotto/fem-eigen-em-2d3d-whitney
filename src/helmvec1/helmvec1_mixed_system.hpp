@@ -4,7 +4,7 @@
 /* Arquivo: src/helmvec1/helmvec1_mixed_system.hpp                            */
 /* Autor: Prof. Lucas Kriesel Sperotto                                        */
 /* E-mail: speroto@unemat.br                                                  */
-/* Versao: 1.0 | Ano: 2026                                                    */
+/* Versao: 2.0 | Ano: 2026                                                    */
 /*****************************************************************************/
 /* Descricao: Sistema misto vetorial+escalar para kc, separando blocos        */
 /* transverso/longitudinal.                                                   */
@@ -35,6 +35,12 @@ struct MixedSystem92
     DenseMat T; // [Tt  0]
                 // [ 0 Tz]
 
+    // Blocos nomeados da Eq. (92), preservados explicitamente por didatica.
+    DenseMat St; // Eq. (88): bloco vetorial transversal
+    DenseMat Tt; // Eq. (90): massa vetorial transversal
+    DenseMat Sz; // Eq. (89): bloco escalar longitudinal
+    DenseMat Tz; // Eq. (91): massa escalar longitudinal
+
     int nt = 0; // numero de DOFs de aresta (componente transversal)
     int nz = 0; // numero de DOFs escalares (componente longitudinal)
 
@@ -59,7 +65,7 @@ MixedSystem92 build_system92_E(
     const Mesh2D &mesh,
     const std::vector<double> &eps_r_tri,
     const std::vector<double> &mu_r_tri,
-    ElementAssemblyBackend backend = ElementAssemblyBackend::GaussianQuadrature);
+    ElementAssemblyBackend backend = ElementAssemblyBackend::ClosedForm);
 
 // Formulacao em H (Ht, Hz), operador dual por troca eps/mu:
 //   - BC de aresta: mantem arestas de contorno (condicao natural)
@@ -68,4 +74,4 @@ MixedSystem92 build_system92_H(
     const Mesh2D &mesh,
     const std::vector<double> &eps_r_tri,
     const std::vector<double> &mu_r_tri,
-    ElementAssemblyBackend backend = ElementAssemblyBackend::GaussianQuadrature);
+    ElementAssemblyBackend backend = ElementAssemblyBackend::ClosedForm);

@@ -4,7 +4,7 @@
 /* Arquivo: src/fem3d/fem3d_case_driver.hpp                                   */
 /* Autor: Prof. Lucas Kriesel Sperotto                                        */
 /* E-mail: speroto@unemat.br                                                  */
-/* Versao: 1.0 | Ano: 2026                                                    */
+/* Versao: 2.0 | Ano: 2026                                                    */
 /*****************************************************************************/
 /* Descricao: Infraestrutura de comparacao dos casos 3D com tabelas do artigo.*/
 /*****************************************************************************/
@@ -49,7 +49,7 @@ struct CliOptions
   bool run_half = false;
   bool run_cyl = false;
   bool run_sphere = false;
-  ElementAssemblyBackend backend = ElementAssemblyBackend::GaussianQuadrature;
+  ElementAssemblyBackend backend = ElementAssemblyBackend::ClosedForm;
   bool debug_local_blocks = false;
   bool debug_candidates = false;
 
@@ -80,7 +80,7 @@ inline void print_usage(const char *bin_name)
 {
   std::cout << "Usage: " << bin_name
             << " [--air|--half|--cyl|--sphere|--all] [--nx N --ny N --nz N]"
-            << " [--backend gauss|closed-form]"
+            << " [--backend closed-form|gauss]"
             << " [--debug-local-blocks] [--debug-candidates]\n";
 }
 

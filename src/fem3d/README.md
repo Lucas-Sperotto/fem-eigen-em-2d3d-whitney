@@ -1,5 +1,7 @@
 # `fem3d` - Infra compartilhada para casos 3D (Sec. 3.1)
 
+Versao didatica: `2.0`
+
 Este diretorio centraliza componentes comuns usados por:
 - `src/fem3d0` (montagem densa),
 - `src/fem3d1` (montagem esparsa simetrica).
@@ -159,9 +161,23 @@ Para conectar o artigo ao codigo, a trilha principal dos casos 3D e:
 
 1. Eq. `(181)` e Eq. `(182)` -> formas locais closed-form em
    `src/explicit/tet3d_edge_explicit.hpp`
-2. Eq. `(178)` -> sistema global vetorial 3D montado em
+2. Eq. `(178)` no nivel do tetraedro ->
+   `build_eq178_local_tet_blocks(...)` em
    `src/edge3d/edge3d_assembly.cpp`
-3. funcoes de montagem principais ->
+3. Eq. `(178)` na montagem global compartilhada ->
+   `assemble_eq178_global_generic(...)` em
+   `src/edge3d/edge3d_assembly.cpp`
+4. Eq. `(178)` no fechamento por politica de armazenamento ->
+   `assemble_eq178_global_dense(...)` e
+   `assemble_eq178_global_sparse(...)` em
+   `src/edge3d/edge3d_assembly.cpp`
+5. entradas publicas didaticas da Eq. `(178)` ->
+   `tp3485::build_eq178_fem3d_system_dense(...)` e
+   `tp3485::build_eq178_fem3d_system_sparse(...)` em
+   `src/article/tp3485_systems.hpp`
+6. Eq. `(178)` -> sistema global vetorial 3D montado em
+   `src/edge3d/edge3d_assembly.cpp`
+7. funcoes de montagem principais subjacentes ->
    `build_helm3d_edge_system(...)` e
    `build_helm3d_edge_system_sparse(...)`
 
