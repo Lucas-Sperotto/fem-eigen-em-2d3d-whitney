@@ -2,6 +2,8 @@
 
 Este arquivo registra o que foi encontrado nos arquivos antigos de `docs/` e justifica a criacao da pasta `docs/traducao_revisada/`.
 
+Parte dessas inconsistencias ja foi corrigida na trilha principal atual em `docs/`. O objetivo deste registro e historico: preservar o diagnostico da documentacao legada e o motivo das revisoes posteriores.
+
 ## 1. Problemas estruturais graves
 
 - `docs/2.2.3_Determinação do número de onda.md`

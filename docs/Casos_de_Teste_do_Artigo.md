@@ -56,7 +56,7 @@ Os itens abaixo existem no repositório por conveniência de validação ou ampl
 ## Fonte principal usada nesta consolidação
 
 - [2_Problemas_Bidimensionais.md](2_Problemas_Bidimensionais.md)
-- [2.2.md](2.2.md)
+- [2.2_Guia_Nao_Homogeneo.md](2.2_Guia_Nao_Homogeneo.md)
 - [2.2.2_Guias_de_Onda_Nao_Homogeneos_Tres_Componentes.md](2.2.2_Guias_de_Onda_Nao_Homogeneos_Tres_Componentes.md)
 - [2.2.3_Determinação do número de onda.md](2.2.3_Determinação%20do%20número%20de%20onda.md)
 - [2.2.4_Caracteristicas_de_Dispersao_de_Guias_de_Onda.md](2.2.4_Caracteristicas_de_Dispersao_de_Guias_de_Onda.md)

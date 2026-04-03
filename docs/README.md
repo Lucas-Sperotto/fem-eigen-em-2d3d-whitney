@@ -1,86 +1,63 @@
-# Documentacao Teorica
+# Documentação Teórica
 
-Esta pasta concentra a trilha de leitura do artigo NASA TP-3485 dentro do projeto. Os arquivos `.md` na raiz de `docs/` preservam a traducao-base revisada manualmente e agora incluem comentarios complementares, passagens intermediarias entre equacoes, observacoes de consistencia e notas de leitura para estudo.
+Esta pasta reúne a trilha principal de leitura do artigo NASA TP-3485 dentro do projeto. Os arquivos numerados em `docs/` preservam a tradução-base revisada manualmente e receberam notas de leitura, passagens intermediárias entre equações e observações editoriais pontuais.
 
-O principio adotado nesta revisao foi simples: preservar o texto traduzido e apenas acrescentar explicacoes, interpretacoes e alertas onde o desenvolvimento pedia mais clareza.
+## Trilha principal
 
-## Ordem recomendada de leitura
+1. [0.0 Capa](0.0_Capa.md)
+2. [0.1 Sumário](0.1_Sumario.md)
+3. [0.2 Tabelas](0.2_Tabelas.md)
+4. [0.3 Figuras](0.3_Figuras.md)
+5. [0.4 Lista de Símbolos](0.4_Simbolos.md)
+6. [0.5 Abstract e Escopo do Artigo](0.5_Abstract.md)
+7. [1. Introdução](1_Introducao.md)
+8. [2. Problemas Bidimensionais](2_Problemas_Bidimensionais.md)
+9. [2.1 Guias de Onda Homogêneos](2.1_Guias%20de%20Onda%20Homogêneos.md)
+10. [2.2 Guias de Onda Não Homogêneos](2.2_Guia_Nao_Homogeneo.md)
+11. [2.2.1 Campos Vetoriais Transversais](2.2.1_Guia%20de%20Onda%20Campos%20Vetoriais.md)
+12. [2.2.2 Três Componentes](2.2.2_Guias_de_Onda_Nao_Homogeneos_Tres_Componentes.md)
+13. [2.2.3 Determinação do Número de Onda](2.2.3_Determinação%20do%20número%20de%20onda.md)
+14. [2.2.4 Características de Dispersão](2.2.4_Caracteristicas_de_Dispersao_de_Guias_de_Onda.md)
+15. [3. Problemas Tridimensionais](3_Problemas_Tridimensionais.md)
+16. [4. Considerações Finais, Apêndice e Referências](4_Consideracoes_Finais_Apendice_Referencias.md)
+17. [5. Página de Documentação do Relatório](5_Report.md)
 
-1. [0.0_Lista_de_Simbolos.md](0.0_Lista_de_Simbolos.md)
-2. [0_Abstract.md](0_Abstract.md)
-3. [1_Introducao.md](1_Introducao.md)
-4. [2_Problemas_Bidimensionais.md](2_Problemas_Bidimensionais.md)
-5. [2.2.md](2.2.md)
-6. [2.2.2_Guias_de_Onda_Nao_Homogeneos_Tres_Componentes.md](2.2.2_Guias_de_Onda_Nao_Homogeneos_Tres_Componentes.md)
-7. [2.2.3_Determinação do número de onda.md](2.2.3_Determinação%20do%20número%20de%20onda.md)
-8. [2.2.4_Caracteristicas_de_Dispersao_de_Guias_de_Onda.md](2.2.4_Caracteristicas_de_Dispersao_de_Guias_de_Onda.md)
-9. [3_Problemas_Tridimensionais.md](3_Problemas_Tridimensionais.md)
-10. [4_Consideracoes_Finais_Apendice_Referencias.md](4_Consideracoes_Finais_Apendice_Referencias.md)
+Todos os arquivos da trilha principal agora terminam com links de `Anterior` e `Próximo`, para permitir leitura linear sem voltar ao índice a cada etapa.
 
-## Mapa rapido do artigo
+## Mapa rápido
 
-| Parte do estudo | Arquivo | Papel no conjunto |
+| Parte | Arquivo | Função no conjunto |
 | --- | --- | --- |
-| Lista de simbolos | [0.0_Lista_de_Simbolos.md](0.0_Lista_de_Simbolos.md) | Convenioes, notacao e blocos matriciais usados ao longo da teoria |
-| Abstract | [0_Abstract.md](0_Abstract.md) | Escopo do artigo e promessa metodologica |
-| Introducao | [1_Introducao.md](1_Introducao.md) | Contexto historico, modos espurios e motivacao para elementos de aresta |
-| Secao 2.1 | [2_Problemas_Bidimensionais.md](2_Problemas_Bidimensionais.md) | Formulacao escalar 2D, forma fraca, discretizacao nodal e campos TE/TM |
-| Secao 2.2.1 | [2.2.md](2.2.md) | Formulacao vetorial transversal 2D com elementos de aresta |
-| Secao 2.2.2 | [2.2.2_Guias_de_Onda_Nao_Homogeneos_Tres_Componentes.md](2.2.2_Guias_de_Onda_Nao_Homogeneos_Tres_Componentes.md) | Sistema misto vetorial + escalar no cutoff |
-| Secao 2.2.3 | [2.2.3_Determinação do número de onda.md](2.2.3_Determinação%20do%20número%20de%20onda.md) | Problema acoplado para determinar `k0` com `beta` especificado |
-| Secao 2.2.4 | [2.2.4_Caracteristicas_de_Dispersao_de_Guias_de_Onda.md](2.2.4_Caracteristicas_de_Dispersao_de_Guias_de_Onda.md) | Problema de dispersao para determinar `beta` com `k0` especificado |
-| Secao 3.1 | [3_Problemas_Tridimensionais.md](3_Problemas_Tridimensionais.md) | Cavidades 3D, tetraedros e bases de aresta tridimensionais |
-| Encerramento | [4_Consideracoes_Finais_Apendice_Referencias.md](4_Consideracoes_Finais_Apendice_Referencias.md) | Consideracoes finais, apendice dos programas e referencias |
+| Material preliminar | [0.0 Capa](0.0_Capa.md) a [0.5 Abstract](0.5_Abstract.md) | Identificação do relatório, sumário, figuras, tabelas, símbolos e escopo do artigo |
+| Abertura conceitual | [1. Introdução](1_Introducao.md) | Contexto histórico, motivação e problema dos modos espúrios |
+| Visão 2D | [2. Problemas Bidimensionais](2_Problemas_Bidimensionais.md) | Ponte para as formulações 2D escalar e vetorial |
+| Formulação escalar | [2.1 Guias de Onda Homogêneos](2.1_Guias%20de%20Onda%20Homogêneos.md) | Forma fraca, discretização nodal e reconstrução de campos |
+| Visão vetorial | [2.2 Guias de Onda Não Homogêneos](2.2_Guia_Nao_Homogeneo.md) | Introdução aos elementos de aresta e ao problema vetorial |
+| Formulação vetorial transversal | [2.2.1 Campos Vetoriais Transversais](2.2.1_Guia%20de%20Onda%20Campos%20Vetoriais.md) | Base algébrica com elementos de aresta em 2D |
+| Formulação mista no cutoff | [2.2.2 Três Componentes](2.2.2_Guias_de_Onda_Nao_Homogeneos_Tres_Componentes.md) | Acoplamento entre arestas e nós sem termos fora da diagonal |
+| `k_0` com `\beta` fixado | [2.2.3 Determinação do Número de Onda](2.2.3_Determinação%20do%20número%20de%20onda.md) | Problema generalizado para obter `k_0` |
+| `\beta` com `k_0` fixado | [2.2.4 Características de Dispersão](2.2.4_Caracteristicas_de_Dispersao_de_Guias_de_Onda.md) | Problema de dispersão e curvas de propagação |
+| Formulação 3D | [3. Problemas Tridimensionais](3_Problemas_Tridimensionais.md) | Cavidades, tetraedros e bases de aresta tridimensionais |
+| Fechamento | [4. Considerações Finais, Apêndice e Referências](4_Consideracoes_Finais_Apendice_Referencias.md) | Síntese, programas do apêndice e bibliografia |
+| Ficha do relatório | [5. Página de Documentação do Relatório](5_Report.md) | Metadados institucionais do NASA TP-3485 |
 
 ## Materiais de apoio
 
-- [19950011772.pdf](19950011772.pdf): PDF original do artigo usado como referencia de confronto.
-- [Casos_de_Teste_do_Artigo.md](Casos_de_Teste_do_Artigo.md): tabela consolidada com todos os casos numéricos apresentados pelo autor.
+- [19950011772.pdf](19950011772.pdf): PDF original do artigo usado como referência de confronto.
+- [Casos_de_Teste_do_Artigo.md](Casos_de_Teste_do_Artigo.md): tabela consolidada com os casos numéricos do artigo.
 - [Matriz_Casos_Executaveis_Arvore_de_Chamada.md](Matriz_Casos_Executaveis_Arvore_de_Chamada.md): ponte entre casos do artigo, executáveis atuais e raízes da árvore de chamada.
-- [diagramas_execucao/README.md](diagramas_execucao/README.md): caderno de navegacao da colecao de diagramas de execucao.
-- [diagramas_execucao/Diagrama_Mestre_R1_a_R7.md](diagramas_execucao/Diagrama_Mestre_R1_a_R7.md): visao global resumida da colecao `R1 -> R7`.
-- [Diagrama_R1_HELM10_Sequencia_e_Arvore.md](Diagrama_R1_HELM10_Sequencia_e_Arvore.md): primeiro diagrama-base, cobrindo a família `HELM10`.
-- [Diagrama_R2_HELMVEC_Sequencia_e_Arvore.md](Diagrama_R2_HELMVEC_Sequencia_e_Arvore.md): segundo diagrama-base, cobrindo a família `HELMVEC`.
-- [Diagrama_R3_HELMVEC1_Sequencia_e_Arvore.md](Diagrama_R3_HELMVEC1_Sequencia_e_Arvore.md): terceiro diagrama-base, cobrindo a família mista `HELMVEC1`.
-- [Diagrama_R4_HELMVEC2_Sequencia_e_Arvore.md](Diagrama_R4_HELMVEC2_Sequencia_e_Arvore.md): quarto diagrama-base, cobrindo a família acoplada `HELMVEC2`.
-- [Diagrama_R5_HELMVEC3_Sequencia_e_Arvore.md](Diagrama_R5_HELMVEC3_Sequencia_e_Arvore.md): quinto diagrama-base, cobrindo a família de dispersão `HELMVEC3`.
-- [Diagrama_R6_FEM3D0_Sequencia_e_Arvore.md](Diagrama_R6_FEM3D0_Sequencia_e_Arvore.md): sexto diagrama-base, cobrindo a família tridimensional densa `FEM3D0`.
-- [Diagrama_R7_FEM3D1_Sequencia_e_Arvore.md](Diagrama_R7_FEM3D1_Sequencia_e_Arvore.md): sétimo diagrama-base, cobrindo a família tridimensional esparsa `FEM3D1`.
-- [results/README.md](results/README.md): resultados curados, validacoes e figuras do projeto.
-- Arquivos `figura*.png` nesta pasta: imagens extraidas/associadas a partes da documentacao original.
+- [diagramas_execucao/README.md](diagramas_execucao/README.md): caderno de navegação da coleção de diagramas de execução.
+- [diagramas_execucao/Diagrama_Mestre_R1_a_R7.md](diagramas_execucao/Diagrama_Mestre_R1_a_R7.md): visão global resumida da coleção `R1 -> R7`.
+- [Diagrama_R1_HELM10_Sequencia_e_Arvore.md](Diagrama_R1_HELM10_Sequencia_e_Arvore.md) a [Diagrama_R7_FEM3D1_Sequencia_e_Arvore.md](Diagrama_R7_FEM3D1_Sequencia_e_Arvore.md): diagramas-base por família de executáveis.
+- [results/README.md](results/README.md): resultados curados, validações e figuras do projeto.
 
-## Colecao dos diagramas-base
+## Relação com o código
 
-Os sete diagramas de chamada agora formam uma trilha única de leitura do projeto, indo da formulação mais elementar até a variante 3D esparsa:
+- [2.1 Guias de Onda Homogêneos](2.1_Guias%20de%20Onda%20Homogêneos.md) -> `src/helm10`
+- [2.2.1 Campos Vetoriais Transversais](2.2.1_Guia%20de%20Onda%20Campos%20Vetoriais.md) -> `src/helmvec`
+- [2.2.2 Três Componentes](2.2.2_Guias_de_Onda_Nao_Homogeneos_Tres_Componentes.md) -> `src/helmvec1`
+- [2.2.3 Determinação do Número de Onda](2.2.3_Determinação%20do%20número%20de%20onda.md) -> `src/helmvec2`
+- [2.2.4 Características de Dispersão](2.2.4_Caracteristicas_de_Dispersao_de_Guias_de_Onda.md) -> `src/helmvec3`
+- [3. Problemas Tridimensionais](3_Problemas_Tridimensionais.md) -> `src/fem3d0` e `src/fem3d1`
 
-| Raiz | Arquivo | Cobertura | Ideia central da transicao |
-| --- | --- | --- | --- |
-| `R1` | [Diagrama_R1_HELM10_Sequencia_e_Arvore.md](Diagrama_R1_HELM10_Sequencia_e_Arvore.md) | Casos 1 a 3 | base escalar nodal 2D, matching analítico e reconstrução de campo |
-| `R2` | [Diagrama_R2_HELMVEC_Sequencia_e_Arvore.md](Diagrama_R2_HELMVEC_Sequencia_e_Arvore.md) | Casos 4 e 5 | troca de nós por arestas e entrada na linguagem de Whitney |
-| `R3` | [Diagrama_R3_HELMVEC1_Sequencia_e_Arvore.md](Diagrama_R3_HELMVEC1_Sequencia_e_Arvore.md) | Casos 6 e 7 | sistema misto em blocos no cutoff |
-| `R4` | [Diagrama_R4_HELMVEC2_Sequencia_e_Arvore.md](Diagrama_R4_HELMVEC2_Sequencia_e_Arvore.md) | Caso 8 | problema acoplado para `k0` com `beta` dado |
-| `R5` | [Diagrama_R5_HELMVEC3_Sequencia_e_Arvore.md](Diagrama_R5_HELMVEC3_Sequencia_e_Arvore.md) | Casos 9 e 10 | problema acoplado para `beta` com `k0` dado e curvas de dispersão |
-| `R6` | [Diagrama_R6_FEM3D0_Sequencia_e_Arvore.md](Diagrama_R6_FEM3D0_Sequencia_e_Arvore.md) | Casos 11 a 14 | entrada 3D com montagem densa e matching com degenerescência |
-| `R7` | [Diagrama_R7_FEM3D1_Sequencia_e_Arvore.md](Diagrama_R7_FEM3D1_Sequencia_e_Arvore.md) | Casos 11 a 14 | mesma física 3D com armazenamento esparso simétrico |
-
-Se a ideia for estudar a implementação como um livro técnico, esta é a ordem mais natural de leitura depois da teoria do artigo.
-
-## Estado atual da revisao
-
-- A traducao-base foi preservada nos arquivos principais.
-- Foram adicionadas explicacoes de leitura, comentarios didaticos e passagens intermediarias entre equacoes.
-- Irregularidades provaveis de OCR, notacao e placeholders de figuras foram apontadas dentro dos arquivos, sem apagar o texto original.
-- Os nomes de alguns arquivos foram ajustados para refletir melhor seu papel no conjunto.
-
-## Relacao com o codigo
-
-Esta trilha teorica conversa diretamente com os modulos do projeto:
-
-- `2_Problemas_Bidimensionais.md` -> `src/helm10`
-- `2.2.md` -> `src/helmvec`
-- `2.2.2_Guias_de_Onda_Nao_Homogeneos_Tres_Componentes.md` -> `src/helmvec1`
-- `2.2.3_Determinação do número de onda.md` -> `src/helmvec2`
-- `2.2.4_Caracteristicas_de_Dispersao_de_Guias_de_Onda.md` -> `src/helmvec3`
-- `3_Problemas_Tridimensionais.md` -> `src/fem3d0` e `src/fem3d1`
-
-Se a ideia for estudar a teoria antes de mergulhar na implementacao, esta pasta deve ser lida primeiro e o `README.md` da raiz deve entrar em seguida como ponte para os executaveis, scripts e validacoes.
+Se a ideia for estudar a teoria antes de mergulhar na implementação, esta pasta deve vir antes dos READMEs em `src/`.

@@ -111,3 +111,9 @@ Não classificado
 ## 20. Limitação do Resumo
 
 Ilimitado
+
+---
+
+## Navegação
+
+Anterior: [4. Considerações Finais](4_Consideracoes_Finais_Apendice_Referencias.md) | Índice: [README.md](README.md)

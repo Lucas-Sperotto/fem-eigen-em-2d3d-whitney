@@ -1,6 +1,6 @@
-# 📄 3. Problemas Tridimensionais
+# 3. Problemas Tridimensionais
 
-## 3.1 Autovalores de Cavidades Tridimensionais — Formulação Vetorial
+## 3.1. Autovalores de Cavidades Tridimensionais - Formulação Vetorial
 
 O problema de calcular frequências de ressonância em cavidades tridimensionais tem sido historicamente dificultado pela presença de **modos espúrios**.
 
@@ -14,7 +14,7 @@ Nesta seção, formula-se o método de elementos finitos de Galerkin para cavida
 
 O leitor deve entrar nesta seção com uma expectativa correta: o salto para 3D não muda a filosofia do método, mas amplia seu cenário geométrico e algébrico. Em 2D, já havíamos aprendido que a escolha adequada dos espaços discretos é decisiva para evitar modos espúrios. Em 3D, essa mesma lição retorna com mais força, porque agora o campo vive em volume, a malha é tetraédrica e a continuidade tangencial precisa ser respeitada em todas as arestas do elemento.
 
-## 3.1.1 Formulação
+## 3.1.1. Formulação
 
 Essa formulação pode ser desenvolvida utilizando o campo elétrico $\mathbf{E}$ ou o campo magnético $\mathbf{H}$. Aqui, será utilizada a formulação em termos do campo elétrico.
 
@@ -153,7 +153,7 @@ $$
 
 ---
 
-## 📄 3.1.2 — Discretização
+## 3.1.2. Discretização
 
 O volume da cavidade é discretizado utilizando **elementos tetraédricos de primeira ordem**, como o mostrado na Figura 14.
 
@@ -166,19 +166,15 @@ As seis arestas são formadas conforme apresentado na Tabela 11.
 
 ---
 
-## 📌 Figura (salvar como `fig14_tetrahedron.png`)
+## Figura 14
 
-```markdown
-![Elemento tetraédrico de primeira ordem](images/fig14_tetrahedron.png)
-```
+A Figura 14 do artigo original mostra o elemento tetraédrico de primeira ordem e sua convenção local de nós e arestas. Como o arquivo de imagem não está versionado em `docs/`, a legenda é preservada aqui para referência.
 
-Legenda:
-
-**Figura 14. Elemento tetraédrico de primeira ordem.**
+**Figura 14.** Elemento tetraédrico de primeira ordem.
 
 ---
 
-## 📊 Tabela 11 — Formação das Arestas do Elemento Tetraédrico
+## Tabela 11. Formação das Arestas do Elemento Tetraédrico
 
 | Aresta ( m ) | Nó ( i ) | Nó ( j ) |
 | ------------ | -------- | -------- |
@@ -266,7 +262,13 @@ e cada $\alpha_{ti}$ vale $1$ no nó $i$ e $0$ nos outros três nós. Com isso, 
 ### (157)
 
 $$
-V = \frac{1}{6} \begin{vmatrix} 1 & x_1 & y_1 & z_1 \ 1 & x_2 & y_2 & z_2 \ 1 & x_3 & y_3 & z_3 \ 1 & x_4 & y_4 & z_4 \end{vmatrix}
+V = \frac{1}{6}
+\begin{vmatrix}
+1 & x_1 & y_1 & z_1 \\
+1 & x_2 & y_2 & z_2 \\
+1 & x_3 & y_3 & z_3 \\
+1 & x_4 & y_4 & z_4
+\end{vmatrix}
 $$
 
 ---
@@ -276,7 +278,13 @@ $$
 ### (158)
 
 $$
-V_1 = \frac{1}{6} \begin{vmatrix} 1 & x & y & z \ 1 & x_2 & y_2 & z_2 \ 1 & x_3 & y_3 & z_3 \ 1 & x_4 & y_4 & z_4 \end{vmatrix}
+V_1 = \frac{1}{6}
+\begin{vmatrix}
+1 & x & y & z \\
+1 & x_2 & y_2 & z_2 \\
+1 & x_3 & y_3 & z_3 \\
+1 & x_4 & y_4 & z_4
+\end{vmatrix}
 $$
 
 ---
@@ -284,7 +292,13 @@ $$
 ### (159)
 
 $$
-V_2 = \frac{1}{6} \begin{vmatrix} 1 & x_1 & y_1 & z_1 \ 1 & x & y & z \ 1 & x_3 & y_3 & z_3 \ 1 & x_4 & y_4 & z_4 \end{vmatrix}
+V_2 = \frac{1}{6}
+\begin{vmatrix}
+1 & x_1 & y_1 & z_1 \\
+1 & x & y & z \\
+1 & x_3 & y_3 & z_3 \\
+1 & x_4 & y_4 & z_4
+\end{vmatrix}
 $$
 
 ---
@@ -292,7 +306,13 @@ $$
 ### (160)
 
 $$
-V_3 = \frac{1}{6} \begin{vmatrix} 1 & x_1 & y_1 & z_1 \ 1 & x_2 & y_2 & z_2 \ 1 & x & y & z \ 1 & x_4 & y_4 & z_4 \end{vmatrix}
+V_3 = \frac{1}{6}
+\begin{vmatrix}
+1 & x_1 & y_1 & z_1 \\
+1 & x_2 & y_2 & z_2 \\
+1 & x & y & z \\
+1 & x_4 & y_4 & z_4
+\end{vmatrix}
 $$
 
 ---
@@ -300,7 +320,13 @@ $$
 ### (161)
 
 $$
-V_4 = \frac{1}{6} \begin{vmatrix} 1 & x_1 & y_1 & z_1 \ 1 & x_2 & y_2 & z_2 \ 1 & x_3 & y_3 & z_3 \ 1 & x & y & z \end{vmatrix}
+V_4 = \frac{1}{6}
+\begin{vmatrix}
+1 & x_1 & y_1 & z_1 \\
+1 & x_2 & y_2 & z_2 \\
+1 & x_3 & y_3 & z_3 \\
+1 & x & y & z
+\end{vmatrix}
 $$
 
 Para qualquer nó $i = 1, 2, 3, 4$:
@@ -424,9 +450,10 @@ Os elementos $\mathbf{W}_m$ satisfazem:
 ### (173)
 
 $$
-\hat{t}_m \cdot \mathbf{W}_m = \begin{cases} 1,
-& \text{na aresta } m \ 0,
-& \text{nas demais arestas}
+\hat{t}_m \cdot \mathbf{W}_m =
+\begin{cases}
+1, & \text{na aresta } m \\
+0, & \text{nas demais arestas}
 \end{cases}
 $$
 
@@ -686,3 +713,9 @@ O salto para 3D não abandona a lógica construída em 2D. O artigo continua tra
 - A sequência (145) -> (149) -> (150) é a parte variacional mais importante desta seção, porque é nela que o termo de contorno é manipulado até restar a forma fraca compatível com PEC.
 - A passagem de (152) para (163) merece atenção especial: ali a base de Whitney deixa de ser apenas uma definição abstrata e passa a ter forma explícita em função das coordenadas do tetraedro.
 - As relações $B_{ym} = -B_{xm}$, $B_{zm} = -C_{xm}$ e $C_{zm} = -C_{ym}$ são úteis para verificar coerência algébrica entre os coeficientes auxiliares.
+
+---
+
+## Navegação
+
+Anterior: [2.2.4 Características de Dispersão](2.2.4_Caracteristicas_de_Dispersao_de_Guias_de_Onda.md) | Índice: [README.md](README.md) | Próximo: [4. Considerações Finais](4_Consideracoes_Finais_Apendice_Referencias.md)

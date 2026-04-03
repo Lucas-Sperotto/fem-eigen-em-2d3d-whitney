@@ -49,3 +49,9 @@ Neste sentido, a introdução já é quase um manifesto pedagógico. Ela diz, ai
 - não comece pelo mais complicado se você ainda não entendeu o essencial;
 - não confunda sofisticação algébrica com fidelidade física;
 - não trate a geometria e o espaço discreto como acessórios secundários.
+
+---
+
+## Navegação
+
+Anterior: [0.5 Abstract](0.5_Abstract.md) | Índice: [README.md](README.md) | Próximo: [2. Problemas Bidimensionais](2_Problemas_Bidimensionais.md)

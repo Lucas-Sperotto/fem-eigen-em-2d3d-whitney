@@ -134,3 +134,9 @@ Esta seção fecha o artigo de maneira bastante coerente com o desenvolvimento a
 - O apêndice não é apenas uma lista de programas: ele serve como mapa entre blocos teóricos e implementações.
 - A sequência `HELM10 -> HELMVEC -> HELMVEC1 -> HELMVEC2 -> HELMVEC3` acompanha o crescimento do problema matemático.
 - A dupla `FEM3D0 / FEM3D1` deixa claro que a passagem ao 3D exige não só nova formulação, mas também nova estratégia numérica para armazenamento e solução.
+
+---
+
+## Navegação
+
+Anterior: [3. Problemas Tridimensionais](3_Problemas_Tridimensionais.md) | Índice: [README.md](README.md) | Próximo: [5. Página de Documentação do Relatório](5_Report.md)
