@@ -14,8 +14,6 @@ Nesta seção, formula-se o método de elementos finitos de Galerkin para cavida
 
 O leitor deve entrar nesta seção com uma expectativa correta: o salto para 3D não muda a filosofia do método, mas amplia seu cenário geométrico e algébrico. Em 2D, já havíamos aprendido que a escolha adequada dos espaços discretos é decisiva para evitar modos espúrios. Em 3D, essa mesma lição retorna com mais força, porque agora o campo vive em volume, a malha é tetraédrica e a continuidade tangencial precisa ser respeitada em todas as arestas do elemento.
 
-Em termos de formação, esta é uma das partes mais nobres do artigo. Ela mostra que a teoria não foi construída para um caso isolado, mas para sobreviver ao aumento de dimensão sem perder a coerência física.
-
 ## 3.1.1 Formulação
 
 Essa formulação pode ser desenvolvida utilizando o campo elétrico $\mathbf{E}$ ou o campo magnético $\mathbf{H}$. Aqui, será utilizada a formulação em termos do campo elétrico.
@@ -60,6 +58,8 @@ $$
 \mathbf{A} \cdot (\nabla \times \mathbf{B}) = (\nabla \times \mathbf{A}) \cdot \mathbf{B} - \nabla \cdot (\mathbf{A} \times \mathbf{B})
 $$
 
+---
+
 #### Passagem intermediária: a integração por partes vetorial em 3D
 
 Esta é a etapa central da formulação variacional. Se definirmos
@@ -76,6 +76,8 @@ $$
 
 Ao integrar essa identidade em todo o volume, o primeiro termo gera a parte interna da forma fraca e o segundo termo prepara o nascimento da contribuição de contorno. É exatamente a versão tridimensional da integração por partes que, em problemas escalares, costuma aparecer escondida sob o nome de fórmula de Green.
 
+---
+
 a equação (144) pode ser reescrita como:
 
 ### (146)
@@ -83,8 +85,6 @@ a equação (144) pode ser reescrita como:
 $$
 \iiint_V (\nabla \times \mathbf{T}) \cdot \left( \frac{1}{\mu_r} \nabla \times \mathbf{E} \right) dv = k_0^2 \varepsilon_r \iiint_V \mathbf{T} \cdot \mathbf{E} ds + \iiint_V \nabla \cdot \left[ \mathbf{T} \times \left( \frac{1}{\mu_r} \nabla \times \mathbf{E} \right) \right] dv
 $$
-
----
 
 Aplicando o **teorema da divergência**:
 
@@ -99,7 +99,7 @@ e a identidade:
 ### (148)
 
 $$
-(\mathbf{A} \times \mathbf{B}) \cdot \hat{n} = \mathbf{A} \cdot (\hat{n} \times \mathbf{B})
+(\mathbf{A} \times \mathbf{B}) \cdot \hat{n} = - \mathbf{A} \cdot (\hat{n} \times \mathbf{B})
 $$
 
 onde:
@@ -108,8 +108,6 @@ onde:
 * $S$: superfície externa
 * $\hat{n}$: vetor normal unitário externo
 
----
-
 A equação (146) torna-se:
 
 ### (149)
@@ -117,8 +115,6 @@ A equação (146) torna-se:
 $$
 \iiint_V (\nabla \times \mathbf{T}) \cdot \left( \frac{1}{\mu_r} \nabla \times \mathbf{E} \right) dv = k_0^2 \varepsilon_r \iiint_V \mathbf{T} \cdot \mathbf{E} dv - \iint_S \mathbf{T} \cdot \left[ \hat{n} \times \left( \frac{1}{\mu_r} \nabla \times \mathbf{E} \right) \right] ds
 $$
-
----
 
 Para uma cavidade delimitada por um **condutor elétrico perfeito (PEC)**:
 
@@ -145,7 +141,9 @@ $$
 
 Por isso, o termo de contorno de (149) deixa de contribuir. Em linguagem funcional, a formulação passa a viver em um subespaço de $H(\mathrm{curl},V)$ com traço tangencial homogêneo no contorno. Essa observação é importante porque não se trata de um cancelamento acidental, mas de uma consequência direta das condições físicas impostas à cavidade.
 
-## Forma Final
+---
+
+A equação (149) pode ser reescrita nesta forma final:
 
 ### (150)
 
@@ -249,6 +247,8 @@ $$
 \alpha_{t1} = \frac{V_1}{V}, \quad \alpha_{t2} = \frac{V_2}{V}, \quad \alpha_{t3} = \frac{V_3}{V}, \quad \alpha_{t4} = \frac{V_4}{V}
 $$
 
+---
+
 #### Passagem intermediária: por que as coordenadas simplex são tão poderosas
 
 As coordenadas simplex organizam toda a geometria do tetraedro em uma linguagem afim muito econômica. Elas satisfazem, em qualquer ponto interno do elemento,
@@ -313,6 +313,8 @@ $$
 
 onde $a_{ti}, b_{ti}, c_{ti}, d_{ti}$ são coeficientes obtidos dos determinantes de $V_1, V_2, V_3, V_4$.
 
+---
+
 #### Passagem intermediária: de $\alpha_{ti}$ para seus gradientes
 
 Como $\alpha_{ti}$ é linear em $x$, $y$ e $z$, seu gradiente é constante dentro do tetraedro:
@@ -323,6 +325,8 @@ $$
 
 Essa observação é preciosa. Ela mostra por que os elementos de aresta de primeira ordem conseguem produzir fórmulas explícitas: os objetos básicos da interpolação já nascem com dependência afim simples, e seus gradientes não variam de ponto para ponto no interior do elemento.
 
+---
+
 Substituindo (152) e (162):
 
 ### (163)
@@ -330,6 +334,8 @@ Substituindo (152) e (162):
 $$
 \mathbf{W}*m = \frac{L_m}{36V^2} \left[ (A*{xm} + B_{xm} y + C_{xm} z)\hat{x} + (A_{ym} + B_{ym} x + C_{ym} z)\hat{y} + (A_{zm} + B_{zm} x + C_{zm} y)\hat{z} \right]
 $$
+
+---
 
 #### Passagem intermediária: como nasce a forma explícita da base de aresta
 
@@ -434,44 +440,6 @@ $$
 $$
 
 Essa leitura ajuda a evitar uma confusão comum. O que caracteriza o grau de liberdade não é um valor pontual qualquer do campo, mas sua circulação tangencial associada à aresta. É justamente isso que alinha a discretização com a física de Maxwell.
-
-## Fecho pedagógico da seção tridimensional inicial
-
-Até a equação (173), o artigo constrói os alicerces 3D: a forma fraca para cavidades PEC, a interpolação por arestas tetraédricas e a maquinaria geométrica das coordenadas simplex. É uma abertura de grande valor didático, porque ensina ao leitor que o sucesso do método em 3D não depende de truques numéricos, mas de uma escolha correta de variáveis, espaços funcionais e graus de liberdade geométricos.
-
-## Notas de revisão complementar
-
-### Papel desta seção no desenvolvimento do artigo
-
-O salto para 3D não abandona a lógica construída em 2D. O artigo continua trabalhando com uma formulação variacional e com graus de liberdade associados a arestas; a diferença é que agora tudo é transportado para tetraedros, com seis arestas por elemento e coordenadas simplex em volume.
-
-### Encadeamento conceitual até a equação (173)
-
-- As equações (143) a (150) fazem em 3D o mesmo papel estrutural que as primeiras equações de 2.2.1 fizeram em 2D: sair da forma forte e chegar à forma fraca com as condições de contorno apropriadas.
-- As equações (151) e (152) introduzem a expansão do campo em bases de aresta tetraédricas.
-- As equações (153) a (162) constroem a parametrização geométrica do tetraedro por coordenadas simplex.
-- As equações (163) a (172) tornam explícita a forma afim das funções de base e os coeficientes geométricos que alimentam as matrizes elementares.
-- A equação (173) registra a propriedade fundamental de interpolação tangencial nas arestas, que é a peça conceitual central para evitar modos espúrios.
-
-### Passagens que merecem leitura mais cuidadosa
-
-- A sequência (145) -> (149) -> (150) é a parte variacional mais importante desta seção, porque é nela que o termo de contorno é manipulado até restar a forma fraca compatível com PEC.
-- A passagem de (152) para (163) merece atenção especial: ali a base de Whitney deixa de ser apenas uma definição abstrata e passa a ter forma explícita em função das coordenadas do tetraedro.
-- As relações `B_{ym} = -B_{xm}`, `B_{zm} = -C_{xm}` e `C_{zm} = -C_{ym}` são úteis para verificar coerência algébrica entre os coeficientes auxiliares.
-
-### Pontos de conferência e irregularidades prováveis
-
-- Na equação (146), o termo volumétrico do lado direito termina com `ds`, embora o contexto seja uma integral em volume. A leitura mais natural, pelo desenvolvimento matemático, parece ser `dv`.
-- As equações (152) e (163) apresentam marcas de OCR como `\mathbf{W}*m` e `\alpha*{ti}`. A leitura correta parece ser sem os asteriscos.
-- As equações determinantes (157) a (161) foram comprimidas em uma única linha no Markdown atual. Isso preserva a informação, mas dificulta bastante a inspeção visual do sinal e da ordem das colunas.
-- A equação (173) está semanticamente correta, mas o ambiente `cases` ficou sem quebra de linha explícita entre os dois ramos, o que atrapalha a renderização.
-- A propriedade registrada em (173) merece leitura conceitual cuidadosa: em formulações de aresta, sua versão mais robusta costuma ser expressa por integral de linha ao longo da aresta, não apenas por leitura pontual da componente tangencial.
-- A Figura 14 aparece como placeholder, então o apoio visual para o tetraedro de primeira ordem ainda está incompleto.
-
-### Observação estrutural importante
-
-- Este arquivo, no estado atual, encerra o desenvolvimento em (173). A continuação natural da teoria 3D, com as equações (174) a (182) e os exemplos numéricos, aparece hoje em outro arquivo da pasta. Não removi nem movi nada; estou apenas registrando essa observação para guiar a leitura.
-
 
 ## 3.1.3. Formulação por Elementos Finitos
 
@@ -683,3 +651,42 @@ Soluções espúrias são completamente evitadas devido à natureza livre de div
 Os resultados numéricos apresentados para cavidades com diferentes geometrias comprovam a validade da análise e a precisão dos códigos computacionais apresentados nesta seção.
 
 ---
+
+## Fecho pedagógico da seção tridimensional inicial
+
+Até a equação (173), o artigo constrói os alicerces 3D: a forma fraca para cavidades PEC, a interpolação por arestas tetraédricas e a maquinaria geométrica das coordenadas simplex. É uma abertura de grande valor didático, porque ensina ao leitor que o sucesso do método em 3D não depende de truques numéricos, mas de uma escolha correta de variáveis, espaços funcionais e graus de liberdade geométricos.
+
+## Notas de revisão complementar
+
+### Papel desta seção no desenvolvimento do artigo
+
+O salto para 3D não abandona a lógica construída em 2D. O artigo continua trabalhando com uma formulação variacional e com graus de liberdade associados a arestas; a diferença é que agora tudo é transportado para tetraedros, com seis arestas por elemento e coordenadas simplex em volume.
+
+### Encadeamento conceitual até a equação (173)
+
+- As equações (143) a (150) fazem em 3D o mesmo papel estrutural que as primeiras equações de 2.2.1 fizeram em 2D: sair da forma forte e chegar à forma fraca com as condições de contorno apropriadas.
+- As equações (151) e (152) introduzem a expansão do campo em bases de aresta tetraédricas.
+- As equações (153) a (162) constroem a parametrização geométrica do tetraedro por coordenadas simplex.
+- As equações (163) a (172) tornam explícita a forma afim das funções de base e os coeficientes geométricos que alimentam as matrizes elementares.
+- A equação (173) registra a propriedade fundamental de interpolação tangencial nas arestas, que é a peça conceitual central para evitar modos espúrios.
+
+### Passagens que merecem leitura mais cuidadosa
+
+- A sequência (145) -> (149) -> (150) é a parte variacional mais importante desta seção, porque é nela que o termo de contorno é manipulado até restar a forma fraca compatível com PEC.
+- A passagem de (152) para (163) merece atenção especial: ali a base de Whitney deixa de ser apenas uma definição abstrata e passa a ter forma explícita em função das coordenadas do tetraedro.
+- As relações `B_{ym} = -B_{xm}`, `B_{zm} = -C_{xm}` e `C_{zm} = -C_{ym}` são úteis para verificar coerência algébrica entre os coeficientes auxiliares.
+
+### Pontos de conferência e irregularidades prováveis
+
+- Na equação (146), o termo volumétrico do lado direito termina com `ds`, embora o contexto seja uma integral em volume. A leitura mais natural, pelo desenvolvimento matemático, parece ser `dv`.
+- As equações (152) e (163) apresentam marcas de OCR como `\mathbf{W}*m` e `\alpha*{ti}`. A leitura correta parece ser sem os asteriscos.
+- As equações determinantes (157) a (161) foram comprimidas em uma única linha no Markdown atual. Isso preserva a informação, mas dificulta bastante a inspeção visual do sinal e da ordem das colunas.
+- A equação (173) está semanticamente correta, mas o ambiente `cases` ficou sem quebra de linha explícita entre os dois ramos, o que atrapalha a renderização.
+- A propriedade registrada em (173) merece leitura conceitual cuidadosa: em formulações de aresta, sua versão mais robusta costuma ser expressa por integral de linha ao longo da aresta, não apenas por leitura pontual da componente tangencial.
+- A Figura 14 aparece como placeholder, então o apoio visual para o tetraedro de primeira ordem ainda está incompleto.
+
+### Observação estrutural importante
+
+- Este arquivo, no estado atual, encerra o desenvolvimento em (173). A continuação natural da teoria 3D, com as equações (174) a (182) e os exemplos numéricos, aparece hoje em outro arquivo da pasta. Não removi nem movi nada; estou apenas registrando essa observação para guiar a leitura.
+
+
