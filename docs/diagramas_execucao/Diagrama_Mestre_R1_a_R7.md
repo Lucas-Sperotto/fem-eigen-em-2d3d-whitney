@@ -77,13 +77,13 @@ Ao longo da colecao, alguns troncos reaparecem com formas diferentes:
 
 ## 6) Links para os diagramas detalhados
 
-- [Diagrama_R1_HELM10_Sequencia_e_Arvore.md](../Diagrama_R1_HELM10_Sequencia_e_Arvore.md)
-- [Diagrama_R2_HELMVEC_Sequencia_e_Arvore.md](../Diagrama_R2_HELMVEC_Sequencia_e_Arvore.md)
-- [Diagrama_R3_HELMVEC1_Sequencia_e_Arvore.md](../Diagrama_R3_HELMVEC1_Sequencia_e_Arvore.md)
-- [Diagrama_R4_HELMVEC2_Sequencia_e_Arvore.md](../Diagrama_R4_HELMVEC2_Sequencia_e_Arvore.md)
-- [Diagrama_R5_HELMVEC3_Sequencia_e_Arvore.md](../Diagrama_R5_HELMVEC3_Sequencia_e_Arvore.md)
-- [Diagrama_R6_FEM3D0_Sequencia_e_Arvore.md](../Diagrama_R6_FEM3D0_Sequencia_e_Arvore.md)
-- [Diagrama_R7_FEM3D1_Sequencia_e_Arvore.md](../Diagrama_R7_FEM3D1_Sequencia_e_Arvore.md)
+- [Diagrama_R1_HELM10_Sequencia_e_Arvore.md](Diagrama_R1_HELM10_Sequencia_e_Arvore.md)
+- [Diagrama_R2_HELMVEC_Sequencia_e_Arvore.md](Diagrama_R2_HELMVEC_Sequencia_e_Arvore.md)
+- [Diagrama_R3_HELMVEC1_Sequencia_e_Arvore.md](Diagrama_R3_HELMVEC1_Sequencia_e_Arvore.md)
+- [Diagrama_R4_HELMVEC2_Sequencia_e_Arvore.md](Diagrama_R4_HELMVEC2_Sequencia_e_Arvore.md)
+- [Diagrama_R5_HELMVEC3_Sequencia_e_Arvore.md](Diagrama_R5_HELMVEC3_Sequencia_e_Arvore.md)
+- [Diagrama_R6_FEM3D0_Sequencia_e_Arvore.md](Diagrama_R6_FEM3D0_Sequencia_e_Arvore.md)
+- [Diagrama_R7_FEM3D1_Sequencia_e_Arvore.md](Diagrama_R7_FEM3D1_Sequencia_e_Arvore.md)
 
 ## 7) Papel deste arquivo
 
