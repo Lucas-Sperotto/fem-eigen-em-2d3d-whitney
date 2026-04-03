@@ -83,7 +83,7 @@ a equação (144) pode ser reescrita como:
 ### (146)
 
 $$
-\iiint_V (\nabla \times \mathbf{T}) \cdot \left( \frac{1}{\mu_r} \nabla \times \mathbf{E} \right) dv = k_0^2 \varepsilon_r \iiint_V \mathbf{T} \cdot \mathbf{E} ds + \iiint_V \nabla \cdot \left[ \mathbf{T} \times \left( \frac{1}{\mu_r} \nabla \times \mathbf{E} \right) \right] dv
+\iiint_V (\nabla \times \mathbf{T}) \cdot \left( \frac{1}{\mu_r} \nabla \times \mathbf{E} \right) dv = k_0^2 \varepsilon_r \iiint_V \mathbf{T} \cdot \mathbf{E} dv + \iiint_V \nabla \cdot \left[ \mathbf{T} \times \left( \frac{1}{\mu_r} \nabla \times \mathbf{E} \right) \right] dv
 $$
 
 Aplicando o **teorema da divergência**:
@@ -226,7 +226,7 @@ Os elementos de aresta vetoriais $\mathbf{W}_m$ são dados por:
 ### (152)
 
 $$
-\mathbf{W}*m = L_m \left( \alpha*{ti} \nabla \alpha_{tj} - \alpha_{tj} \nabla \alpha_{ti} \right)
+\mathbf{W}_m = L_m \left( \alpha_{ti} \nabla \alpha_{tj} - \alpha_{tj} \nabla \alpha_{ti} \right)
 $$
 
 onde:
@@ -332,7 +332,7 @@ Substituindo (152) e (162):
 ### (163)
 
 $$
-\mathbf{W}*m = \frac{L_m}{36V^2} \left[ (A*{xm} + B_{xm} y + C_{xm} z)\hat{x} + (A_{ym} + B_{ym} x + C_{ym} z)\hat{y} + (A_{zm} + B_{zm} x + C_{zm} y)\hat{z} \right]
+\mathbf{W}_m = \frac{L_m}{36V^2} \left[ (A_{xm} + B_{xm} y + C_{xm} z)\hat{x} + (A_{ym} + B_{ym} x + C_{ym} z)\hat{y} + (A_{zm} + B_{zm} x + C_{zm} y)\hat{z} \right]
 $$
 
 ---
@@ -424,7 +424,10 @@ Os elementos $\mathbf{W}_m$ satisfazem:
 ### (173)
 
 $$
-\hat{t}_m \cdot \mathbf{W}_m = \begin{cases} 1, & \text{na aresta } m \ 0, & \text{nas demais arestas} \end{cases}
+\hat{t}_m \cdot \mathbf{W}_m = \begin{cases} 1,
+& \text{na aresta } m \ 0,
+& \text{nas demais arestas}
+\end{cases}
 $$
 
 onde $\hat{t}_m$ é o vetor unitário ao longo da aresta.
@@ -445,6 +448,8 @@ Essa leitura ajuda a evitar uma confusão comum. O que caracteriza o grau de lib
 
 Substituindo a equação (151) na equação (150), integrando sobre o volume de um elemento tetraédrico e trocando a ordem da soma e da integração, obtém-se:
 
+### (174)
+
 $$
 \frac{1}{\mu_r} \sum_{m=1}^{6} \iiint_{\triangle} (\nabla \times \mathbf{W}_m) \cdot (\nabla \times \mathbf{W}_n) e_m dv = k_0^2 \sum_{m=1}^{6} \varepsilon_r \iiint_{\triangle} (\mathbf{W}_m \cdot \mathbf{W}_n) e_m dv
 $$
@@ -455,31 +460,33 @@ $$
 
 onde $\triangle$ indica integração sobre o volume do tetraedro. Isso pode ser escrito na forma matricial como:
 
+### (175)
+
 $$
 [S_{el}][e] = k_0^2 [T_{el}][e]
 $$
 
----
-
 onde as matrizes do elemento são dadas por:
+
+### (176)
 
 $$
 [S_{el}] = \frac{1}{\mu_r} \iiint_{\triangle} (\nabla \times \mathbf{W}_m) \cdot (\nabla \times \mathbf{W}_n) dv
 $$
 
+### (177)
+
 $$
 [T_{el}] = \varepsilon_r \iiint_{\triangle} (\mathbf{W}_m \cdot \mathbf{W}_n) dv
 $$
 
----
-
 Essas matrizes de elemento podem ser montadas sobre todos os elementos tetraédricos no volume da cavidade para obter uma equação matricial global:
+
+### (178)
 
 $$
 [S][e] = k_0^2 [T][e]
 $$
-
----
 
 Para garantir a continuidade do campo nas arestas, define-se uma direção global única para cada aresta (ou seja, sempre apontando do menor número de nó para o maior número de nó), de modo que a equação (151) deve ser multiplicada por $-1$, se o vetor de aresta local não estiver na mesma direção da direção global da aresta.
 
@@ -489,29 +496,33 @@ O campo elétrico é nulo nos contornos PEC (condutor elétrico perfeito). Isso 
 
 O objetivo desta seção é obter expressões em forma fechada para as equações (176) e (177). A partir da equação (163):
 
+### (179)
+
 $$
 \nabla \times \mathbf{W}_m = \frac{L_m}{18V^2} \left( C_{zm} \hat{x} + C_{xm} \hat{y} + B_{ym} \hat{z} \right)
 $$
 
 e, portanto,
 
+### (180)
+
 $$
 (\nabla \times \mathbf{W}_m)\cdot(\nabla \times \mathbf{W}_n) = \frac{L_m L_n}{(18V^2)^2} \left( C_{zm}C_{zn} + C_{xm}C_{xn} + B_{ym}B_{yn} \right)
 $$
 
----
-
 A partir das equações (176), (177) e (180), e utilizando as fórmulas de integração dadas na referência 18, as expressões em forma fechada para as matrizes de elemento são dadas por:
+
+### (181)
 
 $$
 S_{el} = \frac{L_m L_n}{324 V^3 \mu_r} \left( C_{zm}C_{zn} + C_{xm}C_{xn} + B_{ym}B_{yn} \right)
 $$
 
+### (182)
+
 $$
 T_{el} = \varepsilon_r \frac{L_m L_n}{1296 V^3} \sum_{k=1}^{10} I_k
 $$
-
----
 
 onde:
 
@@ -674,19 +685,4 @@ O salto para 3D não abandona a lógica construída em 2D. O artigo continua tra
 
 - A sequência (145) -> (149) -> (150) é a parte variacional mais importante desta seção, porque é nela que o termo de contorno é manipulado até restar a forma fraca compatível com PEC.
 - A passagem de (152) para (163) merece atenção especial: ali a base de Whitney deixa de ser apenas uma definição abstrata e passa a ter forma explícita em função das coordenadas do tetraedro.
-- As relações `B_{ym} = -B_{xm}`, `B_{zm} = -C_{xm}` e `C_{zm} = -C_{ym}` são úteis para verificar coerência algébrica entre os coeficientes auxiliares.
-
-### Pontos de conferência e irregularidades prováveis
-
-- Na equação (146), o termo volumétrico do lado direito termina com `ds`, embora o contexto seja uma integral em volume. A leitura mais natural, pelo desenvolvimento matemático, parece ser `dv`.
-- As equações (152) e (163) apresentam marcas de OCR como `\mathbf{W}*m` e `\alpha*{ti}`. A leitura correta parece ser sem os asteriscos.
-- As equações determinantes (157) a (161) foram comprimidas em uma única linha no Markdown atual. Isso preserva a informação, mas dificulta bastante a inspeção visual do sinal e da ordem das colunas.
-- A equação (173) está semanticamente correta, mas o ambiente `cases` ficou sem quebra de linha explícita entre os dois ramos, o que atrapalha a renderização.
-- A propriedade registrada em (173) merece leitura conceitual cuidadosa: em formulações de aresta, sua versão mais robusta costuma ser expressa por integral de linha ao longo da aresta, não apenas por leitura pontual da componente tangencial.
-- A Figura 14 aparece como placeholder, então o apoio visual para o tetraedro de primeira ordem ainda está incompleto.
-
-### Observação estrutural importante
-
-- Este arquivo, no estado atual, encerra o desenvolvimento em (173). A continuação natural da teoria 3D, com as equações (174) a (182) e os exemplos numéricos, aparece hoje em outro arquivo da pasta. Não removi nem movi nada; estou apenas registrando essa observação para guiar a leitura.
-
-
+- As relações $B_{ym} = -B_{xm}$, $B_{zm} = -C_{xm}$ e $C_{zm} = -C_{ym}$ são úteis para verificar coerência algébrica entre os coeficientes auxiliares.

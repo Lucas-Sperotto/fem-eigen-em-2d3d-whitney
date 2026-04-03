@@ -1,8 +1,12 @@
 # 4. Considerações Finais
 
+---
+
 ## Leitura orientadora deste fechamento
 
-Este encerramento deve ser lido com calma, como faria um professor ao final de um curso sólido. Não se trata apenas de recapitular resultados já vistos, mas de registrar com precisão aquilo que o artigo realmente conquistou. Um bom fechamento não repete o caminho inteiro; ele revela a arquitetura do caminho e mostra por que ele merece ser preservado.
+Este encerramento deve ser lido com calma. Não se trata apenas de recapitular resultados já vistos, mas de registrar com precisão aquilo que o artigo realmente conquistou. Um bom fechamento não repete o caminho inteiro; ele revela a arquitetura do caminho e mostra por que ele merece ser preservado.
+
+---
 
 Uma formulação completa do método dos elementos finitos (FEM) para diversos problemas de autovalores em eletromagnetismo foi apresentada. O uso de funções de base de aresta, recentemente desenvolvidas para elementos finitos vetoriais, foi demonstrado para problemas bidimensionais e tridimensionais. Elementos triangulares (2D) e tetraédricos (3D) são utilizados para modelar geometrias complexas com precisão, devido à sua capacidade de representar tais formas de maneira eficiente.
 
@@ -14,17 +18,19 @@ Como problemas reais envolvem geometrias tridimensionais, foi apresentada uma fo
 
 Para problemas tridimensionais, o número de variáveis aumenta drasticamente em relação aos problemas bidimensionais. Nos códigos tridimensionais, a esparsidade das matrizes FEM foi explorada armazenando apenas os elementos não nulos e utilizando a simetria (armazenando apenas a parte triangular superior ou inferior). Solucionadores esparsos de autovalores foram utilizados para resolver eficientemente as equações FEM.
 
+---
+
 ## Passagem interpretativa: o que o artigo realmente entrega
 
 Se quisermos condensar a contribuição do trabalho em linguagem formativa, ela pode ser organizada em três degraus. O primeiro degrau é pedagógico: a formulação escalar bidimensional mostra o método em sua forma mais clássica e serve como terreno firme para o leitor. O segundo degrau é conceitual: a formulação com elementos de aresta em 2D mostra como a discretização deve respeitar a estrutura geométrica do campo eletromagnético para evitar modos espúrios. O terceiro degrau é de maturidade: a extensão para cavidades tridimensionais demonstra que essa filosofia não era um remédio local, mas uma linguagem geral de modelagem.
 
 Em outras palavras, o legado do artigo não está apenas nos números das tabelas ou nos programas listados, mas na construção de uma família coerente de formulações variacionais para autoproblemas eletromagnéticos.
 
----
-
 ## Nota histórica
 
 O registro institucional e a data ao final desta seção devem ser lidos como parte do contexto histórico do relatório técnico. Eles lembram ao leitor que este trabalho nasceu em uma época em que o custo computacional, a disponibilidade de bibliotecas numéricas e a própria formulação de elementos de aresta ainda estavam em processo de consolidação. Isso torna o texto ainda mais valioso como documento de transição entre a formulação clássica e a prática moderna.
+
+---
 
 NASA Langley Research Center  
 Hampton, VA 23681-0001  
@@ -36,9 +42,13 @@ Hampton, VA 23681-0001
 
 Programas computacionais foram desenvolvidos para implementar a análise apresentada neste relatório. Todos os programas foram escritos em FORTRAN. Esses programas utilizam arquivos *.MOD contendo informações de malha geradas pelo COSMOS/M (ref. 4). Além disso, utilizam rotinas otimizadas das bibliotecas EISPACK (refs. 7 e 8) e VECLIB (ref. 19) em computadores CONVEX.
 
+---
+
 ### Leitura orientadora do apêndice
 
 Este apêndice deve ser lido como um mapa de concretização da teoria. Cada nome de programa marca uma etapa da evolução do estudo: parte-se de um caso escalar mais clássico, passa-se para formulações vetoriais em 2D, incorpora-se a heterogeneidade material e, por fim, chega-se ao regime tridimensional com preocupações explícitas de desempenho numérico.
+
+---
 
 ### HELM10
 
@@ -66,12 +76,6 @@ Programas FEM tridimensionais para cálculo de autovalores em cavidades preenchi
 
 - FEM3D0: utiliza rotinas EISPACK  
 - FEM3D1: explora esparsidade e simetria das matrizes FEM e utiliza VECLIB  
-
-### Passagem interpretativa: por que esta lista é importante
-
-A sequência dos programas não é um apêndice burocrático. Ela mostra que o artigo foi escrito com compromisso entre teoria e implementação. Em especial, a transição de `FEM3D0` para `FEM3D1` revela uma lição que continua atual: quando a dimensão cresce, não basta ter a formulação correta; é preciso também uma estratégia computacional adequada para armazenar e resolver o problema de autovalor.
-
-Para um leitor contemporâneo, esta lista também cumpre outro papel: ela ajuda a distinguir entre o nome histórico dos códigos do relatório e qualquer reorganização moderna que um repositório atual venha a adotar. O conteúdo matemático é o legado principal; os nomes de programas são sua expressão histórica original.
 
 Esses programas estão disponíveis mediante solicitação junto à:
 
@@ -130,10 +134,3 @@ Esta seção fecha o artigo de maneira bastante coerente com o desenvolvimento a
 - O apêndice não é apenas uma lista de programas: ele serve como mapa entre blocos teóricos e implementações.
 - A sequência `HELM10 -> HELMVEC -> HELMVEC1 -> HELMVEC2 -> HELMVEC3` acompanha o crescimento do problema matemático.
 - A dupla `FEM3D0 / FEM3D1` deixa claro que a passagem ao 3D exige não só nova formulação, mas também nova estratégia numérica para armazenamento e solução.
-
-### Observações de consistência
-
-- A lista de referências está adequada como trilha de leitura, mas algumas entradas estão abreviadas em relação ao padrão bibliográfico completo do artigo.
-- O trecho sobre esparsidade e simetria é especialmente importante para não se interpretar os exemplos 3D como simples extensão direta dos exemplos 2D; a dificuldade computacional cresce de forma qualitativa, não apenas quantitativa.
-- O carimbo institucional da NASA e a data final não fazem parte da teoria propriamente dita, mas são relevantes como marca do contexto histórico e tecnológico do relatório.
-- O apêndice lista programas históricos em FORTRAN ligados ao relatório original; isso não deve ser confundido automaticamente com a organização de código de um repositório moderno.
