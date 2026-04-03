@@ -14,6 +14,10 @@ Executáveis atuais correspondentes:
 - `helm10_circle`
 - `helm10_coax`
 
+Entrada didática por equação:
+
+- `tp3485::build_eq43_helm10_system(...)`
+
 ## 1) Visão geral da família
 
 Os três executáveis têm a mesma espinha dorsal:
@@ -42,7 +46,8 @@ sequenceDiagram
     participant CLI as helm10::parse_scalar_cli_options
     participant Mesh as make_*_mesh
     participant Debug as helm10_debug::*
-    participant BuildTE as build_helm10_scalar_system(TE)
+    participant Eq43 as tp3485::build_eq43_helm10_system
+    participant BuildTE as build_helm10_scalar_system
     participant Elem as fem_scalar.hpp
     participant Eig as generalized_eigs_sym_vec
     participant Match as mode_match_*.hpp
@@ -60,7 +65,8 @@ sequenceDiagram
         Main->>Debug: print_first_triangle_closed_form_debug(...)
     end
 
-    Main->>BuildTE: build_helm10_scalar_system(mesh, TE_Neumann, backend)
+    Main->>Eq43: build_eq43_helm10_system(mesh, TE_Neumann, backend)
+    Eq43->>BuildTE: build_helm10_scalar_system(mesh, TE_Neumann, backend)
     BuildTE->>BuildTE: build_dof_map(...)
     loop para cada triangulo
         BuildTE->>Elem: tri_geom(...)
@@ -75,7 +81,8 @@ sequenceDiagram
         Elem-->>BuildTE: Se, Te locais
         BuildTE->>BuildTE: assemble S, T globais
     end
-    BuildTE-->>Main: sys_te
+    BuildTE-->>Eq43: ScalarSystem
+    Eq43-->>Main: sys_te
 
     Main->>Eig: generalized_eigs_sym_vec(sys_te.S, sys_te.T)
     Eig->>Eig: LAPACKE_dsygv(...)
@@ -95,7 +102,8 @@ sequenceDiagram
         Match-->>Main: identificacao modal e rho
     end
 
-    Main->>BuildTE: build_helm10_scalar_system(mesh, TM_Dirichlet, backend)
+    Main->>Eq43: build_eq43_helm10_system(mesh, TM_Dirichlet, backend)
+    Eq43->>BuildTE: build_helm10_scalar_system(mesh, TM_Dirichlet, backend)
     BuildTE->>BuildTE: build_dof_map(...)
     loop para cada triangulo
         BuildTE->>Elem: tri_geom(...)
@@ -103,7 +111,8 @@ sequenceDiagram
         Elem-->>BuildTE: Se, Te locais
         BuildTE->>BuildTE: assemble S, T globais
     end
-    BuildTE-->>Main: sys_tm
+    BuildTE-->>Eq43: ScalarSystem
+    Eq43-->>Main: sys_tm
 
     Main->>Eig: generalized_eigs_sym_vec(sys_tm.S, sys_tm.T)
     Eig->>Eig: LAPACKE_dsygv(...)
@@ -139,19 +148,20 @@ helm10_rect / helm10_circle / helm10_coax
     │   ├── make_circle_mesh(...)
     │   └── make_coax_mesh(...)
     ├── [opcional] helm10_debug::print_first_triangle_closed_form_debug(...)
-    ├── build_helm10_scalar_system(mesh, ScalarBC::TE_Neumann, backend)
-    │   ├── build_dof_map(mesh, bc)
-    │   ├── loop em mesh.tris
-    │   │   ├── tri_geom(mesh, tri)
-    │   │   ├── element_mats_scalar(g, backend, Se, Te)
-    │   │   │   ├── backend closed-form
-    │   │   │   │   ├── element_mats_scalar_closed_form(g, Se, Te)
-    │   │   │   │   └── explicit_tri2d::tri2d_scalar_closed_form_eq_30_33(...)
-    │   │   │   └── backend gauss
-    │   │   │       ├── element_mats_scalar_gauss(g, Se, Te)
-    │   │   │       └── tri_shape_gradients_scalar(g, dndx, dndy)
-    │   │   └── assemble S(ia, ib) e T(ia, ib)
-    │   └── return ScalarSystem{S, T, ndof, dof_map}
+    ├── tp3485::build_eq43_helm10_system(mesh, ScalarBC::TE_Neumann, backend)
+    │   └── build_helm10_scalar_system(mesh, ScalarBC::TE_Neumann, backend)
+    │       ├── build_dof_map(mesh, bc)
+    │       ├── loop em mesh.tris
+    │       │   ├── tri_geom(mesh, tri)
+    │       │   ├── element_mats_scalar(g, backend, Se, Te)
+    │       │   │   ├── backend closed-form
+    │       │   │   │   ├── element_mats_scalar_closed_form(g, Se, Te)
+    │       │   │   │   └── explicit_tri2d::tri2d_scalar_closed_form_eq_30_33(...)
+    │       │   │   └── backend gauss
+    │       │   │       ├── element_mats_scalar_gauss(g, Se, Te)
+    │       │   │       └── tri_shape_gradients_scalar(g, dndx, dndy)
+    │       │   └── assemble S(ia, ib) e T(ia, ib)
+    │       └── return ScalarSystem{S, T, ndof, dof_map}
     ├── generalized_eigs_sym_vec(sys_te.S, sys_te.T)
     │   └── LAPACKE_dsygv(...)
     ├── [opcional] helm10_debug::print_positive_kc_candidates_debug(...)
@@ -164,8 +174,9 @@ helm10_rect / helm10_circle / helm10_coax
     │       └── mass_correlation_abs(...)
     │           ├── mass_inner(...)
     │           └── mass_norm(...)
-    ├── build_helm10_scalar_system(mesh, ScalarBC::TM_Dirichlet, backend)
-    │   └── mesmo tronco de montagem TE, mudando apenas a BC
+    ├── tp3485::build_eq43_helm10_system(mesh, ScalarBC::TM_Dirichlet, backend)
+    │   └── build_helm10_scalar_system(mesh, ScalarBC::TM_Dirichlet, backend)
+    │       └── mesmo tronco de montagem TE, mudando apenas a BC
     ├── generalized_eigs_sym_vec(sys_tm.S, sys_tm.T)
     │   └── LAPACKE_dsygv(...)
     ├── [opcional] helm10_debug::print_positive_kc_candidates_debug(...)
@@ -189,11 +200,12 @@ O coração do `R1` está em três peças que sustentam toda a trilha posterior 
 ### 4.1) Montagem escalar nodal
 
 ```text
-build_helm10_scalar_system(...)
-├── build_dof_map(...)
-├── tri_geom(...)
-├── element_mats_scalar(...)
-└── assemble S, T globais
+tp3485::build_eq43_helm10_system(...)
+└── build_helm10_scalar_system(...)
+    ├── build_dof_map(...)
+    ├── tri_geom(...)
+    ├── element_mats_scalar(...)
+    └── assemble S, T globais
 ```
 
 Ponto conceitual importante:
@@ -206,10 +218,12 @@ Ponto conceitual importante:
 
 ```text
 fluxo TE
-└── build_helm10_scalar_system(..., TE_Neumann, ...)
+└── tp3485::build_eq43_helm10_system(..., TE_Neumann, ...)
+    └── build_helm10_scalar_system(..., TE_Neumann, ...)
 
 fluxo TM
-└── build_helm10_scalar_system(..., TM_Dirichlet, ...)
+└── tp3485::build_eq43_helm10_system(..., TM_Dirichlet, ...)
+    └── build_helm10_scalar_system(..., TM_Dirichlet, ...)
 ```
 
 Ponto conceitual importante:

@@ -16,6 +16,7 @@ Antes de entrar no codigo, a trilha teorica revisada do artigo esta em:
 
 - [docs/README.md](docs/README.md): indice geral da documentacao, em ordem de estudo.
 - [docs/19950011772.pdf](docs/19950011772.pdf): PDF original do paper.
+- [docs/Rastreabilidade_Equacoes_Artigo_Codigo.md](docs/Rastreabilidade_Equacoes_Artigo_Codigo.md): trilha central de rastreabilidade entre equacoes do artigo e funcoes/arquivos C++.
 - [docs/results/README.md](docs/results/README.md): resultados curados, figuras e validacoes preservadas no repositorio.
 
 Os arquivos principais em `docs/` preservam a traducao-base do artigo e receberam comentarios complementares, explicacoes intermediarias entre equacoes e notas de consistencia para estudo.
@@ -28,6 +29,7 @@ Os arquivos principais em `docs/` preservam a traducao-base do artigo e recebera
 - Sec. 2.2.3 (`k0` dado `beta`): `src/helmvec2`
 - Sec. 2.2.4 (`beta` dado `k0`): `src/helmvec3`
 - Sec. 3.1 (cavidades 3D, edge tetra): `src/fem3d0` e `src/fem3d1`
+- Fachada didatica publica por equacao global: `src/article`
 
 ## 1.1) Mapa do Apendice FORTRAN para o repositorio
 
@@ -47,6 +49,8 @@ Observacao:
 - as montagens globais efetivas estao concentradas nos arquivos listados na
   ultima coluna;
 - as formas fechadas locais ficam organizadas em `src/explicit`.
+- as entradas publicas mais didaticas, nomeadas pelas equacoes globais do
+  artigo, ficam em `src/article/tp3485_systems.hpp`.
 
 ## 1.2) Resumo matematico do repositorio
 
@@ -210,6 +214,7 @@ equacoes numeradas do artigo, estao nos READMEs de cada modulo.
 ## 2) Estrutura principal (src)
 
 - `src/core`: malhas, estruturas de matriz, solver LAPACK, utilitarios de I/O VTK
+- `src/article`: fachada publica nomeada pelas equacoes globais do artigo
 - `src/edge`: base/DOFs/montagem edge 2D
 - `src/edge3d`: base/DOFs/montagem edge 3D
 - `src/helm10`: executaveis escalares 2D
@@ -255,16 +260,17 @@ cmake --build . -j
 
 Os executaveis principais aceitam, quando aplicavel:
 
-- `--backend gauss`
 - `--backend closed-form`
+- `--backend gauss`
 - `--debug-local-blocks`
 - `--debug-candidates`
 - `--debug` ou `--debug-all`
 
 Em termos práticos:
 
-- `gauss` preserva a montagem por quadratura/cubatura do fluxo numerico original;
 - `closed-form` usa as formas fechadas ligadas diretamente as equacoes do artigo;
+- `closed-form` e o fluxo principal do repositorio;
+- `gauss` preserva a montagem por quadratura/cubatura para verificacao auxiliar;
 - `--debug-local-blocks` imprime o primeiro elemento local com rastreabilidade
   matematica;
 - `--debug-candidates` imprime as primeiras raizes/candidatos antes do matching.
@@ -273,7 +279,7 @@ Exemplos:
 
 ```bash
 ./build/helm10_rect 14 14 8 --backend closed-form --debug-local-blocks
-./build/edge_rect 14 14 8 --backend gauss --debug-candidates
+./build/edge_rect 14 14 8 --debug-candidates
 ./build/mixed_rect 12 6 --backend closed-form --debug-local-blocks --debug-candidates
 ./build/helmvec2_rect 10 6 6 --backend closed-form --debug-local-blocks
 ./build/helmvec3_rect 0.20 10 5 --backend closed-form --debug-candidates
@@ -285,9 +291,9 @@ Exemplos:
 ### 4.1) Secao 2.1 (`helm10`)
 
 ```bash
-./build/helm10_rect 14 14 8 --backend gauss
-./build/helm10_circle 10 48 8 --backend gauss
-./build/helm10_coax 10 48 8 --backend gauss
+./build/helm10_rect 14 14 8
+./build/helm10_circle 10 48 8
+./build/helm10_coax 10 48 8
 ```
 
 Saidas tipicas:
@@ -299,9 +305,9 @@ Saidas tipicas:
 ### 4.2) Secao 2.2.1 (`helmvec`)
 
 ```bash
-./build/edge_rect 14 14 8 --backend gauss
-./build/edge_circle 10 48 8 --backend gauss
-./build/edge_coax 10 48 8 --backend gauss
+./build/edge_rect 14 14 8
+./build/edge_circle 10 48 8
+./build/edge_coax 10 48 8
 ```
 
 Saidas tipicas:
@@ -313,9 +319,9 @@ Saidas tipicas:
 ### 4.3) Secao 2.2.2 (`helmvec1`)
 
 ```bash
-./build/mixed_rect 12 6 --backend gauss
-./build/mixed_circle 10 48 --backend gauss
-./build/mixed_coax 10 48 --backend gauss
+./build/mixed_rect 12 6
+./build/mixed_circle 10 48
+./build/mixed_coax 10 48
 ```
 
 Saidas tipicas:

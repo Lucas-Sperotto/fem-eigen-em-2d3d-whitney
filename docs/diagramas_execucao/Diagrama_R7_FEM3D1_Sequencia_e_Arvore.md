@@ -13,6 +13,10 @@ Executável atual correspondente:
 
 - `fem3d1_rect`
 
+Entrada didática por equação:
+
+- `tp3485::build_eq178_fem3d_system_sparse(...)`
+
 ## 1) Visão geral da família
 
 Esta raiz fecha a coleção dos diagramas-base mostrando a contraparte esparsa de `R6`.
@@ -42,6 +46,7 @@ sequenceDiagram
     participant Driver as fem3d::for_each_selected_case
     participant BuildCase as fem3d::build_case
     participant Mesh as make_*_tet_mesh
+    participant Eq178 as tp3485::build_eq178_fem3d_system_sparse
     participant Build as build_helm3d_edge_system_sparse
     participant Dofs as build_edge_dofs_3d
     participant Elem as edge3d_assembly.cpp
@@ -69,16 +74,21 @@ sequenceDiagram
         BuildCase-->>Driver: PreparedCase
         Driver->>Main: entrega PreparedCase
 
-        Main->>Build: build_helm3d_edge_system_sparse(mesh, PEC_TangentialZero, eps, mu, backend)
+        Main->>Eq178: build_eq178_fem3d_system_sparse(mesh, PEC_TangentialZero, eps, mu, backend)
+        Eq178->>Build: build_helm3d_edge_system_sparse(mesh, PEC_TangentialZero, eps, mu, backend)
         Build->>Dofs: build_edge_dofs_3d(mesh, bc)
         Dofs-->>Build: edge_to_dof, tet_edges, orientacao local/global
-        Build->>Elem: assemble_generic(...)
+        Build->>Build: initialize_eq178_sparse_global_system(...)
+        Build->>Elem: assemble_eq178_global_sparse(...)
+        Elem->>Elem: assemble_eq178_global_generic(...)
         loop para cada tetraedro
+            Elem->>Elem: build_eq178_local_tet_blocks(...)
             Elem->>Elem: monta Sel, Tel locais
             Elem->>Sparse: add(I, J, ...)
             Note over Sparse: guarda apenas o triangulo inferior
         end
-        Build-->>Main: EdgeSystem3DSparse
+        Build-->>Eq178: EdgeSystem3DSparse
+        Eq178-->>Main: EdgeSystem3DSparse
 
         alt debug_local_blocks
             Main->>Debug: print_first_tet_closed_form_debug(...)
@@ -119,25 +129,27 @@ fem3d1_rect
     │   │   └── CaseId::sphere -> make_sphere_tet_mesh_cartesian(...), table15_rows()
     │   └── callback run_sparse_case(...)
     ├── run_sparse_case(...)
-    │   ├── build_helm3d_edge_system_sparse(mesh, PEC_TangentialZero, eps_r_tet, mu_r_tet, backend)
-    │   │   ├── build_edge_dofs_3d(mesh, bc)
-    │   │   │   ├── key_edge_undirected(...)
-    │   │   │   ├── add_edge(...)
-    │   │   │   ├── conta faces para detectar fronteira
-    │   │   │   ├── marca arestas de fronteira
-    │   │   │   └── cria edge_to_dof eliminando fronteira PEC
-    │   │   ├── aloca SparseSymMat S e T
-    │   │   └── assemble_generic(...)
-    │   │       ├── loop em mesh.tets
-    │   │       ├── tet_geom_edge(mesh, tet)
-    │   │       ├── assemble_local_3d_element_mats(...)
-    │   │       │   ├── backend closed-form
-    │   │       │   │   └── explicit_tet3d::tet3d_edge_closed_form_eq_181_182(...)
-    │   │       │   └── backend gauss
-    │   │       │       ├── whitney_curl_local_3d(...)
-    │   │       │       ├── kTetQuadP2
-    │   │       │       └── whitney_W_local_3d(...)
-    │   │       └── SparseSymMat::add(...) apenas se I >= J
+    │   ├── tp3485::build_eq178_fem3d_system_sparse(mesh, PEC_TangentialZero, eps_r_tet, mu_r_tet, backend)
+    │   │   └── build_helm3d_edge_system_sparse(mesh, PEC_TangentialZero, eps_r_tet, mu_r_tet, backend)
+    │   │       ├── build_edge_dofs_3d(mesh, bc)
+    │   │       │   ├── key_edge_undirected(...)
+    │   │       │   ├── add_edge(...)
+    │   │       │   ├── conta faces para detectar fronteira
+    │   │       │   ├── marca arestas de fronteira
+    │   │       │   └── cria edge_to_dof eliminando fronteira PEC
+    │   │       ├── initialize_eq178_sparse_global_system(...)
+    │   │       └── assemble_eq178_global_sparse(...)
+    │   │           └── assemble_eq178_global_generic(...)
+    │   │               ├── loop em mesh.tets
+    │   │               ├── tet_geom_edge(mesh, tet)
+    │   │               ├── build_eq178_local_tet_blocks(...)
+    │   │               │   ├── backend closed-form
+    │   │               │   │   └── explicit_tet3d::tet3d_edge_closed_form_eq_181_182(...)
+    │   │               │   └── backend gauss
+    │   │               │       ├── whitney_curl_local_3d(...)
+    │   │               │       ├── kTetQuadP2
+    │   │               │       └── whitney_W_local_3d(...)
+    │   │               └── SparseSymMat::add(...) apenas se I >= J
     │   ├── [opcional] fem3d::print_first_tet_closed_form_debug(...)
     │   ├── sparse.S.nnz_lower()
     │   ├── sparse.T.nnz_lower()
@@ -160,8 +172,8 @@ O coração do `R7` está em quatro peças que o separam de `R6` sem mudar a teo
 ### 4.1) Mesma formulação, outro armazenamento
 
 ```text
-R6: build_helm3d_edge_system(...)
-R7: build_helm3d_edge_system_sparse(...)
+R6: tp3485::build_eq178_fem3d_system_dense(...) -> build_helm3d_edge_system(...) -> assemble_eq178_global_dense(...)
+R7: tp3485::build_eq178_fem3d_system_sparse(...) -> build_helm3d_edge_system_sparse(...) -> assemble_eq178_global_sparse(...)
 ```
 
 Ponto conceitual importante:
@@ -184,10 +196,10 @@ Ponto conceitual importante:
 - o código usa essa simetria para reduzir memória durante a montagem;
 - isso aparece tanto no armazenamento quanto nas estatísticas `nnz_lower(S)` e `nnz_lower(T)` impressas pelo driver.
 
-### 4.3) `assemble_generic(...)` reaproveitado
+### 4.3) `assemble_eq178_global_generic(...)` reaproveitado
 
 ```text
-assemble_generic(...)
+assemble_eq178_global_generic(...)
 ├── calcula Sel, Tel locais
 └── callback decide como acumular globalmente
 ```
@@ -226,10 +238,11 @@ Ponto conceitual importante:
 O trecho distintivo desta raiz aparece entre a montagem e o solve:
 
 ```text
-build_helm3d_edge_system_sparse(...)
-└── EdgeSystem3DSparse
-    ├── SparseSymMat S
-    └── SparseSymMat T
+tp3485::build_eq178_fem3d_system_sparse(...)
+└── build_helm3d_edge_system_sparse(...)
+    └── EdgeSystem3DSparse
+        ├── SparseSymMat S
+        └── SparseSymMat T
 
 run_sparse_case(...)
 ├── sparse.S.nnz_lower()

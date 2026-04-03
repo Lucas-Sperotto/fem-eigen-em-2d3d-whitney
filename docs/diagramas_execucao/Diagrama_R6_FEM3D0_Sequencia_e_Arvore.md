@@ -13,6 +13,10 @@ Executável atual correspondente:
 
 - `fem3d0_rect`
 
+Entrada didática por equação:
+
+- `tp3485::build_eq178_fem3d_system_dense(...)`
+
 ## 1) Visão geral da família
 
 Esta raiz marca a entrada plena no domínio tridimensional:
@@ -44,6 +48,7 @@ sequenceDiagram
     participant Driver as fem3d::for_each_selected_case
     participant BuildCase as fem3d::build_case
     participant Mesh as make_*_tet_mesh
+    participant Eq178 as tp3485::build_eq178_fem3d_system_dense
     participant Build as build_helm3d_edge_system
     participant Dofs as build_edge_dofs_3d
     participant Elem as edge3d_assembly.cpp
@@ -70,12 +75,16 @@ sequenceDiagram
         BuildCase-->>Driver: PreparedCase{mesh, eps_r_tet, mu_r_tet, rows}
         Driver->>Main: entrega PreparedCase
 
-        Main->>Build: build_helm3d_edge_system(mesh, PEC_TangentialZero, eps, mu, backend)
+        Main->>Eq178: build_eq178_fem3d_system_dense(mesh, PEC_TangentialZero, eps, mu, backend)
+        Eq178->>Build: build_helm3d_edge_system(mesh, PEC_TangentialZero, eps, mu, backend)
         Build->>Dofs: build_edge_dofs_3d(mesh, bc)
         Dofs-->>Build: edge_to_dof, tet_edges, orientacao local/global
-        Build->>Elem: assemble_generic(...)
+        Build->>Build: initialize_eq178_dense_global_system(...)
+        Build->>Elem: assemble_eq178_global_dense(...)
+        Elem->>Elem: assemble_eq178_global_generic(...)
         loop para cada tetraedro
             Elem->>Basis: tet_geom_edge(...)
+            Elem->>Elem: build_eq178_local_tet_blocks(...)
             alt backend = closed-form
                 Elem->>Elem: explicit_tet3d::tet3d_edge_closed_form_eq_181_182(...)
             else backend = gauss
@@ -85,7 +94,8 @@ sequenceDiagram
             Elem-->>Build: Sel, Tel locais
             Build->>Build: espalha S, T com sgn_i * sgn_j
         end
-        Build-->>Main: sistema S e = k0^2 T e
+        Build-->>Eq178: EdgeSystem3D
+        Eq178-->>Main: sistema S e = k0^2 T e
 
         alt debug_local_blocks
             Main->>Debug: print_first_tet_closed_form_debug(...)
@@ -143,25 +153,27 @@ fem3d0_rect
     │   │       └── table15_rows()
     │   └── callback run_dense_case(...)
     ├── run_dense_case(...)
-    │   ├── build_helm3d_edge_system(mesh, PEC_TangentialZero, eps_r_tet, mu_r_tet, backend)
-    │   │   ├── build_edge_dofs_3d(mesh, bc)
-    │   │   │   ├── key_edge_undirected(...)
-    │   │   │   ├── add_edge(...)
-    │   │   │   ├── conta faces para detectar fronteira
-    │   │   │   ├── marca arestas de fronteira
-    │   │   │   └── cria edge_to_dof eliminando fronteira PEC
-    │   │   ├── aloca S e T densas
-    │   │   └── assemble_generic(...)
-    │   │       ├── loop em mesh.tets
-    │   │       ├── tet_geom_edge(mesh, tet)
-    │   │       ├── assemble_local_3d_element_mats(...)
-    │   │       │   ├── backend closed-form
-    │   │       │   │   └── explicit_tet3d::tet3d_edge_closed_form_eq_181_182(...)
-    │   │       │   └── backend gauss
-    │   │       │       ├── whitney_curl_local_3d(...)
-    │   │       │       ├── kTetQuadP2
-    │   │       │       └── whitney_W_local_3d(...)
-    │   │       └── espalha S(I,J), T(I,J) com sgn_i * sgn_j
+    │   ├── tp3485::build_eq178_fem3d_system_dense(mesh, PEC_TangentialZero, eps_r_tet, mu_r_tet, backend)
+    │   │   └── build_helm3d_edge_system(mesh, PEC_TangentialZero, eps_r_tet, mu_r_tet, backend)
+    │   │       ├── build_edge_dofs_3d(mesh, bc)
+    │   │       │   ├── key_edge_undirected(...)
+    │   │       │   ├── add_edge(...)
+    │   │       │   ├── conta faces para detectar fronteira
+    │   │       │   ├── marca arestas de fronteira
+    │   │       │   └── cria edge_to_dof eliminando fronteira PEC
+    │   │       ├── initialize_eq178_dense_global_system(...)
+    │   │       └── assemble_eq178_global_dense(...)
+    │   │           └── assemble_eq178_global_generic(...)
+    │   │               ├── loop em mesh.tets
+    │   │               ├── tet_geom_edge(mesh, tet)
+    │   │               ├── build_eq178_local_tet_blocks(...)
+    │   │               │   ├── backend closed-form
+    │   │               │   │   └── explicit_tet3d::tet3d_edge_closed_form_eq_181_182(...)
+    │   │               │   └── backend gauss
+    │   │               │       ├── whitney_curl_local_3d(...)
+    │   │               │       ├── kTetQuadP2
+    │   │               │       └── whitney_W_local_3d(...)
+    │   │               └── espalha S(I,J), T(I,J) com sgn_i * sgn_j
     │   ├── [opcional] fem3d::print_first_tet_closed_form_debug(...)
     │   │   ├── tet_geom_edge(...)
     │   │   └── explicit_tet3d::tet3d_edge_closed_form_eq_181_182(...)
@@ -221,7 +233,7 @@ tet_geom_edge(...)
 ├── lambda_coeff[i]
 └── comprimentos L[m]
 
-assemble_local_3d_element_mats(...)
+build_eq178_local_tet_blocks(...)
 ├── whitney_curl_local_3d(...)
 └── whitney_W_local_3d(...)
 ```

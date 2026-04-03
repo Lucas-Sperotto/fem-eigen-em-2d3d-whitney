@@ -68,6 +68,7 @@ Todos os arquivos da trilha principal agora terminam com links de `Anterior` e `
 ## Materiais de apoio
 
 - [19950011772.pdf](refs/19950011772.pdf): PDF original do artigo usado como referência de confronto.
+- [Rastreabilidade_Equacoes_Artigo_Codigo.md](Rastreabilidade_Equacoes_Artigo_Codigo.md): mapa central `equação -> função -> arquivo` para auditoria didática da implementação em C++.
 - [Casos_de_Teste_do_Artigo.md](Casos_de_Teste_do_Artigo.md): tabela consolidada com os casos numéricos do artigo.
 - [Matriz_Casos_Executaveis_Arvore_de_Chamada.md](Matriz_Casos_Executaveis_Arvore_de_Chamada.md): ponte entre casos do artigo, executáveis atuais e raízes da árvore de chamada.
 - [diagramas_execucao/README.md](diagramas_execucao/README.md): caderno de navegação da coleção de diagramas de execução.

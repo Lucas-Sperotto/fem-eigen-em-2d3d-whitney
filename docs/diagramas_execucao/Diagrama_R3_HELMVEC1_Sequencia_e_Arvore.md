@@ -17,6 +17,11 @@ Executáveis atuais correspondentes:
 - `mixed_circle`
 - `mixed_coax`
 
+Entrada didática por equação:
+
+- `tp3485::build_eq92_helmvec1_system_E(...)`
+- `tp3485::build_eq92_helmvec1_system_H(...)`
+
 ## 1) Visão geral da família
 
 Esta raiz é a primeira em que o projeto assume explicitamente uma natureza mista:
@@ -30,9 +35,10 @@ O ponto conceitual mais importante aqui é o seguinte: o repositório não cria 
 - o tronco vetorial de `R2`, vindo de `build_helm10_edge_system(...)`;
 - o tronco escalar de `R1`, vindo de `build_helm10_scalar_system(...)`.
 
-Depois disso, a família `HELMVEC1` faz duas coisas novas:
+Depois disso, a família `HELMVEC1` faz três coisas novas:
 
-- fecha o sistema global em bloco diagonal por `block_diag(...)`;
+- preserva explicitamente os blocos `St`, `Tt`, `Sz` e `Tz`;
+- fecha o sistema global por `assemble_eq92_global_from_named_blocks(...)`;
 - separa os modos pelo bloco dominante usando `split_modes_by_block_energy(...)`.
 
 ## 2) Diagrama de sequência da família `HELMVEC1`
@@ -44,10 +50,11 @@ sequenceDiagram
     participant CLI as helmvec1::parse_mixed_cli_options
     participant Mesh as make_*_mesh
     participant Debug as helmvec1_debug::*
-    participant BuildE as build_system92_E
+    participant Eq92 as tp3485::build_eq92_helmvec1_system_E/H
+    participant BuildE as build_system92_E/H
     participant Edge as build_helm10_edge_system
     participant Scal as build_helm10_scalar_system
-    participant Block as block_diag
+    participant Assemble92 as assemble_eq92_global_from_named_blocks
     participant Eig as generalized_eigs_sym_vec
     participant Split as split_modes_by_block_energy
     participant Ref as mixed_rect_reference / print_first_modes
@@ -63,14 +70,17 @@ sequenceDiagram
         Main->>Debug: print_first_triangle_closed_form_debug(...)
     end
 
-    Main->>BuildE: build_system92_E(mesh, eps, mu, backend)
+    Main->>Eq92: build_eq92_helmvec1_system_E(mesh, eps, mu, backend)
+    Eq92->>BuildE: build_system92_E(mesh, eps, mu, backend)
     BuildE->>Edge: build_helm10_edge_system(..., TE_PEC_TangentialZero, eps, mu, backend)
     Edge-->>BuildE: bloco transversal de aresta
     BuildE->>Scal: build_helm10_scalar_system(..., TM_Dirichlet, eps, mu, backend)
     Scal-->>BuildE: bloco longitudinal escalar
-    BuildE->>Block: block_diag(edge.S, scal.S) e block_diag(edge.T, scal.T)
-    Block-->>BuildE: sistema global misto Eq. (92)
-    BuildE-->>Main: sys_e
+    BuildE->>BuildE: load_named_eq92_blocks_from_subsystems(...)
+    BuildE->>Assemble92: assemble_eq92_global_from_named_blocks(...)
+    Assemble92-->>BuildE: sistema global misto Eq. (92)
+    BuildE-->>Eq92: MixedSystem92
+    Eq92-->>Main: sys_e
 
     Main->>Eig: generalized_eigs_sym_vec(sys_e.S, sys_e.T)
     Eig->>Eig: LAPACKE_dsygv(...)
@@ -90,14 +100,17 @@ sequenceDiagram
         Main->>Ref: print_first_modes(...) para TM
     end
 
-    Main->>BuildE: build_system92_H(mesh, eps, mu, backend)
+    Main->>Eq92: build_eq92_helmvec1_system_H(mesh, eps, mu, backend)
+    Eq92->>BuildE: build_system92_H(mesh, eps, mu, backend)
     BuildE->>Edge: build_helm10_edge_system(..., TM_PEC_NormalZero, mu, eps, backend)
     Edge-->>BuildE: bloco transversal dual
     BuildE->>Scal: build_helm10_scalar_system(..., TE_Neumann, mu, eps, backend)
     Scal-->>BuildE: bloco longitudinal dual
-    BuildE->>Block: block_diag(...)
-    Block-->>BuildE: sistema global misto dual
-    BuildE-->>Main: sys_h
+    BuildE->>BuildE: load_named_eq92_blocks_from_subsystems(...)
+    BuildE->>Assemble92: assemble_eq92_global_from_named_blocks(...)
+    Assemble92-->>BuildE: sistema global misto dual
+    BuildE-->>Eq92: MixedSystem92
+    Eq92-->>Main: sys_h
 
     Main->>Eig: generalized_eigs_sym_vec(sys_h.S, sys_h.T)
     Eig->>Eig: LAPACKE_dsygv(...)
@@ -137,17 +150,23 @@ mixed_rect / mixed_circle / mixed_coax
     │   ├── explicit_tri2d::tri2d_edge_closed_form_eq_66_67(...)
     │   ├── explicit_tri2d::tri2d_scalar_closed_form_eq_30_33(...)
     │   └── print_block_3x3(...)
-    ├── build_system92_E(mesh, eps, mu, backend)
-    │   ├── build_helm10_edge_system(mesh, TE_PEC_TangentialZero, eps, mu, backend)
-    │   │   └── mesmo tronco de montagem da família R2
-    │   ├── build_helm10_scalar_system(mesh, TM_Dirichlet, eps, mu, backend)
-    │   │   └── mesmo tronco de montagem da família R1
-    │   ├── finalize_block_diagonal_system(...)
-    │   │   ├── ms.nt = ms.edge.ed.ndof
-    │   │   ├── ms.nz = ms.scal.ndof
-    │   │   ├── block_diag(ms.edge.S, ms.scal.S)
-    │   │   └── block_diag(ms.edge.T, ms.scal.T)
-    │   └── return MixedSystem92
+    ├── tp3485::build_eq92_helmvec1_system_E(mesh, eps, mu, backend)
+    │   └── build_system92_E(mesh, eps, mu, backend)
+    │       ├── build_helm10_edge_system(mesh, TE_PEC_TangentialZero, eps, mu, backend)
+    │       │   └── mesmo tronco de montagem da família R2
+    │       ├── build_helm10_scalar_system(mesh, TM_Dirichlet, eps, mu, backend)
+    │       │   └── mesmo tronco de montagem da família R1
+    │       ├── load_named_eq92_blocks_from_subsystems(...)
+    │       │   ├── ms.St <- ms.edge.S
+    │       │   ├── ms.Tt <- ms.edge.T
+    │       │   ├── ms.Sz <- ms.scal.S
+    │       │   └── ms.Tz <- ms.scal.T
+    │       ├── assemble_eq92_global_from_named_blocks(...)
+    │       │   ├── ms.nt = ms.edge.ed.ndof
+    │       │   ├── ms.nz = ms.scal.ndof
+    │       │   ├── block_diag(ms.St, ms.Sz)
+    │       │   └── block_diag(ms.Tt, ms.Tz)
+    │       └── return MixedSystem92
     ├── generalized_eigs_sym_vec(sys_e.S, sys_e.T)
     │   └── LAPACKE_dsygv(...)
     ├── split_modes_by_block_energy(res_e, nt, nz, rho, k_edge, k_scal)
@@ -163,11 +182,13 @@ mixed_rect / mixed_circle / mixed_coax
     │   │   ├── analytic_rect_te(...)
     │   │   └── analytic_rect_tm(...)
     │   └── mixed_circle / mixed_coax -> print_first_modes(...)
-    ├── build_system92_H(mesh, eps, mu, backend)
-    │   ├── build_helm10_edge_system(mesh, TM_PEC_NormalZero, mu, eps, backend)
-    │   ├── build_helm10_scalar_system(mesh, TE_Neumann, mu, eps, backend)
-    │   ├── finalize_block_diagonal_system(...)
-    │   └── return MixedSystem92
+    ├── tp3485::build_eq92_helmvec1_system_H(mesh, eps, mu, backend)
+    │   └── build_system92_H(mesh, eps, mu, backend)
+    │       ├── build_helm10_edge_system(mesh, TM_PEC_NormalZero, mu, eps, backend)
+    │       ├── build_helm10_scalar_system(mesh, TE_Neumann, mu, eps, backend)
+    │       ├── load_named_eq92_blocks_from_subsystems(...)
+    │       ├── assemble_eq92_global_from_named_blocks(...)
+    │       └── return MixedSystem92
     ├── generalized_eigs_sym_vec(sys_h.S, sys_h.T)
     │   └── LAPACKE_dsygv(...)
     ├── split_modes_by_block_energy(res_h, nt, nz, rho, k_edge, k_scal)
@@ -185,10 +206,12 @@ O coração do `R3` está em quatro peças que precisam ser lidas em conjunto.
 ### 4.1) Fechamento da Eq. `(92)` por reuso de troncos
 
 ```text
-build_system92_E(...)
-├── build_helm10_edge_system(...)
-├── build_helm10_scalar_system(...)
-└── finalize_block_diagonal_system(...)
+tp3485::build_eq92_helmvec1_system_E(...)
+└── build_system92_E(...)
+    ├── build_helm10_edge_system(...)
+    ├── build_helm10_scalar_system(...)
+    ├── load_named_eq92_blocks_from_subsystems(...)
+    └── assemble_eq92_global_from_named_blocks(...)
 ```
 
 Ponto conceitual importante:
@@ -200,14 +223,16 @@ Ponto conceitual importante:
 ### 4.2) Versão `E` e versão `H`
 
 ```text
-build_system92_E(...)
-├── EdgeBC::TE_PEC_TangentialZero
-└── ScalarBC::TM_Dirichlet
+tp3485::build_eq92_helmvec1_system_E(...)
+└── build_system92_E(...)
+    ├── EdgeBC::TE_PEC_TangentialZero
+    └── ScalarBC::TM_Dirichlet
 
-build_system92_H(...)
-├── EdgeBC::TM_PEC_NormalZero
-├── ScalarBC::TE_Neumann
-└── troca constitutiva eps <-> mu
+tp3485::build_eq92_helmvec1_system_H(...)
+└── build_system92_H(...)
+    ├── EdgeBC::TM_PEC_NormalZero
+    ├── ScalarBC::TE_Neumann
+    └── troca constitutiva eps <-> mu
 ```
 
 Ponto conceitual importante:

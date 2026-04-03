@@ -17,6 +17,10 @@ Executáveis atuais correspondentes:
 - `edge_circle`
 - `edge_coax`
 
+Entrada didática por equação:
+
+- `tp3485::build_eq65_helmvec_system(...)`
+
 ## 1) Visão geral da família
 
 Esta família reutiliza a lógica geral de `main -> montagem -> solve -> matching -> exportação`, mas troca completamente o espaço discreto:
@@ -38,6 +42,7 @@ sequenceDiagram
     participant Mesh as make_*_mesh
     participant Debug as helmvec_debug::*
     participant Run as run_case / run_case_circle
+    participant Eq65 as tp3485::build_eq65_helmvec_system
     participant Build as build_helm10_edge_system
     participant Dofs as build_edge_dofs
     participant Basis as edge_basis.cpp
@@ -59,7 +64,8 @@ sequenceDiagram
     end
 
     Main->>Run: fluxo TE
-    Run->>Build: build_helm10_edge_system(mesh, bc_te, eps, mu, backend)
+    Run->>Eq65: build_eq65_helmvec_system(mesh, bc_te, eps, mu, backend)
+    Eq65->>Build: build_helm10_edge_system(mesh, bc_te, eps, mu, backend)
     Build->>Dofs: build_edge_dofs(mesh, bc_te)
     Dofs->>Dofs: orienta arestas globais e cria edge_to_dof
     Build->>Elem: assemble_edge_system_with_tri_material(...)
@@ -77,7 +83,8 @@ sequenceDiagram
         Elem-->>Build: Sel, Tel locais
         Build->>Build: assemble S, T com correção de sinal local/global
     end
-    Build-->>Run: EdgeSystem
+    Build-->>Eq65: EdgeSystem
+    Eq65-->>Run: EdgeSystem
 
     Run->>Eig: generalized_eigs_sym_vec(sys.S, sys.T)
     Eig->>Eig: LAPACKE_dsygv(...)
@@ -122,26 +129,27 @@ edge_rect / edge_circle / edge_coax
     │   └── make_coax_mesh(...)
     ├── [opcional] helmvec_debug::print_first_triangle_closed_form_debug(...)
     ├── run_case(...) ou run_case_circle(...)
-    │   ├── build_helm10_edge_system(mesh, bc, eps, mu, backend)
-    │   │   ├── build_edge_dofs(mesh, bc)
-    │   │   │   ├── key_undirected(...)
-    │   │   │   ├── cria Edge global sem orientação duplicada
-    │   │   │   ├── grava tri_edges[tid].e
-    │   │   │   ├── grava tri_edges[tid].sgn
-    │   │   │   └── cria edge_to_dof conforme EdgeBC
-    │   │   └── assemble_edge_system_with_tri_material(...)
-    │   │       ├── loop em mesh.tris
-    │   │       │   ├── tri_geom_edge(mesh, tri)
-    │   │       │   ├── element_mats_edge(tg, eps_r, mu_r, backend, Sel, Tel)
-    │   │       │   │   ├── backend closed-form
-    │   │       │   │   │   ├── element_mats_edge_closed_form(...)
-    │   │       │   │   │   └── explicit_tri2d::tri2d_edge_closed_form_eq_66_67(...)
-    │   │       │   │   └── backend gauss
-    │   │       │   │       ├── element_mats_edge_gauss(...)
-    │   │       │   │       ├── whitney_curl_local(...)
-    │   │       │   │       └── whitney_W_local(...)
-    │   │       │   └── assemble S(I,J), T(I,J) com sgn local/global
-    │   │       └── return EdgeSystem{S, T, ed}
+    │   ├── tp3485::build_eq65_helmvec_system(mesh, bc, eps, mu, backend)
+    │   │   └── build_helm10_edge_system(mesh, bc, eps, mu, backend)
+    │   │       ├── build_edge_dofs(mesh, bc)
+    │   │       │   ├── key_undirected(...)
+    │   │       │   ├── cria Edge global sem orientação duplicada
+    │   │       │   ├── grava tri_edges[tid].e
+    │   │       │   ├── grava tri_edges[tid].sgn
+    │   │       │   └── cria edge_to_dof conforme EdgeBC
+    │   │       └── assemble_edge_system_with_tri_material(...)
+    │   │           ├── loop em mesh.tris
+    │   │           │   ├── tri_geom_edge(mesh, tri)
+    │   │           │   ├── element_mats_edge(tg, eps_r, mu_r, backend, Sel, Tel)
+    │   │           │   │   ├── backend closed-form
+    │   │           │   │   │   ├── element_mats_edge_closed_form(...)
+    │   │           │   │   │   └── explicit_tri2d::tri2d_edge_closed_form_eq_66_67(...)
+    │   │           │   │   └── backend gauss
+    │   │           │   │       ├── element_mats_edge_gauss(...)
+    │   │           │   │       ├── whitney_curl_local(...)
+    │   │           │   │       └── whitney_W_local(...)
+    │   │           │   └── assemble S(I,J), T(I,J) com sgn local/global
+    │   │           └── return EdgeSystem{S, T, ed}
     │   ├── generalized_eigs_sym_vec(sys.S, sys.T)
     │   │   └── LAPACKE_dsygv(...)
     │   ├── [opcional] helmvec_debug::print_positive_kc_candidates_debug(...)
@@ -207,12 +215,14 @@ Ponto conceitual importante:
 ### 4.3) Montagem vetorial global
 
 ```text
-assemble_edge_system_with_tri_material(...)
-├── tri_geom_edge(...)
-├── element_mats_edge(...)
-│   ├── element_mats_edge_closed_form(...)
-│   └── element_mats_edge_gauss(...)
-└── assemble S,T com si * sj
+tp3485::build_eq65_helmvec_system(...)
+└── build_helm10_edge_system(...)
+    └── assemble_edge_system_with_tri_material(...)
+        ├── tri_geom_edge(...)
+        ├── element_mats_edge(...)
+        │   ├── element_mats_edge_closed_form(...)
+        │   └── element_mats_edge_gauss(...)
+        └── assemble S,T com si * sj
 ```
 
 Ponto conceitual importante:

@@ -10,6 +10,10 @@ Executável atual correspondente:
 
 - `helmvec2_rect`
 
+Entrada didática por equação:
+
+- `tp3485::build_eq119_helmvec2_system_E(...)`
+
 ## 1) Visão geral da família
 
 Esta raiz é o primeiro ponto em que o projeto entra de fato no problema acoplado da Seção `2.2.3`:
@@ -41,11 +45,12 @@ sequenceDiagram
     participant Mesh as make_rect_mesh
     participant Eps as helmvec23::eps_step_y
     participant Debug as print_first_triangle_closed_form_debug
+    participant Eq119 as tp3485::build_eq119_helmvec2_system_E
     participant Build as build_coupled_wavenumber_system_E
     participant Ctx as build_context_E
     participant Edge as build_helm10_edge_system
     participant Scal as build_helm10_scalar_system
-    participant Coupling as assemble_coupling_block_C / closed-form
+    participant Coupling as assemble_coupling_block_C_named / closed-form
     participant Eig as generalized_eigs_real_vec
     participant Cand as collect_mode_candidates
     participant Shared as helmvec23::unique_sorted / pick_closest_unused
@@ -64,7 +69,8 @@ sequenceDiagram
         Main->>Debug: imprime Eq. (120)-(125) e rearranjo Eq. (119)
     end
 
-    Main->>Build: build_coupled_wavenumber_system_E(mesh, beta, eps, mu, backend)
+    Main->>Eq119: build_eq119_helmvec2_system_E(mesh, beta, eps, mu, backend)
+    Eq119->>Build: build_coupled_wavenumber_system_E(mesh, beta, eps, mu, backend)
     Build->>Ctx: build_context_E(...)
     Ctx->>Edge: build_helm10_edge_system(..., TE_PEC_TangentialZero, eps, mu)
     Edge-->>Ctx: St, Tt, edge dofs
@@ -72,19 +78,23 @@ sequenceDiagram
     Scal-->>Ctx: Sz, Tz, dof_map
     Ctx->>Edge: build_edge_mass_with_inverse_mu(...)
     Edge-->>Ctx: Mt^(1/mu)
+    Build->>Build: initialize_named_eq119_global_blocks(...)
 
     alt backend = closed-form
         Build->>Coupling: assemble_wavenumber_system_closed_form(...)
         Coupling->>Coupling: tri2d_wavenumber_rearranged_closed_form_eq_119(...)
+        Coupling->>Coupling: preenche A_tt, A_tz, A_zt, A_zz, B_tt, B_zz
     else backend = gauss
         Build->>Build: add_block_scaled(...) em A_tt, A_zz, B_tt, B_zz
-        Build->>Coupling: assemble_coupling_block_C(...)
+        Build->>Coupling: assemble_coupling_block_C_named(...)
         Coupling->>Coupling: tri_geom_edge(...)
         Coupling->>Coupling: quadratura triangular P2
         Coupling->>Coupling: whitney_W_local(...)
         Coupling->>Coupling: aplica sgn local/global nas arestas
     end
-    Build-->>Main: sistema A x = k0^2 B x
+    Build->>Build: assemble_eq119_global_from_named_blocks(...)
+    Build-->>Eq119: CoupledSystem119
+    Eq119-->>Main: sistema A x = k0^2 B x
 
     Main->>Eig: generalized_eigs_real_vec(A, B)
     Eig->>Eig: LAPACKE_dggev(...)
@@ -123,37 +133,40 @@ helmvec2_rect
     │   ├── explicit_tri2d::tri2d_wavenumber_closed_form_eq_120_125(...)
     │   ├── explicit_tri2d::tri2d_wavenumber_rearranged_closed_form_eq_119(...)
     │   └── print_block_3x3(...)
-    ├── build_coupled_wavenumber_system_E(mesh, beta, eps, mu, backend)
-    │   ├── build_context_E(mesh, eps, mu, backend)
-    │   │   ├── validate_tri_data(...)
-    │   │   ├── build_helm10_edge_system(mesh, TE_PEC_TangentialZero, eps, mu, backend)
-    │   │   ├── build_helm10_scalar_system(mesh, TM_Dirichlet, eps, mu, backend)
-    │   │   └── build_edge_mass_with_inverse_mu(...)
-    │   │       ├── inverse_per_triangle_checked(mu_r_tri)
-    │   │       └── build_helm10_edge_system(mesh, TE_PEC_TangentialZero, inv_mu, one, backend)
-    │   ├── aloca A e B
-    │   ├── backend closed-form
-    │   │   └── assemble_wavenumber_system_closed_form(...)
-    │   │       ├── loop em triangulos
-    │   │       ├── tri_geom_edge(...)
-    │   │       ├── tri2d_wavenumber_rearranged_closed_form_eq_119(...)
-    │   │       ├── espalha A_tt e B_tt com sgn_m * sgn_n
-    │   │       ├── espalha A_zz e B_zz em dofs escalares
-    │   │       ├── espalha A_tz com sgn_m
-    │   │       └── espalha A_zt com sgn_n
-    │   └── backend gauss
-    │       ├── add_block_scaled(A, 0, 0, edge.S, +1)
-    │       ├── add_block_scaled(A, 0, 0, Mt^(1/mu), +beta^2)
-    │       ├── add_block_scaled(B, 0, 0, edge.T, +1)
-    │       ├── add_block_scaled(A, nt, nt, scal.S, +beta^2)
-    │       ├── add_block_scaled(B, nt, nt, scal.T, +beta^2)
-    │       └── assemble_coupling_block_C(...)
-    │           ├── loop em triangulos
-    │           ├── tri_geom_edge(...)
-    │           ├── gradN constante por triangulo
-    │           ├── kTriQuadP2
-    │           ├── whitney_W_local(...)
-    │           └── espalha bloco C com sinal de orientacao
+    ├── tp3485::build_eq119_helmvec2_system_E(mesh, beta, eps, mu, backend)
+    │   └── build_coupled_wavenumber_system_E(mesh, beta, eps, mu, backend)
+    │       ├── build_context_E(mesh, eps, mu, backend)
+    │       │   ├── validate_tri_data(...)
+    │       │   ├── build_helm10_edge_system(mesh, TE_PEC_TangentialZero, eps, mu, backend)
+    │       │   ├── build_helm10_scalar_system(mesh, TM_Dirichlet, eps, mu, backend)
+    │       │   └── build_edge_mass_with_inverse_mu(...)
+    │       │       ├── inverse_per_triangle_checked(mu_r_tri)
+    │       │       └── build_helm10_edge_system(mesh, TE_PEC_TangentialZero, inv_mu, one, backend)
+    │       ├── initialize_named_eq119_global_blocks(...)
+    │       ├── backend closed-form
+    │       │   └── assemble_wavenumber_system_closed_form(...)
+    │       │       ├── loop em triangulos
+    │       │       ├── tri_geom_edge(...)
+    │       │       ├── tri2d_wavenumber_rearranged_closed_form_eq_119(...)
+    │       │       ├── espalha A_tt e B_tt com sgn_m * sgn_n
+    │       │       ├── espalha A_zz e B_zz em dofs escalares
+    │       │       ├── espalha A_tz com sgn_m
+    │       │       └── espalha A_zt com sgn_n
+    │       │   └── assemble_eq119_global_from_named_blocks(...)
+    │       └── backend gauss
+    │           ├── add_block_scaled(A_tt, 0, 0, edge.S, +1)
+    │           ├── add_block_scaled(A_tt, 0, 0, Mt^(1/mu), +beta^2)
+    │           ├── add_block_scaled(B_tt, 0, 0, edge.T, +1)
+    │           ├── add_block_scaled(A_zz, 0, 0, scal.S, +beta^2)
+    │           ├── add_block_scaled(B_zz, 0, 0, scal.T, +beta^2)
+    │           ├── assemble_coupling_block_C_named(...)
+    │               ├── loop em triangulos
+    │               ├── tri_geom_edge(...)
+    │               ├── gradN constante por triangulo
+    │               ├── kTriQuadP2
+    │               ├── whitney_W_local(...)
+    │               └── espalha bloco C com sinal de orientacao
+    │           └── assemble_eq119_global_from_named_blocks(...)
     ├── generalized_eigs_real_vec(sys.A, sys.B)
     │   └── LAPACKE_dggev(...)
     ├── collect_mode_candidates(eig, nt, nz)
@@ -178,10 +191,12 @@ O coração do `R4` está em quatro peças que marcam a virada para o problema a
 ### 4.1) Contexto comum `Et/Ez`
 
 ```text
-build_context_E(...)
-├── build_helm10_edge_system(...)
-├── build_helm10_scalar_system(...)
-└── build_edge_mass_with_inverse_mu(...)
+tp3485::build_eq119_helmvec2_system_E(...)
+└── build_coupled_wavenumber_system_E(...)
+    └── build_context_E(...)
+        ├── build_helm10_edge_system(...)
+        ├── build_helm10_scalar_system(...)
+        └── build_edge_mass_with_inverse_mu(...)
 ```
 
 Ponto conceitual importante:
@@ -193,11 +208,11 @@ Ponto conceitual importante:
 ### 4.2) Acoplamento verdadeiro entre arestas e nós
 
 ```text
-assemble_coupling_block_C(...)
+assemble_coupling_block_C_named(...)
 ├── gradN[j] = [b_j, c_j] / (2A)
 ├── C(m,j) = int_T (1/mu_r) W_m . grad(N_j) dA
-├── bloco sup-dir  += coeff_top_right  * C
-└── bloco inf-esq  += coeff_bottom_left* C^T
+├── bloco Et-Ez += coeff_top_right * C
+└── bloco Ez-Et += coeff_bottom_left * C^T
 ```
 
 Ponto conceitual importante:
@@ -214,13 +229,14 @@ backend = closed-form
 
 backend = gauss
 ├── add_block_scaled(...)
-└── assemble_coupling_block_C(...)
+└── assemble_coupling_block_C_named(...)
 ```
 
 Ponto conceitual importante:
 
 - o caminho `closed-form` entra pelas expressões locais rearranjadas da Eq. `(119)`;
 - o caminho `gauss` recompõe o mesmo sistema a partir dos blocos base e do bloco de acoplamento;
+- em ambos os casos, os sub-blocos `A_tt`, `A_tz`, `A_zt`, `A_zz`, `B_tt` e `B_zz` ficam preservados antes do fechamento final;
 - as duas rotas convergem para o mesmo solve generalizado real `A x = k0^2 B x`.
 
 ### 4.4) Filtro físico e matching com a Tabela 8

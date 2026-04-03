@@ -244,7 +244,7 @@ def _equation_trace_rows() -> List[Dict[str, str]]:
             "module": "src/helm10",
             "explicit": "src/explicit/tri2d_scalar_explicit.hpp",
             "assembly": "src/core/helm10_scalar_system.cpp",
-            "function": "build_helm10_scalar_system(...)",
+            "function": "tp3485::build_eq43_helm10_system(...)",
         },
         {
             "program": "HELMVEC",
@@ -254,7 +254,7 @@ def _equation_trace_rows() -> List[Dict[str, str]]:
             "module": "src/helmvec",
             "explicit": "src/explicit/tri2d_edge_explicit.hpp",
             "assembly": "src/edge/edge_assembly.cpp",
-            "function": "build_helm10_edge_system(...)",
+            "function": "tp3485::build_eq65_helmvec_system(...)",
         },
         {
             "program": "HELMVEC1",
@@ -264,7 +264,7 @@ def _equation_trace_rows() -> List[Dict[str, str]]:
             "module": "src/helmvec1",
             "explicit": "src/explicit/tri2d_edge_explicit.hpp + src/explicit/tri2d_scalar_explicit.hpp",
             "assembly": "src/helmvec1/helmvec1_mixed_system.cpp",
-            "function": "build_system92_E(...), build_system92_H(...)",
+            "function": "tp3485::build_eq92_helmvec1_system_E/H(...)",
         },
         {
             "program": "HELMVEC2",
@@ -274,7 +274,7 @@ def _equation_trace_rows() -> List[Dict[str, str]]:
             "module": "src/helmvec2",
             "explicit": "src/explicit/tri2d_coupled_explicit.hpp",
             "assembly": "src/helmvec2/helmvec2_coupled_system.cpp",
-            "function": "build_coupled_wavenumber_system_E(...)",
+            "function": "tp3485::build_eq119_helmvec2_system_E(...)",
         },
         {
             "program": "HELMVEC3",
@@ -284,7 +284,7 @@ def _equation_trace_rows() -> List[Dict[str, str]]:
             "module": "src/helmvec3",
             "explicit": "src/explicit/tri2d_coupled_explicit.hpp",
             "assembly": "src/helmvec2/helmvec2_coupled_system.cpp",
-            "function": "build_coupled_beta_system_E(...)",
+            "function": "tp3485::build_eq136_helmvec3_system_E(...)",
         },
         {
             "program": "FEM3D0/FEM3D1",
@@ -293,8 +293,8 @@ def _equation_trace_rows() -> List[Dict[str, str]]:
             "global_eq": "178",
             "module": "src/fem3d0 + src/fem3d1",
             "explicit": "src/explicit/tet3d_edge_explicit.hpp",
-            "assembly": "src/edge3d/edge3d_assembly.cpp",
-            "function": "build_helm3d_edge_system(...), build_helm3d_edge_system_sparse(...)",
+            "assembly": "src/edge3d/edge3d_assembly.cpp (build_eq178_local_tet_blocks -> assemble_eq178_global_generic -> dense/sparse)",
+            "function": "tp3485::build_eq178_fem3d_system_dense/sparse(...)",
         },
     ]
 
@@ -352,14 +352,14 @@ def _write_report(
     lines.append("## Rastreabilidade das Equacoes")
     lines.append("")
     lines.append("Esta secao resume a trilha didatica principal do repositorio:")
-    lines.append("equacoes locais closed-form -> sistema global -> funcao de montagem.")
+    lines.append("equacoes locais closed-form -> entrada didatica -> montagem interna.")
     lines.append("")
-    lines.append("| Programa | Secao | Eq. locais | Eq. global | Modulo | Closed-form | Montagem global | Funcao |")
+    lines.append("| Programa | Secao | Eq. locais | Eq. global | Modulo | Closed-form | Entrada didatica | Montagem interna |")
     lines.append("|---|---|---|---|---|---|---|---|")
     for row in _equation_trace_rows():
         lines.append(
             f"| `{row['program']}` | `{row['section']}` | `{row['local_eqs']}` | `{row['global_eq']}` | "
-            f"`{row['module']}` | `{row['explicit']}` | `{row['assembly']}` | `{row['function']}` |"
+            f"`{row['module']}` | `{row['explicit']}` | `{row['function']}` | `{row['assembly']}` |"
         )
     lines.append("")
 
@@ -367,8 +367,8 @@ def _write_report(
     lines.append("")
     lines.append("Fluxos recomendados para inspecao didatica e comparacao numerica:")
     lines.append("")
-    lines.append("- `--backend gauss`: usa a montagem por quadratura/cubatura do repositorio.")
-    lines.append("- `--backend closed-form`: usa os helpers ligados diretamente as equacoes do artigo.")
+    lines.append("- `--backend closed-form`: usa os helpers ligados diretamente as equacoes do artigo e e o fluxo principal do repositorio.")
+    lines.append("- `--backend gauss`: usa a montagem por quadratura/cubatura como verificacao auxiliar.")
     lines.append("- `--debug-local-blocks`: imprime os blocos locais do primeiro elemento.")
     lines.append("- `--debug-candidates`: imprime as primeiras raizes/candidatos antes do matching final.")
     lines.append("- `--show-output` (scripts Python): ecoa a saida bruta dos executaveis durante a validacao.")
@@ -376,7 +376,7 @@ def _write_report(
     lines.append("")
     lines.append("```bash")
     lines.append("./build/helm10_rect 14 14 8 --backend closed-form --debug-local-blocks")
-    lines.append("./build/edge_rect 14 14 8 --backend gauss --debug-candidates")
+    lines.append("./build/edge_rect 14 14 8 --debug-candidates")
     lines.append("./build/mixed_rect 12 6 --backend closed-form --debug-local-blocks --debug-candidates")
     lines.append("python3 scripts/validate_2d_22.py --backend closed-form --show-output --debug-local-blocks")
     lines.append("python3 scripts/validate_3d_31.py --backend closed-form --show-output --debug-candidates")

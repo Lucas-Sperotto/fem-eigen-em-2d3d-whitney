@@ -11,6 +11,10 @@ Executável atual correspondente:
 
 - `helmvec3_rect`
 
+Entrada didática por equação:
+
+- `tp3485::build_eq136_helmvec3_system_E(...)`
+
 ## 1) Visão geral da família
 
 Esta raiz é a inversão direta da pergunta espectral de `R4`:
@@ -42,7 +46,9 @@ sequenceDiagram
     participant Match as match_ratio_to_reference
     participant Trace as trace_ratio_branch
     participant Cand as beta_ratio_candidates_from_k0
+    participant Eq136 as tp3485::build_eq136_helmvec3_system_E
     participant Build as build_coupled_beta_system_E
+    participant Blocks as assemble_beta_system_closed_form / assemble_coupling_block_C_named
     participant Eig as generalized_eigs_real_vec
     participant Shared as helmvec23::collect_positive_real_roots / unique_sorted
     participant Time as timing::print_breakdown
@@ -63,8 +69,14 @@ sequenceDiagram
     loop para cada br/lambda0 de Tabela 9
         Match->>Match: k0 = 2*pi*s / b
         Match->>Cand: beta_ratio_candidates_from_k0(mesh, eps12, mu, k0)
-        Cand->>Build: build_coupled_beta_system_E(...)
-        Build-->>Cand: sistema P x = beta^2 Q x
+        Cand->>Eq136: build_eq136_helmvec3_system_E(...)
+        Eq136->>Build: build_coupled_beta_system_E(...)
+        Build->>Build: initialize_named_eq136_global_blocks(...)
+        Build->>Blocks: assemble_beta_system_closed_form(...) ou gauss por blocos nomeados
+        Blocks->>Blocks: preenche P_tt, P_zz, Q_tt, Q_tz, Q_zt, Q_zz
+        Build->>Build: assemble_eq136_global_from_named_blocks(...)
+        Build-->>Eq136: CoupledSystem136
+        Eq136-->>Cand: sistema P x = beta^2 Q x
         Cand->>Eig: generalized_eigs_real_vec(P, Q)
         Eig->>Eig: LAPACKE_dggev(...)
         Eig-->>Cand: espectro generalizado
@@ -118,8 +130,12 @@ helmvec3_rect
     │   ├── loop em br_over_lambda_9
     │   │   ├── k0 = 2*pi*s / b
     │   │   ├── beta_ratio_candidates_from_k0(...)
-    │   │   │   ├── build_coupled_beta_system_E(mesh, k0, eps, mu, backend)
-    │   │   │   │   └── mesmo tronco de montagem beta compartilhado com o modulo acoplado em src/helmvec2
+    │   │   │   ├── tp3485::build_eq136_helmvec3_system_E(mesh, k0, eps, mu, backend)
+    │   │   │   │   └── build_coupled_beta_system_E(mesh, k0, eps, mu, backend)
+    │   │   │   │       ├── initialize_named_eq136_global_blocks(...)
+    │   │   │   │       ├── assemble_beta_system_closed_form(...) ou montagem gauss em blocos nomeados
+    │   │   │   │       ├── assemble_coupling_block_C_named(...)
+    │   │   │   │       └── assemble_eq136_global_from_named_blocks(...)
     │   │   │   ├── generalized_eigs_real_vec(sys.P, sys.Q)
     │   │   │   │   └── LAPACKE_dggev(...)
     │   │   │   ├── helmvec23::collect_positive_real_roots(...)
@@ -150,21 +166,24 @@ O coração do `R5` está em cinco peças que transformam solves isolados em cur
 ### 4.1) Rearranjo espectral em `beta^2`
 
 ```text
-build_coupled_beta_system_E(...)
-└── monta P x = beta^2 Q x
+tp3485::build_eq136_helmvec3_system_E(...)
+└── build_coupled_beta_system_E(...)
+    └── monta P x = beta^2 Q x
 ```
 
 Ponto conceitual importante:
 
 - a geometria e os blocos locais ainda pertencem à mesma família mista `Et/Ez`;
 - o que muda é quem fica do lado esquerdo e do lado direito do autoproblema;
+- os sub-blocos `P_tt`, `P_zz`, `Q_tt`, `Q_tz`, `Q_zt` e `Q_zz` agora ficam preservados explicitamente no código antes do fechamento final;
 - essa troca basta para transformar o problema de “número de onda para beta dado” no problema de “constante de propagação para k0 dado”.
 
 ### 4.2) Geração de candidatos `beta / k0`
 
 ```text
 beta_ratio_candidates_from_k0(...)
-├── build_coupled_beta_system_E(...)
+├── tp3485::build_eq136_helmvec3_system_E(...)
+│   └── build_coupled_beta_system_E(...)
 ├── generalized_eigs_real_vec(...)
 ├── collect_positive_real_roots(...)
 ├── beta_ratio = beta / k0
@@ -239,7 +258,8 @@ Cada ponto de `b_r / lambda_0` dispara um solve interno com a seguinte espinha:
 s = br_over_lambda
 └── k0 = 2*pi*s / b
     └── beta_ratio_candidates_from_k0(...)
-        ├── build_coupled_beta_system_E(...)
+        ├── tp3485::build_eq136_helmvec3_system_E(...)
+        │   └── build_coupled_beta_system_E(...)
         ├── generalized_eigs_real_vec(...)
         ├── helmvec23::collect_positive_real_roots(...)
         ├── converte beta -> beta/k0

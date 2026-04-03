@@ -7,7 +7,7 @@ OUT_DIR="$ROOT_DIR/out"
 BUILD_TYPE="Release"
 PROFILE="quick"
 MODE_EXPORT=8
-BACKEND="gauss"
+BACKEND="closed-form"
 SKIP_VALIDATE=0
 SKIP_IMAGES=0
 SKIP_3D=0
@@ -54,7 +54,7 @@ Options:
   --jobs <N>             Parallel build jobs (default: nproc)
   --profile <quick|full> Profile for validate_3d_31.py (default: quick)
   --mode-export <N>      Number of exported 2D modes per TE/TM block (default: 8)
-  --backend <name>       Backend: gauss|closed-form (default: gauss)
+  --backend <name>       Backend: closed-form|gauss (default: closed-form)
   --case <id>            Run only selected section/case (repeatable)
   --log-file <path>      Write console log to file (default: <out-dir>/run_all.log)
   --no-log               Disable log file output

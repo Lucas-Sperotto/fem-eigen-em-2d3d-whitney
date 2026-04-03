@@ -255,7 +255,7 @@ def build_project(build_dir: Path, jobs: int) -> None:
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description="Varredura completa de malhas para gauss e closed-form.")
+    ap = argparse.ArgumentParser(description="Varredura completa de malhas para closed-form e gauss.")
     ap.add_argument("--build-dir", type=Path, default=DEFAULT_BUILD)
     ap.add_argument("--out-root", type=Path, default=DEFAULT_OUT)
     ap.add_argument("--jobs", type=int, default=os.cpu_count() or 4)
@@ -266,8 +266,8 @@ def main() -> int:
     ap.add_argument("--skip-images", action="store_true")
     ap.add_argument(
         "--backends",
-        default="gauss,closed-form",
-        help="Lista separada por virgula. Ex.: gauss,closed-form",
+        default="closed-form,gauss",
+        help="Lista separada por virgula. Ex.: closed-form,gauss",
     )
     ap.add_argument(
         "--cases",

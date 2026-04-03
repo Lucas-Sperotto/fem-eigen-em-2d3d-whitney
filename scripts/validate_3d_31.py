@@ -119,7 +119,7 @@ def parse_args() -> argparse.Namespace:
     ap = argparse.ArgumentParser(description="Validate Section 3.1 and save CSV files.")
     ap.add_argument("--profile", choices=["quick", "full"], default="quick")
     ap.add_argument("--solver", choices=["fem3d0", "fem3d1", "both"], default="both")
-    ap.add_argument("--backend", choices=["gauss", "closed-form", "both"], default="gauss")
+    ap.add_argument("--backend", choices=["gauss", "closed-form", "both"], default="closed-form")
     ap.add_argument(
         "--cases",
         default="air,half,cyl,sphere",

@@ -219,7 +219,12 @@ def parse_args() -> argparse.Namespace:
     ap = argparse.ArgumentParser(description="Validate Section 2.2 and save CSV.")
     ap.add_argument("--build-dir", type=Path, default=Path("build"), help="Build directory containing executables.")
     ap.add_argument("--out-csv", type=Path, default=Path("out/validation/validation_2d_22.csv"), help="Output CSV path.")
-    ap.add_argument("--backend", choices=["gauss", "closed-form", "both"], default="gauss", help="Backend de montagem a validar.")
+    ap.add_argument(
+        "--backend",
+        choices=["gauss", "closed-form", "both"],
+        default="closed-form",
+        help="Backend de montagem a validar (default: closed-form).",
+    )
     ap.add_argument("--rect-nx", type=int, default=12)
     ap.add_argument("--rect-ny", type=int, default=6)
     ap.add_argument("--circle-nr", type=int, default=10)
