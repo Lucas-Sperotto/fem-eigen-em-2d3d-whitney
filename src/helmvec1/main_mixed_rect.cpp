@@ -189,7 +189,7 @@ int main(int argc, char **argv)
     timing::Breakdown perf_h;
     // Malha padrao (2*nx*ny triangulos). Para comparacao em formato de tabela,
     // usamos uma discretizacao uniforme moderadamente refinada e expomos (nx, ny).
-    int nx = 12, ny = 6;
+    int nx = 14, ny = 14;
     helmvec1::MixedCliOptions cli;
     try
     {
