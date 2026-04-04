@@ -4,7 +4,7 @@
 /* Arquivo: src/helmvec1/mixed_rect_reference.hpp                             */
 /* Autor: Prof. Lucas Kriesel Sperotto                                        */
 /* E-mail: speroto@unemat.br                                                  */
-/* Versao: 1.0 | Ano: 2026                                                    */
+/* Versao: 2.0 | Ano: 2026                                                    */
 /*****************************************************************************/
 /* Descricao: Sistema misto vetorial+escalar para kc, separando blocos        */
 /* transverso/longitudinal.                                                   */
@@ -101,17 +101,17 @@ inline std::vector<RectAnaMode> analytic_rect_tm(double a, double b, int n_modes
 /* DESCRICAO: Gera saida didatica dos resultados para inspecao no terminal ou */
 /* em arquivo.                                                                */
 /* ENTRADA: title: const std::string &; ana: const std::vector<RectAnaMode> &;*/
-/* calc: const std::vector<double> &; rho: double.                            */
+/* calc: const std::vector<double> &; lambda_filter: double.                  */
 /* SAIDA: sem retorno explicito (void).                                       */
 /******************************************************************************/
 inline void print_rect_compare_table(
     const std::string &title,
     const std::vector<RectAnaMode> &ana,
     const std::vector<double> &calc,
-    double rho)
+    double lambda_filter)
 {
     std::cout << "\n" << title << "\n";
-    std::cout << "rho(filter kc^2) = " << rho << "\n";
+    std::cout << "lambda_filter(kc^2) = " << lambda_filter << "\n";
     std::cout << " #   mode     kc(ana)        kc(calc)       err(%)\n";
 
     const int n = std::min((int)ana.size(), (int)calc.size());

@@ -78,6 +78,9 @@ Todos os arquivos da trilha principal agora terminam com links de `Anterior` e `
 - [HELMVEC_CSV_Modos_Referencia.md](HELMVEC_CSV_Modos_Referencia.md): glossario didatico das colunas do CSV de modos do `HELMVEC`, ligado à Secao 2.2.1, incluindo a explicacao de `rho_abs` e do matching por correlacao de massa vetorial.
 - [HELMVEC_CSV_Campos_Referencia.md](HELMVEC_CSV_Campos_Referencia.md): glossario didatico das colunas do CSV de campos por celula do `HELMVEC`, ligado à Secao 2.2.1.
 - [HELMVEC_Imagens_Referencia.md](HELMVEC_Imagens_Referencia.md): guia do script `scripts/helmvec.py`, que lê os CSVs do `HELMVEC` e gera mapas de magnitude, diagramas de setas e resumos de erro e `rho`.
+- [HELMVEC1_CSV_Modos_Referencia.md](HELMVEC1_CSV_Modos_Referencia.md): glossario didatico das colunas do CSV de modos do `HELMVEC1`, ligado à Secao 2.2.2, incluindo a explicacao da classificacao por energia de bloco e do `rho_abs` por correlacao de massa no bloco dominante.
+- [HELMVEC1_Imagens_Referencia.md](HELMVEC1_Imagens_Referencia.md): guia do script `scripts/helmvec1.py`, que lê o `modes.csv` do `HELMVEC1` e gera imagens-resumo do sistema misto da Eq. `(92)`, incluindo cutoff, `rho`, energia dominante e energias de bloco.
+- [HELMVEC2_CSV_Referencia.md](HELMVEC2_CSV_Referencia.md): referencia didatica dos CSVs do `HELMVEC2`, ligando o espectro de candidatos da Eq. `(119)` ao matching final da Tabela 8.
 - [diagramas_execucao/README.md](diagramas_execucao/README.md): caderno de navegação da coleção de diagramas de execução.
 - [diagramas_execucao/Diagrama_Mestre_R1_a_R7.md](diagramas_execucao/Diagrama_Mestre_R1_a_R7.md): visão global resumida da coleção `R1 -> R7`.
 - [Diagrama_R1_HELM10_Sequencia_e_Arvore.md](diagramas_execucao/Diagrama_R1_HELM10_Sequencia_e_Arvore.md) a [Diagrama_R7_FEM3D1_Sequencia_e_Arvore.md](diagramas_execucao/Diagrama_R7_FEM3D1_Sequencia_e_Arvore.md): diagramas-base por família de executáveis.
@@ -93,7 +96,14 @@ Todos os arquivos da trilha principal agora terminam com links de `Anterior` e `
   - apoio operacional por celula: [HELMVEC_CSV_Campos_Referencia.md](HELMVEC_CSV_Campos_Referencia.md)
   - apoio grafico: [HELMVEC_Imagens_Referencia.md](HELMVEC_Imagens_Referencia.md)
 - [2.2.2 Três Componentes](traducao/2.2.2_Guias_de_Onda_Nao_Homogeneos_Tres_Componentes.md) -> `src/helmvec1`
+  - apoio operacional: [HELMVEC1_CSV_Modos_Referencia.md](HELMVEC1_CSV_Modos_Referencia.md)
+  - apoio grafico: [HELMVEC1_Imagens_Referencia.md](HELMVEC1_Imagens_Referencia.md)
+  - apoio operacional: [Rastreabilidade_Equacoes_Artigo_Codigo.md](Rastreabilidade_Equacoes_Artigo_Codigo.md)
+  - apoio de navegacao: [Matriz_Casos_Executaveis_Arvore_de_Chamada.md](Matriz_Casos_Executaveis_Arvore_de_Chamada.md)
+  - apoio de uso: [Tabela_Executaveis_Entradas_Saidas.md](Tabela_Executaveis_Entradas_Saidas.md)
 - [2.2.3 Determinação do Número de Onda](traducao/2.2.3_Determinação%20do%20número%20de%20onda.md) -> `src/helmvec2`
+  - apoio operacional: [HELMVEC2_CSV_Referencia.md](HELMVEC2_CSV_Referencia.md)
+  - apoio de uso: [Tabela_Executaveis_Entradas_Saidas.md](Tabela_Executaveis_Entradas_Saidas.md)
 - [2.2.4 Características de Dispersão](traducao/2.2.4_Caracteristicas_de_Dispersao_de_Guias_de_Onda.md) -> `src/helmvec3`
 - [3. Problemas Tridimensionais](traducao/3_Problemas_Tridimensionais.md) -> `src/fem3d0` e `src/fem3d1`
 

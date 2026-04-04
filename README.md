@@ -335,7 +335,14 @@ Saidas tipicas:
 Saidas tipicas:
 
 - espectros separados por energia de bloco (edge vs escalar)
-- comparacao analitica detalhada no caso retangular
+- matching analitico por correlacao de massa no bloco dominante
+- `run.log` e `run_timing.csv` em `out/helmvec1/{rect,circle,coax}`
+- CSVs didaticos em `out/helmvec1/{rect,circle,coax}/csv`, com
+  `mixed_<caso>_modes.csv`, incluindo `rho_abs`, `match_space` e
+  `match_method`
+- imagens-resumo geradas por `python3 scripts/helmvec1.py` em
+  `out/helmvec1/{rect,circle,coax}/img`, incluindo cutoff, `rho`, energia
+  dominante e energias de bloco
 
 ### 4.4) Secao 2.2.3 (`helmvec2`)
 
@@ -347,6 +354,9 @@ Saidas tipicas:
 Saidas tipicas:
 
 - Tabela 8 (Figura 11): `k0L(FEM matched)` vs HELMVEC2/Hayata
+- `run.log` e `run_timing.csv` em `out/helmvec2/rect`
+- CSVs didaticos em `out/helmvec2/rect/csv`, com `helmvec2_rect_modes.csv`
+  e `helmvec2_rect_candidates.csv`
 
 Observacao:
 

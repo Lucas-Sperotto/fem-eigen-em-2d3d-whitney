@@ -443,8 +443,8 @@ def main() -> int:
                 stdout = run_exe("mixed_circle", "2.2.2", f"nr={polar[0]},nt={polar[1]}",
                                  [str(build_dir / "mixed_circle"), str(polar[0]), str(polar[1]), "--backend", backend])
                 snapshots = [
-                    ("mixed_circle_TE_edge", "TE (edge block), first 8 kc:"),
-                    ("mixed_circle_TM_scalar", "TM (scalar block), first 8 kc:"),
+                    ("mixed_circle_TE_edge", "TE (edge block)"),
+                    ("mixed_circle_TM_scalar", "TM (scalar block)"),
                 ]
                 for case_name, label in snapshots:
                     vals = parse_first_kc_block(stdout, label)
@@ -466,8 +466,8 @@ def main() -> int:
                 stdout = run_exe("mixed_coax", "2.2.2", f"nr={polar[0]},nt={polar[1]}",
                                  [str(build_dir / "mixed_coax"), str(polar[0]), str(polar[1]), "--backend", backend])
                 snapshots = [
-                    ("mixed_coax_TE_edge", "TE (edge block), first 8 kc:"),
-                    ("mixed_coax_TM_scalar", "TM (scalar block), first 8 kc:"),
+                    ("mixed_coax_TE_edge", "TE (edge block)"),
+                    ("mixed_coax_TM_scalar", "TM (scalar block)"),
                 ]
                 for case_name, label in snapshots:
                     vals = parse_first_kc_block(stdout, label)

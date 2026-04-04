@@ -18,22 +18,27 @@
 /*****************************************************************************/
 
 #include "article/tp3485_systems.hpp"
+#include "core/execution_log.hpp"
 #include "core/mesh2d.hpp"
 #include "core/mesh2d_rect.hpp"
 #include "core/lapack_eig.hpp"
+#include "core/run_timing_wavenumber_csv.hpp"
 #include "core/timing_utils.hpp"
 #include "explicit/tri2d_coupled_explicit.hpp"
 #include "helmvec23_shared.hpp"
 #include "coupled_cli_options.hpp"
+#include "helmvec2_case_output.hpp"
 #include "helmvec2_coupled_system.hpp"
 #include <algorithm>
 #include <cmath>
 #include <cstdlib>
 #include <iostream>
+#include <limits>
 #include <vector>
 
 struct ModeCand
 {
+    int eig_index = -1;
     double k0 = 0.0;
     double ez_ratio = 0.0; // ||Ez||^2 / (||Et||^2 + ||Ez||^2)
 };
@@ -146,7 +151,7 @@ static std::vector<ModeCand> collect_mode_candidates(
         }
         const double den = et + ez;
         const double ratio = (den > 0.0) ? (ez / den) : 0.0;
-        out.push_back({k0, ratio});
+        out.push_back({i, k0, ratio});
     }
     std::sort(out.begin(), out.end(), [](const ModeCand &a, const ModeCand &b)
               { return a.k0 < b.k0; });
@@ -200,9 +205,22 @@ int main(int argc, char **argv)
         }
     }
 
+    const auto out_dirs = helmvec2_output::ensure_case_dirs("rect");
+    execution_log::ExecutionLogScope log_scope((out_dirs.root / "run.log").string());
+    if (!log_scope.active())
+    {
+        std::cerr << "Aviso: nao foi possivel abrir run.log em "
+                  << (out_dirs.root / "run.log")
+                  << " (" << log_scope.error_message() << ")\n";
+    }
+
     auto mesh = make_rect_mesh(L, L, nx, ny);
     auto eps = helmvec23::eps_step_y(mesh, 0.5 * L, 1.5, 1.0);
     std::vector<double> mu(mesh.tris.size(), 1.0);
+
+    std::cout << "[output] root_dir=" << out_dirs.root << "\n";
+    std::cout << "[output] csv_dir=" << out_dirs.csv << "\n";
+    std::cout << "[output] img_dir=" << out_dirs.img << "\n";
 
     if (cli.debug_local_blocks)
         print_first_triangle_closed_form_debug(mesh, beta, eps, mu);
@@ -224,11 +242,25 @@ int main(int argc, char **argv)
 
     // Mantem apenas raizes fisicamente propagantes para este beta.
     std::vector<double> k0_phys;
-    for (const auto &m : all_modes)
+    std::vector<helmvec2_output::CandidateCsvRecord> candidate_records;
+    candidate_records.reserve(all_modes.size());
+    for (int candidate_rank = 0; candidate_rank < (int)all_modes.size(); ++candidate_rank)
     {
-        if (m.k0 <= k0_min_phys)
-            continue;
-        k0_phys.push_back(m.k0);
+        const auto &m = all_modes[(size_t)candidate_rank];
+        const bool passes = (m.k0 > k0_min_phys);
+        if (passes)
+        {
+            k0_phys.push_back(m.k0);
+        }
+        candidate_records.push_back(
+            {
+                candidate_rank + 1,
+                m.eig_index,
+                m.k0,
+                m.k0 * L,
+                m.ez_ratio,
+                passes ? 1 : 0,
+            });
     }
     k0_phys = helmvec23::unique_sorted(std::move(k0_phys));
 
@@ -249,15 +281,37 @@ int main(int argc, char **argv)
 
     std::cout << "mode  k0L(FEM matched)  HELMVEC2(ref)  Hayata(ref)\n";
     std::vector<char> used(k0_phys.size(), 0);
+    std::vector<helmvec2_output::ModeCsvRecord> mode_records;
     const int N = std::min<int>(10, ref_helmvec2.size());
     for (int i = 0; i < N; ++i)
     {
         // Modo de validacao: escolhe a raiz calculada nao usada mais proxima da
         // familia modal publicada do HELMVEC2 (Tabela 8), preservando ordenacao.
-        const double k0L = helmvec23::pick_closest_unused(ref_helmvec2[i], k0_phys, used);
+        const int matched_index =
+            helmvec23::pick_closest_unused_index(ref_helmvec2[i], k0_phys, used);
+        const double k0L =
+            (matched_index >= 0) ? k0_phys[(size_t)matched_index] : std::numeric_limits<double>::quiet_NaN();
         std::cout << (i + 1) << "  " << k0L
                   << "  " << ref_helmvec2[i]
                   << "  " << ref_hayata[i] << "\n";
+        const double err_helmvec2 =
+            std::isfinite(k0L) ? 100.0 * (k0L - ref_helmvec2[i]) / ref_helmvec2[i]
+                               : std::numeric_limits<double>::quiet_NaN();
+        const double err_hayata =
+            std::isfinite(k0L) ? 100.0 * (k0L - ref_hayata[i]) / ref_hayata[i]
+                               : std::numeric_limits<double>::quiet_NaN();
+        mode_records.push_back(
+            {
+                i + 1,
+                (matched_index >= 0) ? (matched_index + 1) : 0,
+                std::isfinite(k0L) ? k0L / L : std::numeric_limits<double>::quiet_NaN(),
+                k0L,
+                ref_helmvec2[i],
+                ref_hayata[i],
+                err_helmvec2,
+                err_hayata,
+                (matched_index >= 0) ? "matched" : "missing_candidate",
+            });
     }
 
     if (cli.debug_candidates)
@@ -272,7 +326,50 @@ int main(int argc, char **argv)
         }
     }
 
-    perf.total_ms = total_watch.elapsed_ms();
+    stage.reset();
+    const auto modes_csv_path = out_dirs.csv / "helmvec2_rect_modes.csv";
+    const auto candidates_csv_path = out_dirs.csv / "helmvec2_rect_candidates.csv";
+    if (!helmvec2_output::write_modes_csv(modes_csv_path, mode_records))
+    {
+        std::cerr << "Aviso: falha ao escrever " << modes_csv_path << "\n";
+    }
+    if (!helmvec2_output::write_candidates_csv(candidates_csv_path, candidate_records))
+    {
+        std::cerr << "Aviso: falha ao escrever " << candidates_csv_path << "\n";
+    }
+    perf.post_ms += stage.elapsed_ms();
+
+    run_timing_wavenumber_csv::Record timing_record;
+    timing_record.case_label = "helmvec2_rect";
+    timing_record.geometry = "rect";
+    timing_record.backend = element_assembly_backend_name(cli.backend);
+    timing_record.debug_local_blocks = cli.debug_local_blocks ? 1 : 0;
+    timing_record.debug_candidates = cli.debug_candidates ? 1 : 0;
+    timing_record.beta = beta;
+    timing_record.L = L;
+    timing_record.betaL = beta * L;
+    timing_record.nx = nx;
+    timing_record.ny = ny;
+    timing_record.mesh_nodes = static_cast<int>(mesh.nodes.size());
+    timing_record.mesh_tris = static_cast<int>(mesh.tris.size());
+    timing_record.eps_top = 1.0;
+    timing_record.eps_bottom = 1.5;
+    timing_record.mu_r = 1.0;
+    timing_record.k0_min_phys = k0_min_phys;
+    timing_record.candidate_count_raw = static_cast<int>(all_modes.size());
+    timing_record.candidate_count_phys = static_cast<int>(k0_phys.size());
+    timing_record.matched_mode_count = static_cast<int>(mode_records.size());
+    timing_record.assembly_ms = perf.assembly_ms;
+    timing_record.solve_ms = perf.solve_ms;
+    timing_record.post_ms = perf.post_ms;
+    timing_record.total_ms = total_watch.elapsed_ms();
+    const auto timing_csv_path = out_dirs.root / "run_timing.csv";
+    if (!run_timing_wavenumber_csv::write_csv(timing_csv_path.string(), timing_record))
+    {
+        std::cerr << "Aviso: falha ao escrever " << timing_csv_path << "\n";
+    }
+
+    perf.total_ms = timing_record.total_ms;
     timing::print_breakdown("helmvec2_rect", perf);
     return 0;
 }

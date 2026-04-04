@@ -161,6 +161,44 @@ e o modo vai para o bloco com maior energia.
 Esse criterio evita ambiguidade de ordenacao quando o solve global mistura
 modos de familias diferentes.
 
+## 4.1) Matching modal por correlacao de massa no bloco dominante
+
+Depois da classificacao por energia, o repositorio nao tenta identificar o
+modo no autovetor misto completo. Em vez disso, ele extrai apenas o bloco
+dominante e faz o matching no espaco certo:
+
+- bloco `edge` -> correlacao de massa com `Tt`
+- bloco `scalar` -> correlacao de massa com `Tz`
+
+Em notacao compacta:
+
+```text
+rho_abs =
+    | x_dom^T M_dom u_ref |
+    ------------------------------------------
+    sqrt(x_dom^T M_dom x_dom) sqrt(u_ref^T M_dom u_ref)
+```
+
+onde:
+
+- `x_dom` e o bloco dominante do autovetor numerico;
+- `u_ref` e o candidato analitico;
+- `M_dom` e `Tt` ou `Tz`, de acordo com `match_space`.
+
+Interpretacao didatica:
+
+- `rho_abs` perto de `1` significa que a forma modal numerica e muito parecida
+  com a referencia analitica no bloco dominante;
+- o matching fica imune ao sinal global do autovetor;
+- a escala arbitraria do autovetor tambem deixa de atrapalhar.
+
+No codigo, essa trilha aparece em:
+
+- `mixed_mode_match.hpp`
+- `main_mixed_rect.cpp`
+- `main_mixed_circle.cpp`
+- `main_mixed_coax.cpp`
+
 ## 5) Referencias analiticas (retangular)
 
 `mixed_rect_reference.hpp` centraliza:
@@ -231,11 +269,59 @@ Interpretacao:
 
 ## 8) Saidas tipicas
 
-- retangular: tabelas TE/TM para formulacao E e H
-- circular/coaxial: snapshot de primeiros modos por bloco dominante
+- retangular: tabelas matched TE/TM para formulacao `E` e `H`, com `kc_ana`,
+  `kc_fem`, erro e `|rho|`
+- circular/coaxial: tabelas matched por correlacao de massa para os primeiros
+  modos de cada bloco dominante
 
-As strings dos blocos no `main_mixed_rect` sao mantidas estaveis para parse do
-script `scripts/validate_2d_22.py`.
+Arvore de saida:
+
+- `out/helmvec1/rect/`
+- `out/helmvec1/circle/`
+- `out/helmvec1/coax/`
+
+Cada caso agora grava:
+
+- `run.log`
+  - copia completa do que foi impresso no terminal durante a execucao.
+- `run_timing.csv`
+  - configuracao da rodada e tempos separados de montagem, solve e
+    classificacao modal das formulacoes `E` e `H`.
+- `csv/mixed_<caso>_modes.csv`
+  - uma linha por modo classificado, com formulacao, bloco dominante, familia,
+    `kc`, referencia analitica, `rho_abs`, `match_space`, `match_method` e
+    energias por bloco.
+  - para manter a saida didatica e o tempo de pos-processamento sob controle,
+    o export atual fica limitado aos primeiros `20` modos por subgrupo.
+- `img/`
+  - imagens-resumo geradas por `python3 scripts/helmvec1.py`.
+  - nesta etapa, sao graficos modais do sistema misto, e nao mapas espaciais
+    por modo.
+  - o conjunto atual inclui cutoff normalizado, `rho`, energia dominante,
+    energias de bloco e erro quando houver referencia analitica.
+
+Cabecalho atual do `modes.csv`:
+
+- `formulation,dominant_block,component_label,family,mode_label,positive_rank,eig_index,m,n,p,ar_m,b_m,r_m,r1_m,r2_m,kc_fem,kc_ana,kc_ar_fem,kc_ar_ana,kc_r_fem,kc_r_ana,kc_r1_fem,kc_r1_ana,error_percent,rho_abs,edge_energy,scalar_energy,dominant_energy_ratio,match_space,match_method,mode_status`
+
+Observacao didatica importante:
+
+- o `HELMVEC1` ainda nao exporta, por padrao, um campo espacial por modo;
+- nesta fase, a saida principal da familia e a classificacao modal do sistema
+  misto da Eq. `(92)`;
+- por isso, a trilha didatica do modulo hoje passa principalmente por
+  `run.log`, `run_timing.csv`, `mixed_<caso>_modes.csv` e os graficos-resumo
+  em `img/`.
+
+As strings de cabecalho das tabelas no terminal sao mantidas estaveis para
+parse dos scripts `scripts/validate_2d_22.py`, `scripts/run_full_mesh_sweep.py`
+e `scripts/run_structured_campaign.py`.
+
+## 8.1) Referencias de saida
+
+- `docs/HELMVEC1_CSV_Modos_Referencia.md`
+- `docs/HELMVEC1_Imagens_Referencia.md`
+- `docs/Tabela_Executaveis_Entradas_Saidas.md`
 
 ## 9) Relacao com o artigo
 

@@ -1345,8 +1345,8 @@ def build_validation_2d_rows(entry: ConfigEntry, stdout_text: str) -> list[dict[
         )
     elif case_id == "mixed_circle":
         snapshots = [
-            ("2.2.2", "mixed_circle_TE_edge", parse_first_kc_block(stdout_text, "TE (edge block), first 8 kc:")),
-            ("2.2.2", "mixed_circle_TM_scalar", parse_first_kc_block(stdout_text, "TM (scalar block), first 8 kc:")),
+            ("2.2.2", "mixed_circle_TE_edge", parse_first_kc_block(stdout_text, "TE (edge block)")),
+            ("2.2.2", "mixed_circle_TM_scalar", parse_first_kc_block(stdout_text, "TM (scalar block)")),
         ]
         for section, case_name, values in snapshots:
             for idx, value in enumerate(values, start=1):
@@ -1364,8 +1364,8 @@ def build_validation_2d_rows(entry: ConfigEntry, stdout_text: str) -> list[dict[
                 )
     elif case_id == "mixed_coax":
         snapshots = [
-            ("2.2.2", "mixed_coax_TE_edge", parse_first_kc_block(stdout_text, "TE (edge block), first 8 kc:")),
-            ("2.2.2", "mixed_coax_TM_scalar", parse_first_kc_block(stdout_text, "TM (scalar block), first 8 kc:")),
+            ("2.2.2", "mixed_coax_TE_edge", parse_first_kc_block(stdout_text, "TE (edge block)")),
+            ("2.2.2", "mixed_coax_TM_scalar", parse_first_kc_block(stdout_text, "TM (scalar block)")),
         ]
         for section, case_name, values in snapshots:
             for idx, value in enumerate(values, start=1):

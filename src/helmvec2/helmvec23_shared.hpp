@@ -4,7 +4,7 @@
 /* Arquivo: src/helmvec2/helmvec23_shared.hpp                                 */
 /* Autor: Prof. Lucas Kriesel Sperotto                                        */
 /* E-mail: speroto@unemat.br                                                  */
-/* Versao: 1.0 | Ano: 2026                                                    */
+/* Versao: 2.0 | Ano: 2026                                                    */
 /*****************************************************************************/
 /* Descricao: Sistema acoplado vetorial+escalar para obter k0 dado beta.      */
 /*****************************************************************************/
@@ -136,7 +136,15 @@ inline std::vector<double> eps_step_x(
 /* std::vector<char> &.                                                       */
 /* SAIDA: double.                                                             */
 /******************************************************************************/
-inline double pick_closest_unused(
+/******************************************************************************/
+/* FUNCAO: pick_closest_unused_index                                          */
+/* DESCRICAO: Seleciona o candidato nao utilizado mais proximo de um valor de */
+/* referencia.                                                                */
+/* ENTRADA: target: double; cands: const std::vector<double> &; used:         */
+/* std::vector<char> &.                                                       */
+/* SAIDA: int.                                                                */
+/******************************************************************************/
+inline int pick_closest_unused_index(
     double target,
     const std::vector<double> &cands,
     std::vector<char> &used)
@@ -155,8 +163,27 @@ inline double pick_closest_unused(
         }
     }
     if (best < 0)
-        return std::numeric_limits<double>::quiet_NaN();
+        return -1;
     used[(size_t)best] = 1;
+    return best;
+}
+
+/******************************************************************************/
+/* FUNCAO: pick_closest_unused                                                */
+/* DESCRICAO: Seleciona o candidato nao utilizado mais proximo de um valor de */
+/* referencia.                                                                */
+/* ENTRADA: target: double; cands: const std::vector<double> &; used:         */
+/* std::vector<char> &.                                                       */
+/* SAIDA: double.                                                             */
+/******************************************************************************/
+inline double pick_closest_unused(
+    double target,
+    const std::vector<double> &cands,
+    std::vector<char> &used)
+{
+    const int best = pick_closest_unused_index(target, cands, used);
+    if (best < 0)
+        return std::numeric_limits<double>::quiet_NaN();
     return cands[(size_t)best];
 }
 

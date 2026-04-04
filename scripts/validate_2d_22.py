@@ -153,14 +153,23 @@ def parse_first_kc_block(text: str, label: str) -> list[float]:
         return vals
 
     sub = text[start:].splitlines()
+    pat_old = re.compile(r"^\s*\d+\s+([0-9.+-eE]+)\s*$")
+    pat_matched = re.compile(
+        r"^\s*(\d+)\s+\((\d+),(\d+)\)\s+([0-9.+-eE]+)\s+([0-9.+-eE]+)\s+"
+        r"([0-9.+-eE]+)(?:\s+([0-9.+-eE]+))?\s*$"
+    )
     for ln in sub[1:]:
         if not ln.strip():
-            break
-        m = re.search(r"^\s*\d+\s+([0-9.+-eE]+)\s*$", ln)
+            if vals:
+                break
+            continue
+        m = pat_old.match(ln)
         if m:
             vals.append(float(m.group(1)))
-        else:
-            break
+            continue
+        m = pat_matched.match(ln)
+        if m:
+            vals.append(float(m.group(5)))
     return vals
 
 
@@ -171,7 +180,10 @@ def parse_mixed_rect_table(text: str, block_title: str, case: str) -> list[dict]
         return rows
 
     sub = text[start:].splitlines()
-    pat = re.compile(r"^\s*(\d+)\s+\((\d+),(\d+)\)\s+([0-9.+-eE]+)\s+([0-9.+-eE]+)\s+([0-9.+-eE]+)\s*$")
+    pat = re.compile(
+        r"^\s*(\d+)\s+\((\d+),(\d+)\)\s+([0-9.+-eE]+)\s+([0-9.+-eE]+)\s+"
+        r"([0-9.+-eE]+)(?:\s+([0-9.+-eE]+))?\s*$"
+    )
     for ln in sub:
         m = pat.match(ln)
         if not m:
@@ -312,10 +324,10 @@ def main() -> None:
         )
 
         snapshots = [
-            ("2.2.2", "mixed_circle_TE_edge", parse_first_kc_block(out_mixed_circle, "TE (edge block), first 8 kc:")),
-            ("2.2.2", "mixed_circle_TM_scalar", parse_first_kc_block(out_mixed_circle, "TM (scalar block), first 8 kc:")),
-            ("2.2.2", "mixed_coax_TE_edge", parse_first_kc_block(out_mixed_coax, "TE (edge block), first 8 kc:")),
-            ("2.2.2", "mixed_coax_TM_scalar", parse_first_kc_block(out_mixed_coax, "TM (scalar block), first 8 kc:")),
+            ("2.2.2", "mixed_circle_TE_edge", parse_first_kc_block(out_mixed_circle, "TE (edge block)")),
+            ("2.2.2", "mixed_circle_TM_scalar", parse_first_kc_block(out_mixed_circle, "TM (scalar block)")),
+            ("2.2.2", "mixed_coax_TE_edge", parse_first_kc_block(out_mixed_coax, "TE (edge block)")),
+            ("2.2.2", "mixed_coax_TM_scalar", parse_first_kc_block(out_mixed_coax, "TM (scalar block)")),
         ]
         append_snapshot_rows(backend_rows, snapshots)
 

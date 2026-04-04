@@ -250,6 +250,26 @@ Backends disponiveis:
 
 Sem `--backend`, o padrao publico do executavel e `closed-form`.
 
+## 6.1) Saidas tipicas
+
+O executavel agora grava em:
+
+- `out/helmvec2/rect/run.log`
+  - copia completa do terminal.
+- `out/helmvec2/rect/run_timing.csv`
+  - configuracao da rodada e tempos de montagem, solve e pos-processamento.
+- `out/helmvec2/rect/csv/helmvec2_rect_modes.csv`
+  - tabela didatica final da Figura 11 / Tabela 8, com `k0L(FEM matched)`,
+    referencias e erros percentuais.
+- `out/helmvec2/rect/csv/helmvec2_rect_candidates.csv`
+  - lista dos candidatos espectrais positivos reais, com `eig_index`,
+    `k0L`, `ez_ratio` e indicacao do filtro fisico.
+
+Observacao:
+
+- a tabela impressa no terminal continua estavel para o parser legado;
+- os CSVs novos apenas registram essa mesma trilha de forma estruturada.
+
 ## 7) Integracao com scripts
 
 `scripts/validate_2d_22.py` le este executavel e salva em:
@@ -265,6 +285,11 @@ Campos relacionados:
 - `section=2.2.3`
 - `case=Figure11_Table8`
 - erro relativo contra HELMVEC2 e Hayata.
+
+## 7.1) Referencias de saida
+
+- `docs/HELMVEC2_CSV_Referencia.md`
+- `docs/Tabela_Executaveis_Entradas_Saidas.md`
 
 ## 8) Relacao com a sequencia 2D
 
