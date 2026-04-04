@@ -4,10 +4,10 @@ Plot 2D vector fields from legacy ASCII VTK files generated in this repo.
 
 Main modes:
 1) Single file plot:
-   python3 scripts/plot_vtk_quiver.py out/2d/2.1_scalar/circle/te_circle_sv.vtk --out out/img/te_circle.png
+   python3 scripts/plot_vtk_quiver.py out/helm10/circle/vtk/te_circle_sv.vtk --out out/img/te_circle.png
 
 2) Batch generation:
-   python3 scripts/plot_vtk_quiver.py --all-img --build-dir build --vtk-root out/2d --out-dir out/img_all
+   python3 scripts/plot_vtk_quiver.py --all-img --build-dir build --vtk-root out --out-dir out/img_all
 """
 
 from __future__ import annotations
@@ -310,6 +310,14 @@ def _resolve(path: Path) -> Path:
     return path if path.is_absolute() else ROOT / path
 
 
+def _infer_out_root_from_vtk_root(vtk_root: Path) -> Path:
+    if vtk_root.name == "out":
+        return vtk_root
+    if vtk_root.parent.name == "out":
+        return vtk_root.parent
+    return vtk_root.parent
+
+
 def _parse_mode_table(
     text: str,
     geometry: str,
@@ -519,7 +527,7 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--title", type=str, default=None, help="Custom title (single-file mode).")
     p.add_argument("--all-img", "--all_img", dest="all_img", action="store_true", help="Run all solvers, generate all images and CSV.")
     p.add_argument("--build-dir", type=Path, default=Path("build"), help="Build/output directory.")
-    p.add_argument("--vtk-root", type=Path, default=Path("out/2d"), help="Root folder containing VTK files for batch plotting.")
+    p.add_argument("--vtk-root", type=Path, default=Path("out"), help="Root folder containing VTK files for batch plotting.")
     p.add_argument("--out-dir", type=Path, default=Path("out/img_all"), help="Folder for batch images.")
     p.add_argument("--csv", type=Path, default=Path("out/img_all/mode_summary.csv"), help="CSV output path in batch mode.")
     p.add_argument("--mode-export", type=int, default=8, help="Mode export count forwarded to 2D executables in --all-img mode.")
@@ -536,7 +544,10 @@ def main() -> None:
     csv_path = _resolve(args.csv)
 
     if args.all_img:
-        rows = _collect_all_mode_rows(build_dir, args.mode_export, vtk_root.parent)
+        rows = _collect_all_mode_rows(
+            build_dir,
+            args.mode_export,
+            _infer_out_root_from_vtk_root(vtk_root))
         _write_csv(rows, csv_path)
         _plot_all_images(
             vtk_root=vtk_root,

@@ -19,7 +19,7 @@ Não entram aqui casos extras criados pelo repositório para validação ampliad
 
 | ID | Seção do artigo | Programa do artigo | Caso de teste | Geometria / configuração | Saída comparada pelo autor | Figura / tabela | Malha citada no texto | Executável atual do repositório |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1 | 2.1 | `HELM10` | Guia de onda retangular homogêneo | Retangular com `a_r/b_r = 2` | Números de onda de corte `k_c` e campos modais | Figura 4, Tabela 1, Figura 5 | `400` triângulos | `./build/helm10_rect 14 14 8` |
+| 1 | 2.1 | `HELM10` | Guia de onda retangular homogêneo | Retangular com `a_r/b_r = 2` | Números de onda de corte `k_c` e campos modais | Figura 4, Tabela 1, Figura 5 | `400` triângulos | `./build/helm10_rect 1.0 14 14 8` |
 | 2 | 2.1 | `HELM10` | Guia de onda circular homogêneo | Circular com raio unitário | Números de onda de corte `k_c` e campos modais | Figura 6, Tabela 2, Figura 7 | `200` triângulos | `./build/helm10_circle 10 48 8` |
 | 3 | 2.1 | `HELM10` | Linha coaxial homogênea | Coaxial com `r_2/r_1 = 4` | Números de onda de corte `k_c` e campos TE/TM superiores | Figura 8, Tabela 3, Figura 9 | `340` triângulos | `./build/helm10_coax 10 48 8` |
 | 4 | 2.2.1 | `HELMVEC` | Guia de onda retangular vetorial | Retangular com ar e `a_r/b_r = 2` | Números de onda de corte `k_c` para modos TE/TM | Figura 4, Tabela 4 | `400` triângulos | `./build/edge_rect 14 14 8` |

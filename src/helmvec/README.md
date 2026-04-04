@@ -153,19 +153,28 @@ Retangular:
 
 ```bash
 ./build/edge_rect 14 14
+./build/edge_rect 14 14 20
 ```
 
 Circular:
 
 ```bash
 ./build/edge_circle 10 48
+./build/edge_circle 10 48 20
 ```
 
 Coaxial:
 
 ```bash
 ./build/edge_coax 10 48
+./build/edge_coax 10 48 20
 ```
+
+Convencoes publicas atuais:
+
+- `nmodos` indica quantos modos positivos de cada ramo serao exportados;
+- se `nmodos` nao for informado, o padrao publico agora e `20`;
+- sem `--backend`, o fluxo principal do executavel e `closed-form`.
 
 ## 7.1) Backends e depuracao
 
@@ -200,10 +209,76 @@ Console:
 - primeiros `kc`,
 - tabela FEM x analitico (`kc_ana`, `kc_fem`, erro %, `rho`).
 
-VTK:
-- retangular: `edge_rect_Et.vtk`, `edge_rect_Ht.vtk`
-- circular: `edge_circle_Et.vtk`, `edge_circle_Ht.vtk`
-- coaxial: `edge_coax_Et.vtk`, `edge_coax_Ht.vtk`
+Arvore de saida:
+
+- `out/helmvec/rect/`
+- `out/helmvec/circle/`
+- `out/helmvec/coax/`
+
+Cada caso agora grava:
+
+- `run.log`
+  - copia completa do que foi impresso no terminal durante a execucao.
+- `run_timing.csv`
+  - configuracao da rodada e tempos de montagem, solve e pos-processamento.
+- `csv/edge_<caso>_modes.csv`
+  - uma linha por modo exportado.
+- `csv/edge_<caso>_fields_<familia>_m<...>_<n/p><...>_rank<rr>.csv`
+  - campo transversal por celula.
+- `vtk/`
+  - VTK por modo e aliases legados do primeiro modo.
+- `img/`
+  - imagens geradas por `python3 scripts/helmvec.py`.
+
+Cabecalho atual do `modes.csv`:
+
+- retangular:
+  - `family,transverse_label,mode_label,positive_rank,eig_index,m,n,ar_m,b_m,kc_fem,kc_ana,kc_ar_fem,kc_ar_ana,error_percent,rho_abs,field_status,fields_csv_file,vtk_file`
+- circular:
+  - `family,transverse_label,mode_label,positive_rank,eig_index,m,p,r_m,kc_fem,kc_ana,kc_r_fem,kc_r_ana,error_percent,rho_abs,field_status,fields_csv_file,vtk_file`
+- coaxial:
+  - `family,transverse_label,mode_label,positive_rank,eig_index,m,p,r1_m,r2_m,kc_fem,kc_ana,kc_r1_fem,kc_r1_ana,error_percent,rho_abs,field_status,fields_csv_file,vtk_file`
+
+Cabecalho atual do `fields_<modo>.csv`:
+
+- no ramo `TE`:
+  - `cell_id,xc_m,yc_m,Ex,Ey,Emag`
+- no ramo `TM`:
+  - `cell_id,xc_m,yc_m,Hx,Hy,Hmag`
+
+Observacao didatica importante:
+
+- o campo salvo em `fields_<modo>.csv` e reconstruido no centroide de cada
+  triangulo;
+- no ramo `TE`, esse campo e `E_t`, por isso o CSV usa `Ex,Ey,Emag`;
+- no ramo `TM`, esse campo e `H_t`, por isso o CSV usa `Hx,Hy,Hmag`;
+- no estado atual do projeto, esse campo ja sai normalizado por pico unitario
+  para visualizacao;
+- isso aparece no `modes.csv` pela coluna `field_status`.
+
+## 8.1) Script de imagens
+
+O script:
+
+```bash
+python3 scripts/helmvec.py
+```
+
+le os CSVs e gera, para cada modo:
+
+- mapa de magnitude do campo transversal em `img/magnitude/`
+- diagrama de setas em `img/quiver/`
+
+e, por caso:
+
+- `img/helmvec_<caso>_error_by_mode.png`
+- `img/helmvec_<caso>_rho_by_mode.png`
+
+Referencias didaticas:
+
+- `docs/HELMVEC_CSV_Modos_Referencia.md`
+- `docs/HELMVEC_CSV_Campos_Referencia.md`
+- `docs/HELMVEC_Imagens_Referencia.md`
 
 ## 9) Relacao com o artigo
 

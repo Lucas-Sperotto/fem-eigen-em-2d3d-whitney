@@ -85,8 +85,9 @@ API pública didática correspondente:
 6. `generalized_eigs_sym_vec(...)`
 7. `match_*_mode_by_mass_correlation(...)`
 8. `helm10_post::extract_mode_nodal_from_Z(...)`
-9. `helm10_post::compute_smoothed_transverse_from_scalar(...)`
-10. `write_vtk_unstructured_tri_scalar_vector(...)`
+9. `helm10::field_reconstruction::reconstruct_transverse_fields(...)`
+10. escrita de `modes.csv` e `fields_<modo>.csv`
+11. `write_vtk_unstructured_tri_scalar_vector(...)`
 
 ### R2) Família `HELMVEC`
 

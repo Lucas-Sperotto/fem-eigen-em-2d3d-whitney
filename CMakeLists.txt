@@ -9,6 +9,7 @@ add_compile_definitions(TP3485_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
 
 add_executable(helm10_rect
   src/helm10/main_helm10_rect.cpp
+  src/helm10/field_reconstruction.cpp
   src/core/mesh2d_rect.cpp
   src/core/fem_scalar_helm10.cpp
   src/core/helm10_scalar_system.cpp
@@ -16,14 +17,21 @@ add_executable(helm10_rect
 
 add_executable(helm10_circle
   src/helm10/main_helm10_circle.cpp
+  src/helm10/field_reconstruction.cpp
   src/core/mesh2d_circle.cpp
   src/core/helm10_scalar_system.cpp
 )
 
 add_executable(helm10_coax
   src/helm10/main_helm10_coax.cpp
+  src/helm10/field_reconstruction.cpp
   src/core/mesh2d_coax.cpp
   src/core/helm10_scalar_system.cpp
+)
+
+add_executable(helm10_field_reconstruction_example
+  src/helm10/main_field_reconstruction_example.cpp
+  src/helm10/field_reconstruction.cpp
 )
 
 add_executable(edge_rect
@@ -131,6 +139,7 @@ add_executable(fem3d1_rect
 target_include_directories(helm10_rect PRIVATE src)
 target_include_directories(helm10_circle PRIVATE src)
 target_include_directories(helm10_coax PRIVATE src)
+target_include_directories(helm10_field_reconstruction_example PRIVATE src)
 target_include_directories(edge_rect PRIVATE src)
 target_include_directories(edge_circle PRIVATE src)
 target_include_directories(edge_coax PRIVATE src)

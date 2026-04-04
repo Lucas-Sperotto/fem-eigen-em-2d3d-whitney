@@ -375,7 +375,7 @@ def _write_report(
     lines.append("- `--show-validation-output` (`build_and_run_all.sh`): repassa esse comportamento para o pipeline completo.")
     lines.append("")
     lines.append("```bash")
-    lines.append("./build/helm10_rect 14 14 8 --backend closed-form --debug-local-blocks")
+    lines.append("./build/helm10_rect 1.0 14 14 8 --backend closed-form --debug-local-blocks")
     lines.append("./build/edge_rect 14 14 8 --debug-candidates")
     lines.append("./build/mixed_rect 12 6 --backend closed-form --debug-local-blocks --debug-candidates")
     lines.append("python3 scripts/validate_2d_22.py --backend closed-form --show-output --debug-local-blocks")

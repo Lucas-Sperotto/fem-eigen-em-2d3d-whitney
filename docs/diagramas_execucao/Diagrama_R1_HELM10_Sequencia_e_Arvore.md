@@ -28,7 +28,7 @@ Os três executáveis têm a mesma espinha dorsal:
 4. resolver o autoproblema generalizado;
 5. fazer matching modal com a referência analítica;
 6. repetir o processo para TM;
-7. reconstruir campos e exportar VTK;
+7. reconstruir campos e exportar CSVs e VTK;
 8. imprimir tabela e tempos.
 
 O que muda entre os três é:
@@ -52,6 +52,8 @@ sequenceDiagram
     participant Eig as generalized_eigs_sym_vec
     participant Match as mode_match_*.hpp
     participant Post as helm10_post::*
+    participant Field as field_reconstruction::*
+    participant CSV as modes.csv / fields_<modo>.csv
     participant VTK as write_vtk_unstructured_tri_scalar_vector
     participant Time as timing::print_breakdown
 
@@ -60,6 +62,7 @@ sequenceDiagram
     CLI-->>Main: backend, debug, positionals
     Main->>Mesh: make_*_mesh(...)
     Mesh-->>Main: Mesh2D
+    Main->>Main: ensure_case_dir(...)\nabre modes.csv
 
     alt debug_local_blocks
         Main->>Debug: print_first_triangle_closed_form_debug(...)
@@ -130,7 +133,10 @@ sequenceDiagram
 
     loop modos exportados
         Main->>Post: extract_mode_nodal_from_Z(...)
-        Main->>Post: compute_smoothed_transverse_from_scalar(...)
+        Main->>Field: reconstruct_transverse_fields(...)
+        Field-->>Main: psi, gradiente, Ex, Ey, beta, ztm, status
+        Main->>CSV: escreve modes.csv
+        Main->>CSV: escreve fields_<modo>.csv
         Main->>VTK: write_vtk_unstructured_tri_scalar_vector(...)
     end
 
@@ -183,12 +189,17 @@ helm10_rect / helm10_circle / helm10_coax
     ├── helm10_post::print_positive_kc(...)
     ├── loop de matching TM
     │   └── match_*_mode_by_mass_correlation(...)
-    ├── loop de exportação VTK
+    ├── output_paths::ensure_case_dir(...)
+    ├── loop de exportação modal
     │   ├── helm10_post::extract_mode_nodal_from_Z(...)
-    │   ├── helm10_post::compute_smoothed_transverse_from_scalar(...)
+    │   ├── helm10::field_reconstruction::reconstruct_transverse_fields(...)
     │   │   ├── tri_geom(mesh, tri)
     │   │   ├── gradiente local do potencial
-    │   │   └── suavização nodal ponderada por área
+    │   │   ├── suavização nodal ponderada por área
+    │   │   ├── beta / ztm / below_cutoff
+    │   │   └── Ex, Ey sem multiplicação por Ztm
+    │   ├── escreve helm10_*_modes.csv
+    │   ├── escreve helm10_*_fields_<modo>.csv
     │   └── write_vtk_unstructured_tri_scalar_vector(...)
     └── timing::print_breakdown(...)
 ```
@@ -240,8 +251,10 @@ match_*_mode_by_mass_correlation(...)
 ├── monta referencia analitica
 └── compara por correlacao de massa
 
-helm10_post::compute_smoothed_transverse_from_scalar(...)
-└── reconstrói campo transversal suave
+helm10::field_reconstruction::reconstruct_transverse_fields(...)
+├── reconstrói gradiente transversal suave
+├── calcula beta / ztm / below_cutoff
+└── salva Ex, Ey sem multiplicação por Ztm
 ```
 
 Ponto conceitual importante:
@@ -252,11 +265,11 @@ Ponto conceitual importante:
 
 ## 5) Substituições específicas por executável
 
-| Executável | Geração de malha | Matching analítico | VTK típico |
+| Executável | Geração de malha | Matching analítico | Saídas típicas |
 | --- | --- | --- | --- |
-| `helm10_rect` | `make_rect_mesh(...)` | `match_rect_mode_by_mass_correlation(...)` | `te_rect_*_sv.vtk`, `tm_rect_*_sv.vtk` |
-| `helm10_circle` | `make_circle_mesh(...)` | `match_circle_mode_by_mass_correlation(...)` | `te_circle_sv.vtk`, `tm_circle_sv.vtk` |
-| `helm10_coax` | `make_coax_mesh(...)` | `match_coax_mode_by_mass_correlation(...)` | `te_coax_sv.vtk`, `tm_coax_sv.vtk` |
+| `helm10_rect` | `make_rect_mesh(...)` | `match_rect_mode_by_mass_correlation(...)` | `out/helm10/rect/run.log`, `out/helm10/rect/run_timing.csv`, `out/helm10/rect/vtk/te_rect_*_sv.vtk`, `out/helm10/rect/vtk/tm_rect_*_sv.vtk`, `out/helm10/rect/csv/helm10_rect_modes.csv`, `out/helm10/rect/csv/helm10_rect_fields_*.csv` |
+| `helm10_circle` | `make_circle_mesh(...)` | `match_circle_mode_by_mass_correlation(...)` | `out/helm10/circle/run.log`, `out/helm10/circle/run_timing.csv`, `out/helm10/circle/vtk/te_circle*.vtk`, `out/helm10/circle/vtk/tm_circle*.vtk`, `out/helm10/circle/csv/helm10_circle_modes.csv`, `out/helm10/circle/csv/helm10_circle_fields_*.csv` |
+| `helm10_coax` | `make_coax_mesh(...)` | `match_coax_mode_by_mass_correlation(...)` | `out/helm10/coax/run.log`, `out/helm10/coax/run_timing.csv`, `out/helm10/coax/vtk/te_coax*.vtk`, `out/helm10/coax/vtk/tm_coax*.vtk`, `out/helm10/coax/csv/helm10_coax_modes.csv`, `out/helm10/coax/csv/helm10_coax_fields_*.csv` |
 
 ## 6) Subárvore analítica do matching modal
 

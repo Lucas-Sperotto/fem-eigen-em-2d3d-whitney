@@ -71,6 +71,13 @@ Todos os arquivos da trilha principal agora terminam com links de `Anterior` e `
 - [Rastreabilidade_Equacoes_Artigo_Codigo.md](Rastreabilidade_Equacoes_Artigo_Codigo.md): mapa central `equação -> função -> arquivo` para auditoria didática da implementação em C++.
 - [Casos_de_Teste_do_Artigo.md](Casos_de_Teste_do_Artigo.md): tabela consolidada com os casos numéricos do artigo.
 - [Matriz_Casos_Executaveis_Arvore_de_Chamada.md](Matriz_Casos_Executaveis_Arvore_de_Chamada.md): ponte entre casos do artigo, executáveis atuais e raízes da árvore de chamada.
+- [Tabela_Executaveis_Entradas_Saidas.md](Tabela_Executaveis_Entradas_Saidas.md): tabela direta `executável -> entrada -> saída`, útil para operação e estudo.
+- [HELM10_CSV_Modos_Referencia.md](HELM10_CSV_Modos_Referencia.md): glossario didatico das colunas do CSV de modos do `HELM10`, ligado à Secao 2.1, incluindo a explicacao de `rho_abs` e do matching por correlacao de massa.
+- [HELM10_CSV_Campos_Referencia.md](HELM10_CSV_Campos_Referencia.md): glossario didatico das colunas do CSV de campos nodais do `HELM10`, ligado à Secao 2.1.
+- [HELM10_Imagens_Referencia.md](HELM10_Imagens_Referencia.md): guia do script `scripts/helm10.py`, que lê os CSVs do `HELM10` e gera isolinhas, diagramas de setas e resumo de erro por modo.
+- [HELMVEC_CSV_Modos_Referencia.md](HELMVEC_CSV_Modos_Referencia.md): glossario didatico das colunas do CSV de modos do `HELMVEC`, ligado à Secao 2.2.1, incluindo a explicacao de `rho_abs` e do matching por correlacao de massa vetorial.
+- [HELMVEC_CSV_Campos_Referencia.md](HELMVEC_CSV_Campos_Referencia.md): glossario didatico das colunas do CSV de campos por celula do `HELMVEC`, ligado à Secao 2.2.1.
+- [HELMVEC_Imagens_Referencia.md](HELMVEC_Imagens_Referencia.md): guia do script `scripts/helmvec.py`, que lê os CSVs do `HELMVEC` e gera mapas de magnitude, diagramas de setas e resumos de erro e `rho`.
 - [diagramas_execucao/README.md](diagramas_execucao/README.md): caderno de navegação da coleção de diagramas de execução.
 - [diagramas_execucao/Diagrama_Mestre_R1_a_R7.md](diagramas_execucao/Diagrama_Mestre_R1_a_R7.md): visão global resumida da coleção `R1 -> R7`.
 - [Diagrama_R1_HELM10_Sequencia_e_Arvore.md](diagramas_execucao/Diagrama_R1_HELM10_Sequencia_e_Arvore.md) a [Diagrama_R7_FEM3D1_Sequencia_e_Arvore.md](diagramas_execucao/Diagrama_R7_FEM3D1_Sequencia_e_Arvore.md): diagramas-base por família de executáveis.
@@ -78,7 +85,13 @@ Todos os arquivos da trilha principal agora terminam com links de `Anterior` e `
 ## Relação com o código
 
 - [2.1 Guias de Onda Homogêneos](traducao/2.1_Guias%20de%20Onda%20Homogêneos.md) -> `src/helm10`
+  - apoio operacional: [HELM10_CSV_Modos_Referencia.md](HELM10_CSV_Modos_Referencia.md)
+  - apoio operacional nodal: [HELM10_CSV_Campos_Referencia.md](HELM10_CSV_Campos_Referencia.md)
+  - apoio grafico: [HELM10_Imagens_Referencia.md](HELM10_Imagens_Referencia.md)
 - [2.2.1 Campos Vetoriais Transversais](traducao/2.2.1_Guia%20de%20Onda%20Campos%20Vetoriais.md) -> `src/helmvec`
+  - apoio operacional: [HELMVEC_CSV_Modos_Referencia.md](HELMVEC_CSV_Modos_Referencia.md)
+  - apoio operacional por celula: [HELMVEC_CSV_Campos_Referencia.md](HELMVEC_CSV_Campos_Referencia.md)
+  - apoio grafico: [HELMVEC_Imagens_Referencia.md](HELMVEC_Imagens_Referencia.md)
 - [2.2.2 Três Componentes](traducao/2.2.2_Guias_de_Onda_Nao_Homogeneos_Tres_Componentes.md) -> `src/helmvec1`
 - [2.2.3 Determinação do Número de Onda](traducao/2.2.3_Determinação%20do%20número%20de%20onda.md) -> `src/helmvec2`
 - [2.2.4 Características de Dispersão](traducao/2.2.4_Caracteristicas_de_Dispersao_de_Guias_de_Onda.md) -> `src/helmvec3`

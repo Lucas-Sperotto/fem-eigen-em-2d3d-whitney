@@ -17,6 +17,7 @@ Antes de entrar no codigo, a trilha teorica revisada do artigo esta em:
 - [docs/README.md](docs/README.md): indice geral da documentacao, em ordem de estudo.
 - [docs/19950011772.pdf](docs/19950011772.pdf): PDF original do paper.
 - [docs/Rastreabilidade_Equacoes_Artigo_Codigo.md](docs/Rastreabilidade_Equacoes_Artigo_Codigo.md): trilha central de rastreabilidade entre equacoes do artigo e funcoes/arquivos C++.
+- [docs/Tabela_Executaveis_Entradas_Saidas.md](docs/Tabela_Executaveis_Entradas_Saidas.md): tabela unificada com todos os executaveis gerados, suas entradas e suas saidas.
 - [docs/results/README.md](docs/results/README.md): resultados curados, figuras e validacoes preservadas no repositorio.
 
 Os arquivos principais em `docs/` preservam a traducao-base do artigo e receberam comentarios complementares, explicacoes intermediarias entre equacoes e notas de consistencia para estudo.
@@ -278,7 +279,7 @@ Em termos práticos:
 Exemplos:
 
 ```bash
-./build/helm10_rect 14 14 8 --backend closed-form --debug-local-blocks
+./build/helm10_rect 1.0 14 14 8 --backend closed-form --debug-local-blocks
 ./build/edge_rect 14 14 8 --debug-candidates
 ./build/mixed_rect 12 6 --backend closed-form --debug-local-blocks --debug-candidates
 ./build/helmvec2_rect 10 6 6 --backend closed-form --debug-local-blocks
@@ -291,7 +292,7 @@ Exemplos:
 ### 4.1) Secao 2.1 (`helm10`)
 
 ```bash
-./build/helm10_rect 14 14 8
+./build/helm10_rect 1.0 14 14 8
 ./build/helm10_circle 10 48 8
 ./build/helm10_coax 10 48 8
 ```
@@ -300,7 +301,9 @@ Saidas tipicas:
 
 - lista de `kc`
 - tabela de comparacao FEM x analitico com correlacao modal (`rho`)
-- VTK em `out/2d/2.1_scalar/{rect,circle,coax}` (inclui varios modos por rank)
+- VTK em `out/helm10/{rect,circle,coax}/vtk`
+- CSVs didaticos em `out/helm10/{rect,circle,coax}/csv`, com `modes.csv` e
+  `fields_<modo>.csv`
 
 ### 4.2) Secao 2.2.1 (`helmvec`)
 
@@ -314,7 +317,12 @@ Saidas tipicas:
 
 - lista de `kc`
 - tabela FEM x analitico (matching por correlacao em massa)
-- VTK em `out/2d/2.2.1_edge/{rect,circle,coax}` (inclui varios modos por rank)
+- `run.log` e `run_timing.csv` em `out/helmvec/{rect,circle,coax}`
+- CSVs didaticos em `out/helmvec/{rect,circle,coax}/csv`, com `modes.csv` e
+  `fields_<modo>.csv`
+- VTK em `out/helmvec/{rect,circle,coax}/vtk`
+- imagens geradas por `python3 scripts/helmvec.py` em
+  `out/helmvec/{rect,circle,coax}/img`
 
 ### 4.3) Secao 2.2.2 (`helmvec1`)
 
@@ -448,15 +456,15 @@ Saidas:
 Modo arquivo unico:
 
 ```bash
-python3 scripts/plot_vtk_quiver.py out/2d/2.1_scalar/rect/te10_rect_sv.vtk --out out/img/te10_rect.png --stride 2 --scale 22 --dpi 210
-python3 scripts/plot_vtk_quiver.py out/2d/2.1_scalar/rect/tm11_rect_sv.vtk --out out/img/tm11_rect.png --stride 2 --scale 22 --dpi 210
+python3 scripts/plot_vtk_quiver.py out/helm10/rect/vtk/te10_rect_sv.vtk --out out/img/te10_rect.png --stride 2 --scale 22 --dpi 210
+python3 scripts/plot_vtk_quiver.py out/helm10/rect/vtk/tm11_rect_sv.vtk --out out/img/tm11_rect.png --stride 2 --scale 22 --dpi 210
 python3 scripts/plot_vtk_quiver.py out/2d/2.2.1_edge/rect/edge_rect_Et.vtk --out out/img/edge_rect_Et.png --stride 2 --scale 25 --dpi 210
 ```
 
 Modo lote (gera imagens e CSV resumo):
 
 ```bash
-python3 scripts/plot_vtk_quiver.py --all-img --build-dir build --vtk-root out/2d --out-dir out/img_all --csv out/img_all/mode_summary.csv --mode-export 8 --max-rank 8
+python3 scripts/plot_vtk_quiver.py --all-img --build-dir build --vtk-root out --out-dir out/img_all --csv out/img_all/mode_summary.csv --mode-export 8 --max-rank 8
 ```
 
 Imagens de validacao para os casos 2.2.2, 2.2.3 e 2.2.4:
@@ -519,7 +527,7 @@ Use esta sequencia para reproduzir os blocos numericos em ordem de tabelas/figur
 1. Tabela 1 (retangular escalar, Sec. 2.1):
 
 ```bash
-./build/helm10_rect 14 14 8
+./build/helm10_rect 1.0 14 14 8
 ```
 
 2. Tabela 2 (circular escalar, Sec. 2.1):
@@ -579,7 +587,7 @@ python3 scripts/validate_3d_31.py --profile quick --solver both --build-dir buil
 10. Geracao de imagens e CSV de modos:
 
 ```bash
-python3 scripts/plot_vtk_quiver.py --all-img --build-dir build --vtk-root out/2d --out-dir out/img_all --csv out/img_all/mode_summary.csv --mode-export 8 --max-rank 8
+python3 scripts/plot_vtk_quiver.py --all-img --build-dir build --vtk-root out --out-dir out/img_all --csv out/img_all/mode_summary.csv --mode-export 8 --max-rank 8
 ```
 
 ## 12) Script unico (compila e roda tudo)
