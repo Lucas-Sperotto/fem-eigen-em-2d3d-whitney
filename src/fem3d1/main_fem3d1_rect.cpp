@@ -28,13 +28,44 @@
 #include "fem3d/fem3d_case_output.hpp"
 #include "fem3d/fem3d_compare.hpp"
 #include "fem3d/fem3d_debug.hpp"
+#include "fem3d/fem3d_field_output.hpp"
 #include "fem3d1/fem3d1_driver_entry.hpp"
 
 #include <iostream>
+#include <limits>
 #include <stdexcept>
 
 namespace
 {
+inline std::vector<double> k0_values_from_candidates(
+    const std::vector<fem3d::PositiveK0Candidate> &candidates)
+{
+  std::vector<double> out;
+  out.reserve(candidates.size());
+  for (const auto &cand : candidates)
+    out.push_back(cand.k0);
+  return out;
+}
+
+inline std::vector<double> matched_k0_from_indices(
+    const std::vector<double> &lambda,
+    const std::vector<int> &matched_indices,
+    double tol = 1e-10)
+{
+  std::vector<double> out(matched_indices.size(), std::numeric_limits<double>::quiet_NaN());
+  for (size_t i = 0; i < matched_indices.size(); ++i)
+  {
+    const int eig_index = matched_indices[i];
+    if (eig_index < 0 || eig_index >= (int)lambda.size())
+      continue;
+    const double l = lambda[(size_t)eig_index];
+    if (l <= tol)
+      continue;
+    out[i] = std::sqrt(l);
+  }
+  return out;
+}
+
 /******************************************************************************/
 /* FUNCAO: run_sparse_case                                                    */
 /* DESCRICAO: Executa um caso 3D com solver esparso (FEM3D1), incluindo montagem, solucao e exportacao. */
@@ -79,6 +110,7 @@ timing::Breakdown run_sparse_case(
   std::cout << "output_root=" << dirs.root.string() << "\n";
   std::cout << "csv_dir=" << dirs.csv.string() << "\n";
   std::cout << "linop_dir=" << dirs.linop.string() << "\n";
+  std::cout << "vtk_dir=" << dirs.vtk.string() << "\n";
   std::cout << "nodes=" << c.mesh.nodes.size()
             << ", tets=" << c.mesh.tets.size()
             << ", edges=" << sparse.ed.edges.size()
@@ -96,17 +128,43 @@ timing::Breakdown run_sparse_case(
 
   stage.reset();
   const int scan_limit = fem3d::scan_limit_for_table((int)c.rows.size());
-  const auto k0 = fem3d::first_positive_k0(eig.w, scan_limit);
+  const auto k0_candidates = fem3d::first_positive_k0_candidates(eig.w, scan_limit);
   if (debug_candidates)
-    fem3d::print_positive_k0_candidates_debug(k0);
-  const auto k0_match = fem3d::match_by_reference_with_degeneracy(c.rows, k0, scan_limit);
+    fem3d::print_positive_k0_candidates_debug(k0_values_from_candidates(k0_candidates));
+  const auto matched_indices =
+      fem3d::match_indices_by_reference_with_degeneracy(c.rows, k0_candidates, scan_limit);
+  const auto k0_match = matched_k0_from_indices(eig.w, matched_indices);
   fem3d::print_table_compare(
       "Comparacao (casamento agrupado para raizes analiticas degeneradas)",
       c.rows,
       k0_match);
 
-  const auto mode_rows = fem3d_output::build_mode_records(c.rows, k0_match);
   const std::string prefix = "fem3d1_" + c.case_name;
+  auto mode_rows = fem3d_output::build_mode_records(c.rows, k0_match);
+  for (size_t i = 0; i < mode_rows.size(); ++i)
+  {
+    const int eig_index = (i < matched_indices.size()) ? matched_indices[i] : -1;
+    mode_rows[i].matched_eig_index = eig_index;
+    if (eig_index < 0)
+    {
+      mode_rows[i].field_status = "missing";
+      continue;
+    }
+
+    const auto artifacts = fem3d_field::export_mode(
+        dirs,
+        c.mesh,
+        sparse.ed,
+        eig.Zcol,
+        prefix,
+        eig_index,
+        static_cast<int>(i) + 1,
+        mode_rows[i].mode_label);
+    mode_rows[i].field_status = artifacts.field_status;
+    mode_rows[i].fields_csv_file = artifacts.fields_csv_file;
+    mode_rows[i].vtk_file = artifacts.vtk_file;
+  }
+
   const auto modes_path = dirs.csv / (prefix + "_modes.csv");
   if (!fem3d_output::write_modes_csv(modes_path, mode_rows))
     throw std::runtime_error("Falha ao escrever CSV de modos: " + modes_path.string());

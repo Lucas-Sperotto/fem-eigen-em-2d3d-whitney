@@ -37,6 +37,7 @@ struct CaseDirs
     std::filesystem::path root;
     std::filesystem::path csv;
     std::filesystem::path linop;
+    std::filesystem::path vtk;
 };
 
 struct ModeCsvRecord
@@ -48,7 +49,11 @@ struct ModeCsvRecord
     double ref_paper = 0.0;
     double error_percent_analytic = std::numeric_limits<double>::quiet_NaN();
     double error_percent_ref_paper = std::numeric_limits<double>::quiet_NaN();
+    int matched_eig_index = -1;
     std::string match_status;
+    std::string field_status;
+    std::string fields_csv_file;
+    std::string vtk_file;
 };
 
 inline SolverDirs ensure_solver_dirs(const std::string &solver_name)
@@ -65,9 +70,11 @@ inline CaseDirs ensure_case_dirs(const std::string &solver_name, const std::stri
     dirs.root = output_paths::ensure_case_dir(solver_name + "/" + case_name);
     dirs.csv = dirs.root / "csv";
     dirs.linop = dirs.root / "linop";
+    dirs.vtk = dirs.root / "vtk";
     std::error_code ec;
     std::filesystem::create_directories(dirs.csv, ec);
     std::filesystem::create_directories(dirs.linop, ec);
+    std::filesystem::create_directories(dirs.vtk, ec);
     return dirs;
 }
 
@@ -110,7 +117,8 @@ inline bool write_modes_csv(
 
     out << std::setprecision(16);
     out << "reference_index,mode_label,k0_analytic,k0_fem,ref_paper,"
-           "error_percent_analytic,error_percent_ref_paper,match_status\n";
+           "error_percent_analytic,error_percent_ref_paper,matched_eig_index,"
+           "match_status,field_status,fields_csv_file,vtk_file\n";
 
     for (const ModeCsvRecord &row : records)
     {
@@ -121,7 +129,11 @@ inline bool write_modes_csv(
             << row.ref_paper << ","
             << row.error_percent_analytic << ","
             << row.error_percent_ref_paper << ","
-            << row.match_status << "\n";
+            << row.matched_eig_index << ","
+            << row.match_status << ","
+            << row.field_status << ","
+            << row.fields_csv_file << ","
+            << row.vtk_file << "\n";
     }
 
     return static_cast<bool>(out);

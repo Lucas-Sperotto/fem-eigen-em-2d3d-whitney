@@ -33,6 +33,24 @@ struct RefRow
   double ref_paper = 0.0;
 };
 
+struct PositiveK0Candidate
+{
+  int eig_index = -1;
+  double k0 = 0.0;
+};
+
+/******************************************************************************/
+/* FUNCAO: first_positive_k0_candidates                                       */
+/* DESCRICAO: Extrai as primeiras raizes positivas `k0` junto com o indice do */
+/* autovalor correspondente, preservando a ligacao com o autovetor.           */
+/* ENTRADA: lambda: const std::vector<double> &; nmax: int; tol: double.      */
+/* SAIDA: std::vector<PositiveK0Candidate>.                                   */
+/******************************************************************************/
+inline std::vector<PositiveK0Candidate> first_positive_k0_candidates(
+    const std::vector<double> &lambda,
+    int nmax,
+    double tol = 1e-10);
+
 /******************************************************************************/
 /* FUNCAO: first_positive_k0                                                  */
 /* DESCRICAO: Extrai o primeiro autovalor positivo (k0) da lista numerica, ignorando residuos nao fisicos. */
@@ -47,15 +65,39 @@ inline std::vector<double> first_positive_k0(
 {
   std::vector<double> out;
   out.reserve((size_t)nmax);
-  for (double l : lambda)
+  for (const auto &cand : first_positive_k0_candidates(lambda, nmax, tol))
   {
-    if (l <= tol)
-      continue;
-    out.push_back(std::sqrt(l));
+    out.push_back(cand.k0);
     if ((int)out.size() >= nmax)
       break;
   }
   return out;
+}
+
+/******************************************************************************/
+/* FUNCAO: first_positive_k0_candidates                                       */
+/* DESCRICAO: Extrai as primeiras raizes positivas `k0` junto com o indice do */
+/* autovalor correspondente, preservando a ligacao com o autovetor.           */
+/* ENTRADA: lambda: const std::vector<double> &; nmax: int; tol: double.      */
+/* SAIDA: std::vector<PositiveK0Candidate>.                                   */
+/******************************************************************************/
+inline std::vector<PositiveK0Candidate> first_positive_k0_candidates(
+    const std::vector<double> &lambda,
+    int nmax,
+    double tol)
+{
+  std::vector<PositiveK0Candidate> cand;
+  cand.reserve((size_t)nmax);
+  for (int eig_index = 0; eig_index < (int)lambda.size(); ++eig_index)
+  {
+    const double l = lambda[(size_t)eig_index];
+    if (l <= tol)
+      continue;
+    cand.push_back({eig_index, std::sqrt(l)});
+    if ((int)cand.size() >= nmax)
+      break;
+  }
+  return cand;
 }
 
 // Casamento guloso com agrupamento explicito para valores analiticos iguais.
@@ -140,6 +182,91 @@ inline std::vector<double> match_by_reference_with_degeneracy(
       const int ik = picked[(size_t)i];
       used[(size_t)ik] = 1;
       out[(size_t)ir] = kscan[(size_t)ik];
+    }
+  }
+
+  return out;
+}
+
+/******************************************************************************/
+/* FUNCAO: match_indices_by_reference_with_degeneracy                         */
+/* DESCRICAO: Variante do matching 3D que devolve o indice do autovalor FEM   */
+/* escolhido para cada linha da referencia, preservando grupos degenerados.   */
+/* ENTRADA: ref: const std::vector<RefRow> &; cand: const                     */
+/* std::vector<PositiveK0Candidate> &; scan_limit: int.                       */
+/* SAIDA: std::vector<int>.                                                   */
+/******************************************************************************/
+inline std::vector<int> match_indices_by_reference_with_degeneracy(
+    const std::vector<RefRow> &ref,
+    const std::vector<PositiveK0Candidate> &cand_all,
+    int scan_limit)
+{
+  struct Group
+  {
+    double target = 0.0;
+    std::vector<int> iref;
+  };
+
+  const int ns = std::min((int)cand_all.size(), scan_limit);
+  std::vector<PositiveK0Candidate> cand_scan;
+  cand_scan.reserve((size_t)ns);
+  for (int i = 0; i < ns; ++i)
+    cand_scan.push_back(cand_all[(size_t)i]);
+
+  std::vector<Group> groups;
+  constexpr double kDegTol = 1e-9;
+  for (int i = 0; i < (int)ref.size(); ++i)
+  {
+    bool placed = false;
+    for (auto &g : groups)
+    {
+      if (std::abs(g.target - ref[(size_t)i].analytical) < kDegTol)
+      {
+        g.iref.push_back(i);
+        placed = true;
+        break;
+      }
+    }
+    if (!placed)
+      groups.push_back({ref[(size_t)i].analytical, {i}});
+  }
+
+  std::vector<int> used((size_t)ns, 0);
+  std::vector<int> out(ref.size(), -1);
+
+  for (const auto &g : groups)
+  {
+    struct LocalCand
+    {
+      double err = 0.0;
+      int ic = -1;
+    };
+    std::vector<LocalCand> local;
+    local.reserve((size_t)ns);
+    for (int ic = 0; ic < ns; ++ic)
+    {
+      if (used[(size_t)ic])
+        continue;
+      const double e = std::abs(cand_scan[(size_t)ic].k0 - g.target) / g.target;
+      local.push_back({e, ic});
+    }
+    std::sort(local.begin(), local.end(), [](const LocalCand &a, const LocalCand &b)
+              { return a.err < b.err; });
+
+    const int take = std::min((int)g.iref.size(), (int)local.size());
+    std::vector<int> picked;
+    picked.reserve((size_t)take);
+    for (int i = 0; i < take; ++i)
+      picked.push_back(local[(size_t)i].ic);
+    std::sort(picked.begin(), picked.end(), [&](int a, int b)
+              { return cand_scan[(size_t)a].k0 < cand_scan[(size_t)b].k0; });
+
+    for (int i = 0; i < take; ++i)
+    {
+      const int ir = g.iref[(size_t)i];
+      const int ic = picked[(size_t)i];
+      used[(size_t)ic] = 1;
+      out[(size_t)ir] = cand_scan[(size_t)ic].eig_index;
     }
   }
 
