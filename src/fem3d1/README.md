@@ -45,7 +45,8 @@ Implementacao compartilhada:
 4. Pos-processamento identico ao `fem3d0`:
    - primeiras raizes positivas,
    - matching com degenerescencia,
-   - tabela comparativa.
+   - tabela comparativa,
+   - exportacao vetorial 3D por modo casado.
 
 ## 2.1) Expressoes matematicas usadas
 
@@ -144,6 +145,12 @@ Cada caso agora grava:
   - configuracao da malha, estrutura esparsa e tempos de montagem, solve e pos-processamento.
 - `out/fem3d1/<caso>/csv/fem3d1_<caso>_modes.csv`
   - resumo modal alinhado com as Tabelas 12-15.
+- `out/fem3d1/<caso>/csv/fem3d1_<caso>_modeXX_<modo>_E_fields.csv`
+  - campo vetorial reconstruido no centroide de cada tetraedro.
+- `out/fem3d1/<caso>/vtk/*.vtk`
+  - malha tetraedrica com `CELL_DATA` para `E` e `Emag`.
+- `out/fem3d1/<caso>/img/`
+  - resumos modais, projecoes ortogonais e vistas 3D geradas por `python3 scripts/fem3d.py`.
 - `out/fem3d1/<caso>/linop/`
   - `S`, `T`, autovalores e autovetores em CSV.
 
@@ -153,6 +160,11 @@ Exemplo para `fem3d1_half`:
 out/fem3d1/half/run.log
 out/fem3d1/half/run_timing.csv
 out/fem3d1/half/csv/fem3d1_half_modes.csv
+out/fem3d1/half/csv/fem3d1_half_mode01_TE101_E_fields.csv
+out/fem3d1/half/vtk/fem3d1_half_mode01_TE101_E.vtk
+out/fem3d1/half/img/fem3d1_half_k0_by_mode.png
+out/fem3d1/half/img/quiver/fem3d1_half_mode01_TE101_E_quiver_proj.png
+out/fem3d1/half/img/3d_quiver/fem3d1_half_mode01_TE101_quiver3d.png
 out/fem3d1/half/linop/fem3d1_half_S_crs.csv
 out/fem3d1/half/linop/fem3d1_half_T_crs.csv
 out/fem3d1/half/linop/fem3d1_half_eigenvalues.csv
@@ -182,3 +194,7 @@ out/fem3d1/half/linop/fem3d1_half_eigenvectors.csv
 - Diferenca: estrutura de dados da montagem (`dense` vs `sparse`).
 - Ambos sao validados pelo mesmo script:
   - `scripts/validate_3d_31.py`.
+- Ambos tambem compartilham a mesma camada grafica 3D:
+  - `scripts/fem3d.py`.
+- Ambos tambem compartilham a mesma camada grafica 3D:
+  - `scripts/fem3d.py`.

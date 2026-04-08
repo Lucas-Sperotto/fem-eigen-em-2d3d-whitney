@@ -41,6 +41,9 @@ Evitar duplicacao de:
   - padronizacao de pastas `out/fem3d{0,1}/<caso>/`,
   - escrita de `modes.csv`,
   - apoio a `run.log` e `linop/`.
+- `fem3d_field_output.hpp`
+  - reconstrucao vetorial 3D por tetraedro,
+  - escrita de `fields.csv` e VTK por modo casado.
 
 ## 3) Estruturas principais
 
@@ -135,6 +138,9 @@ Essas expressoes sao as que aparecem materializadas no backend
   - `run.log`,
   - `run_timing.csv`,
   - `csv/<solver>_<caso>_modes.csv`,
+  - `csv/<solver>_<caso>_modeXX_<modo>_E_fields.csv`,
+  - `vtk/<solver>_<caso>_modeXX_<modo>_E.vtk`,
+  - `img/` com resumos modais e projecoes `XY/XZ/YZ`,
   - `linop/` com `S`, `T`, autovalores e autovetores.
 
 ## 4.1) Flags de depuracao compartilhadas

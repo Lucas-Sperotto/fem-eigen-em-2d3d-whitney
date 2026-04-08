@@ -235,7 +235,8 @@ equacoes numeradas do artigo, estao nos READMEs de cada modulo.
 - [src/helmvec2/README.md](src/helmvec2/README.md): sistema acoplado para obter `k0` com `beta` dado (Secao 2.2.3).
 - [src/helmvec3/README.md](src/helmvec3/README.md): sistema acoplado para obter `beta` com `k0` dado (Secao 2.2.4).
 - [docs/Artefatos_Espectrais_CSV_Referencia.md](docs/Artefatos_Espectrais_CSV_Referencia.md): formato dos CSVs em `linop/`, com matrizes em CRS, autovalores ordenados e autovetores ordenados das familias `HELM10` a `FEM3D1`.
-- [docs/FEM3D_CSV_Referencia.md](docs/FEM3D_CSV_Referencia.md): referencia operacional dos artefatos 3D (`run.log`, `run_timing.csv`, `modes.csv` e `linop/`) por caso de `FEM3D0` e `FEM3D1`.
+- [docs/FEM3D_CSV_Referencia.md](docs/FEM3D_CSV_Referencia.md): referencia operacional dos artefatos 3D (`run.log`, `run_timing.csv`, `modes.csv`, `fields.csv`, `vtk/` e `linop/`) por caso de `FEM3D0` e `FEM3D1`.
+- [docs/FEM3D_Imagens_Referencia.md](docs/FEM3D_Imagens_Referencia.md): guia do script `scripts/fem3d.py`, com resumos modais e projecoes ortogonais `XY/XZ/YZ` dos campos 3D exportados por modo.
 - [src/explicit/README.md](src/explicit/README.md): backend `closed-form`, mapeamento de equacoes locais e rearranjos.
 - [src/fem3d/README.md](src/fem3d/README.md): infraestrutura comum de validacao 3D (Secao 3.1).
 - [src/fem3d0/README.md](src/fem3d0/README.md): solver 3D denso (`FEM3D0`).
@@ -427,6 +428,9 @@ Saidas tipicas por caso (`air`, `half`, `cyl`, `sphere`):
 - `out/fem3d0/<caso>/run.log`
 - `out/fem3d0/<caso>/run_timing.csv`
 - `out/fem3d0/<caso>/csv/fem3d0_<caso>_modes.csv`
+- `out/fem3d0/<caso>/csv/fem3d0_<caso>_modeXX_<modo>_E_fields.csv`
+- `out/fem3d0/<caso>/vtk/fem3d0_<caso>_modeXX_<modo>_E.vtk`
+- `out/fem3d0/<caso>/img/` com resumos e projecoes `XY/XZ/YZ`
 - `out/fem3d0/<caso>/linop/` com `S`, `T`, autovalores e autovetores em CSV
 
 ### 5.2) FEM3D1 (montagem esparsa)
@@ -445,6 +449,9 @@ Saidas tipicas por caso (`air`, `half`, `cyl`, `sphere`):
 - `out/fem3d1/<caso>/run.log`
 - `out/fem3d1/<caso>/run_timing.csv`
 - `out/fem3d1/<caso>/csv/fem3d1_<caso>_modes.csv`
+- `out/fem3d1/<caso>/csv/fem3d1_<caso>_modeXX_<modo>_E_fields.csv`
+- `out/fem3d1/<caso>/vtk/fem3d1_<caso>_modeXX_<modo>_E.vtk`
+- `out/fem3d1/<caso>/img/` com resumos e projecoes `XY/XZ/YZ`
 - `out/fem3d1/<caso>/linop/` com `S`, `T`, autovalores e autovetores em CSV
 
 ## 6) Scripts de validacao

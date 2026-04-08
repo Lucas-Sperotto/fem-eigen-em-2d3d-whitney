@@ -42,6 +42,7 @@ Implementacao compartilhada:
 3. Extrai primeiras raizes positivas `k0`.
 4. Faz matching por degenerescencia analitica.
 5. Imprime tabela comparativa.
+6. Exporta, para cada modo casado, o campo vetorial 3D reconstruido por tetraedro.
 
 ## 2.1) Expressoes matematicas usadas
 
@@ -139,6 +140,12 @@ Cada caso agora grava:
   - configuracao da malha e tempos de montagem, solve e pos-processamento.
 - `out/fem3d0/<caso>/csv/fem3d0_<caso>_modes.csv`
   - resumo modal alinhado com as Tabelas 12-15.
+- `out/fem3d0/<caso>/csv/fem3d0_<caso>_modeXX_<modo>_E_fields.csv`
+  - campo vetorial reconstruido no centroide de cada tetraedro.
+- `out/fem3d0/<caso>/vtk/*.vtk`
+  - malha tetraedrica com `CELL_DATA` para `E` e `Emag`.
+- `out/fem3d0/<caso>/img/`
+  - resumos modais, projecoes ortogonais e vistas 3D geradas por `python3 scripts/fem3d.py`.
 - `out/fem3d0/<caso>/linop/`
   - `S`, `T`, autovalores e autovetores em CSV.
 
@@ -148,6 +155,11 @@ Exemplo para `fem3d0_air`:
 out/fem3d0/air/run.log
 out/fem3d0/air/run_timing.csv
 out/fem3d0/air/csv/fem3d0_air_modes.csv
+out/fem3d0/air/csv/fem3d0_air_mode01_TE101_E_fields.csv
+out/fem3d0/air/vtk/fem3d0_air_mode01_TE101_E.vtk
+out/fem3d0/air/img/fem3d0_air_k0_by_mode.png
+out/fem3d0/air/img/magnitude/fem3d0_air_mode01_TE101_E_magnitude_proj.png
+out/fem3d0/air/img/3d_scatter/fem3d0_air_mode01_TE101_scatter3d.png
 out/fem3d0/air/linop/fem3d0_air_S_crs.csv
 out/fem3d0/air/linop/fem3d0_air_T_crs.csv
 out/fem3d0/air/linop/fem3d0_air_eigenvalues.csv
@@ -158,6 +170,12 @@ Flags de depuracao:
 - `--debug-local-blocks`: imprime `Sel` e `Tel` do primeiro tetraedro
 - `--debug-candidates`: imprime as primeiras raizes positivas `k0`
 - `--debug` / `--debug-all`: ativa os dois
+
+Para gerar as imagens do caso ja resolvido:
+
+```bash
+python3 scripts/fem3d.py --solver fem3d0 --case air
+```
 
 ## 6) Dependencias internas
 

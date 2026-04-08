@@ -73,7 +73,8 @@ Todos os arquivos da trilha principal agora terminam com links de `Anterior` e `
 - [Matriz_Casos_Executaveis_Arvore_de_Chamada.md](Matriz_Casos_Executaveis_Arvore_de_Chamada.md): ponte entre casos do artigo, executáveis atuais e raízes da árvore de chamada.
 - [Tabela_Executaveis_Entradas_Saidas.md](Tabela_Executaveis_Entradas_Saidas.md): tabela direta `executável -> entrada -> saída`, útil para operação e estudo.
 - [Artefatos_Espectrais_CSV_Referencia.md](Artefatos_Espectrais_CSV_Referencia.md): referencia central dos arquivos `linop/*.csv`, cobrindo matrizes em CRS, autovalores ordenados e autovetores ordenados das familias `HELM10` a `FEM3D1`.
-- [FEM3D_CSV_Referencia.md](FEM3D_CSV_Referencia.md): referencia didatica das saidas 3D de `FEM3D0` e `FEM3D1`, cobrindo `run.log`, `run_timing.csv`, `modes.csv` e `linop/` por caso.
+- [FEM3D_CSV_Referencia.md](FEM3D_CSV_Referencia.md): referencia didatica das saidas 3D de `FEM3D0` e `FEM3D1`, cobrindo `run.log`, `run_timing.csv`, `modes.csv`, `fields.csv`, `vtk/` e `linop/` por caso.
+- [FEM3D_Imagens_Referencia.md](FEM3D_Imagens_Referencia.md): guia do script `scripts/fem3d.py`, que gera resumos modais e projecoes ortogonais `XY/XZ/YZ` dos campos 3D exportados por modo casado.
 - [HELM10_CSV_Modos_Referencia.md](HELM10_CSV_Modos_Referencia.md): glossario didatico das colunas do CSV de modos do `HELM10`, ligado à Secao 2.1, incluindo a explicacao de `rho_abs` e do matching por correlacao de massa.
 - [HELM10_CSV_Campos_Referencia.md](HELM10_CSV_Campos_Referencia.md): glossario didatico das colunas do CSV de campos nodais do `HELM10`, ligado à Secao 2.1.
 - [HELM10_Imagens_Referencia.md](HELM10_Imagens_Referencia.md): guia do script `scripts/helm10.py`, que lê os CSVs do `HELM10` e gera isolinhas, diagramas de setas e resumo de erro por modo.
@@ -121,6 +122,7 @@ Todos os arquivos da trilha principal agora terminam com links de `Anterior` e `
   - apoio de uso: [Tabela_Executaveis_Entradas_Saidas.md](Tabela_Executaveis_Entradas_Saidas.md)
 - [3. Problemas Tridimensionais](traducao/3_Problemas_Tridimensionais.md) -> `src/fem3d0` e `src/fem3d1`
   - apoio operacional: [FEM3D_CSV_Referencia.md](FEM3D_CSV_Referencia.md)
+  - apoio grafico: [FEM3D_Imagens_Referencia.md](FEM3D_Imagens_Referencia.md)
   - apoio espectral: [Artefatos_Espectrais_CSV_Referencia.md](Artefatos_Espectrais_CSV_Referencia.md)
 
 Se a ideia for estudar a teoria antes de mergulhar na implementação, esta pasta deve vir antes dos READMEs em `src/`.

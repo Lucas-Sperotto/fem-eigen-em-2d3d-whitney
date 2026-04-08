@@ -732,6 +732,8 @@ O salto para 3D não abandona a lógica construída em 2D. O artigo continua tra
   - `run.log`
   - `run_timing.csv`
   - `modes.csv`
+  - `fields.csv` por modo casado
+  - `vtk/` por modo casado
   - `linop/` com `S`, `T`, autovalores e autovetores
 - a referência operacional dessas saídas está em:
   - [FEM3D_CSV_Referencia.md](../FEM3D_CSV_Referencia.md)
