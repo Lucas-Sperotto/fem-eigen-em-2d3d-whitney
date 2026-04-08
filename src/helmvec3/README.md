@@ -10,7 +10,11 @@ Montar e resolver o EVP acoplado em `beta^2` para guia retangular
 parcialmente preenchido, reproduzindo os estudos da Sec. 2.2.4
 (Figuras 12 e 13, Tabelas 9 e 10).
 
-Arquivo principal:
+Entradas publicas:
+- `main_helmvec3_fig12_rect.cpp`
+- `main_helmvec3_fig13_rect.cpp`
+
+Implementacao compartilhada:
 - `main_helmvec3_rect.cpp`
 
 Montagem compartilhada:
@@ -226,55 +230,61 @@ Motivacao:
 ## 6) Uso
 
 ```bash
-./build/helmvec3_rect 0.20 10 5
-./build/helmvec3_rect 0.20 10 5 1
-./build/helmvec3_rect 0.20 10 5 1 --backend closed-form
-./build/helmvec3_rect 0.20 10 5 --debug-local-blocks --backend closed-form
-./build/helmvec3_rect 0.20 10 5 --debug-candidates
-# args: d_over_a nx ny [debug]
+./build/helmvec3_fig12_rect 10 5
+./build/helmvec3_fig12_rect 10 5 1
+./build/helmvec3_fig12_rect 10 5 --debug-local-blocks --backend closed-form
+./build/helmvec3_fig12_rect 10 5 --debug-candidates
+# args: nx ny [debug]
+
+./build/helmvec3_fig13_rect 0.20 10 5
+./build/helmvec3_fig13_rect 0.20 10 5 1
+./build/helmvec3_fig13_rect 0.20 10 5 --debug-local-blocks --backend closed-form
+./build/helmvec3_fig13_rect 0.20 10 5 --debug-candidates
+# args: d_over_a_preview nx ny [debug]
 ```
 
-Saida textual em 3 blocos:
-- Tabela 9 (Figura 12),
-- preview de ramo (Figura 13, um `d/a`),
-- validacao completa da Tabela 10.
+Saida textual:
+
+- `helmvec3_fig12_rect`
+  - Tabela 9 / Figura 12.
+- `helmvec3_fig13_rect`
+  - preview de ramo da Figura 13 para um `d/a` escolhido;
+  - validacao completa da Tabela 10.
 
 Saida estruturada em disco:
 
 ```text
-out/helmvec3/rect/
+out/helmvec3/fig12_rect/
   run.log
   run_timing.csv
   csv/
-    helmvec3_rect_table9.csv
-    helmvec3_rect_preview.csv
-    helmvec3_rect_table10.csv
-    helmvec3_rect_figure12_br*_Et_fields.csv
-    helmvec3_rect_figure12_br*_Ez_fields.csv
-    helmvec3_rect_preview_da*_br*_Et_fields.csv
-    helmvec3_rect_preview_da*_br*_Ez_fields.csv
-    helmvec3_rect_table10_da*_br*_Et_fields.csv
-    helmvec3_rect_table10_da*_br*_Ez_fields.csv
+    helmvec3_fig12_rect_table9.csv
+    helmvec3_fig12_rect_figure12_br*_Et_fields.csv
+    helmvec3_fig12_rect_figure12_br*_Ez_fields.csv
   vtk/
-    helmvec3_rect_figure12_br*_Et.vtk
-    helmvec3_rect_figure12_br*_Ez.vtk
-    helmvec3_rect_preview_da*_br*_Et.vtk
-    helmvec3_rect_preview_da*_br*_Ez.vtk
-    helmvec3_rect_table10_da*_br*_Et.vtk
-    helmvec3_rect_table10_da*_br*_Ez.vtk
+    helmvec3_fig12_rect_figure12_br*_Et.vtk
+    helmvec3_fig12_rect_figure12_br*_Ez.vtk
   linop/
-    helmvec3_rect_figure12_*.csv
-    helmvec3_rect_preview_da*_*.csv
-    helmvec3_rect_table10_da*_*.csv
-  img/
-    helmvec3_rect_table9_beta_over_k0.png
-    helmvec3_rect_table9_error_by_point.png
-    helmvec3_rect_preview_branch.png
-    helmvec3_rect_table10_fem_branches.png
-    helmvec3_rect_table10_error_by_branch.png
-    magnitude/
-    quiver/
-    scalar/
+    helmvec3_fig12_rect_figure12_*.csv
+
+out/helmvec3/fig13_rect/
+  run.log
+  run_timing.csv
+  csv/
+    helmvec3_fig13_rect_preview.csv
+    helmvec3_fig13_rect_table10.csv
+    helmvec3_fig13_rect_preview_da*_br*_Et_fields.csv
+    helmvec3_fig13_rect_preview_da*_br*_Ez_fields.csv
+    helmvec3_fig13_rect_table10_da*_br*_Et_fields.csv
+    helmvec3_fig13_rect_table10_da*_br*_Ez_fields.csv
+  vtk/
+    helmvec3_fig13_rect_preview_da*_br*_Et.vtk
+    helmvec3_fig13_rect_preview_da*_br*_Ez.vtk
+    helmvec3_fig13_rect_table10_da*_br*_Et.vtk
+    helmvec3_fig13_rect_table10_da*_br*_Ez.vtk
+  linop/
+    helmvec3_fig13_rect_preview_da*_*.csv
+    helmvec3_fig13_rect_table10_da*_*.csv
 ```
 
 O `run.log` espelha tudo que o executavel imprime em tela. O `run_timing.csv`
@@ -282,17 +292,17 @@ registra a configuracao da rodada, o tamanho da malha, a quantidade de pontos
 resolvidos nas Tabelas 9 e 10 e os tempos agregados de montagem, solve e
 pos-processamento.
 
-Os tres CSVs principais se dividem assim:
+Os CSVs principais se dividem assim:
 
-- `helmvec3_rect_table9.csv`
+- `helmvec3_fig12_rect_table9.csv`
   - curva casada da Figura 12 / Tabela 9;
   - cada linha agora registra tambem o candidato/autovetor escolhido e a
     ponte para os artefatos espaciais `Et`/`Ez`.
-- `helmvec3_rect_preview.csv`
+- `helmvec3_fig13_rect_preview.csv`
   - ramo rastreado por continuidade para um `d/a` escolhido;
   - cada linha agora registra o candidato acompanhado no ramo e a ponte para
     os artefatos espaciais `Et`/`Ez`.
-- `helmvec3_rect_table10.csv`
+- `helmvec3_fig13_rect_table10.csv`
   - validacao completa por blocos da Figura 13 / Tabela 10;
   - cada linha agora registra o candidato/autovetor escolhido e a ponte para
     os artefatos espaciais `Et`/`Ez`.
@@ -314,9 +324,15 @@ Para gerar as imagens a partir desses CSVs:
 
 ```bash
 python3 scripts/helmvec3.py
-python3 scripts/helmvec3.py --case rect --dpi 120
-python3 scripts/helmvec3.py --case rect --dpi 120 --show-mesh
+python3 scripts/helmvec3.py --case fig12_rect --dpi 120
+python3 scripts/helmvec3.py --case fig13_rect --dpi 120 --show-mesh
 ```
+
+Observacao:
+
+- o script ja acompanha as novas entradas publicas
+  `helmvec3_fig12_rect` e `helmvec3_fig13_rect`;
+- o nucleo numerico, os CSVs/VTKs e a camada de imagens ficaram separados.
 
 O script gera:
 
@@ -352,7 +368,9 @@ python3 scripts/validate_2d_22.py --backend closed-form --show-output --debug-ca
 
 ## 7) Integracao com scripts
 
-`scripts/validate_2d_22.py` parseia os blocos de `helmvec3_rect` e grava em:
+`scripts/validate_2d_22.py` ja foi adaptado para os binarios
+`helmvec3_fig12_rect` e `helmvec3_fig13_rect`.
+Ele grava em:
 - `build/validation_2d_22.csv`
 
 Campos relacionados:

@@ -27,12 +27,12 @@ Não entram aqui casos extras criados pelo repositório para validação ampliad
 | 6 | 2.2.2 | `HELMVEC1` | Guia de onda retangular misto | Retangular com ar e `a_r/b_r = 2` | Números de onda de corte `k_c` nas formulações `E` e `H` | Figura 4, Tabela 6 | Não explicitada nesse trecho | `./build/mixed_rect 12 6` |
 | 7 | 2.2.2 | `HELMVEC1` | Guia de onda circular misto | Circular com ar e raio unitário | Números de onda de corte `k_c` nas formulações `E` e `H` | Tabela 7 | Não explicitada nesse trecho | `./build/mixed_circle 10 48` |
 | 8 | 2.2.3 | `HELMVEC2` | Guia de onda quadrado parcialmente preenchido | Guia quadrado parcialmente preenchido com `beta = 10` | Primeiros `10` números de onda | Figura 11, Tabela 8 | Malha atual documentada no repositório: `6x6` (`72` triângulos) | `./build/helmvec2_rect 10 6 6` |
-| 9 | 2.2.4 | `HELMVEC3` | Dispersão em guia retangular parcialmente preenchido, exemplo 1 | `b_r/a_r = 0.45`, `d/a_r = 0.5`, `\varepsilon_r = 2.45` | Razão `beta/k_0` | Figura 12, Tabela 9 | Não explicitada no artigo traduzido | `./build/helmvec3_rect 0.20 10 5` |
-| 10 | 2.2.4 | `HELMVEC3` | Dispersão em guia retangular parcialmente preenchido, exemplo 2 | `b_r/a_r = 0.45`, `\varepsilon_r = 2.45`, vários valores de `d/a_r` | Ramos de dispersão `beta/k_0` | Figura 13, Tabela 10 | `100` triângulos | `./build/helmvec3_rect 0.20 10 5` |
-| 11 | 3.1 | `FEM3D1` | Cavidade retangular preenchida com ar | Cavidade retangular homogênea | Autovalores de ressonância `k_0` | Figura 15, Tabela 12 | `343` tetraedros | `./build/fem3d1_rect --air` ou `./build/fem3d0_rect --air` |
-| 12 | 3.1 | `FEM3D1` | Cavidade retangular semi-preenchida | Preenchimento dielétrico em `z = 0.5` a `1` cm, `\varepsilon_r = 2.0` | Autovalores de ressonância `k_0` | Figura 16, Tabela 13 | `615` tetraedros | `./build/fem3d1_rect --half` ou `./build/fem3d0_rect --half` |
-| 13 | 3.1 | `FEM3D1` | Cavidade cilíndrica circular com ar | Cavidade cilíndrica homogênea | Autovalores de ressonância `k_0` | Figura 17, Tabela 14 | `633` tetraedros | `./build/fem3d1_rect --cyl` ou `./build/fem3d0_rect --cyl` |
-| 14 | 3.1 | `FEM3D1` | Cavidade esférica | Esfera de raio `1 cm` | Autovalores de ressonância `k_0` | Tabela 15 | `473` tetraedros | `./build/fem3d1_rect --sphere` ou `./build/fem3d0_rect --sphere` |
+| 9 | 2.2.4 | `HELMVEC3` | Dispersão em guia retangular parcialmente preenchido, exemplo 1 | `b_r/a_r = 0.45`, `d/a_r = 0.5`, `\varepsilon_r = 2.45` | Razão `beta/k_0` | Figura 12, Tabela 9 | Não explicitada no artigo traduzido | `./build/helmvec3_fig12_rect 10 5` |
+| 10 | 2.2.4 | `HELMVEC3` | Dispersão em guia retangular parcialmente preenchido, exemplo 2 | `b_r/a_r = 0.45`, `\varepsilon_r = 2.45`, vários valores de `d/a_r` | Ramos de dispersão `beta/k_0` | Figura 13, Tabela 10 | `100` triângulos | `./build/helmvec3_fig13_rect 0.20 10 5` |
+| 11 | 3.1 | `FEM3D1` | Cavidade retangular preenchida com ar | Cavidade retangular homogênea | Autovalores de ressonância `k_0` | Figura 15, Tabela 12 | `343` tetraedros | `./build/fem3d1_air` ou `./build/fem3d0_air` |
+| 12 | 3.1 | `FEM3D1` | Cavidade retangular semi-preenchida | Preenchimento dielétrico em `z = 0.5` a `1` cm, `\varepsilon_r = 2.0` | Autovalores de ressonância `k_0` | Figura 16, Tabela 13 | `615` tetraedros | `./build/fem3d1_half` ou `./build/fem3d0_half` |
+| 13 | 3.1 | `FEM3D1` | Cavidade cilíndrica circular com ar | Cavidade cilíndrica homogênea | Autovalores de ressonância `k_0` | Figura 17, Tabela 14 | `633` tetraedros | `./build/fem3d1_cyl` ou `./build/fem3d0_cyl` |
+| 14 | 3.1 | `FEM3D1` | Cavidade esférica | Esfera de raio `1 cm` | Autovalores de ressonância `k_0` | Tabela 15 | `473` tetraedros | `./build/fem3d1_sphere` ou `./build/fem3d0_sphere` |
 
 ## Observações importantes
 

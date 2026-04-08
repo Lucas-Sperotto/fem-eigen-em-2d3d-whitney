@@ -90,20 +90,8 @@ def grids_for(profile: str) -> dict[str, list[tuple[int, int, int]]]:
     return full if profile == "full" else quick
 
 
-def case_option(case: str) -> str:
-    return {
-        "air": "--air",
-        "half": "--half",
-        "cyl": "--cyl",
-        "sphere": "--sphere",
-    }[case]
-
-
-def solver_bin(solver: str) -> str:
-    return {
-        "fem3d0": "./fem3d0_rect",
-        "fem3d1": "./fem3d1_rect",
-    }[solver]
+def solver_bin(solver: str, case: str) -> str:
+    return f"./{solver}_{case}"
 
 
 def parse_cases_arg(cases_arg: str) -> list[str]:
@@ -159,12 +147,11 @@ def main() -> None:
     backends = ["gauss", "closed-form"] if args.backend == "both" else [args.backend]
 
     for solver in selected_solvers:
-        exe = solver_bin(solver)
         for backend in backends:
             for case in selected_cases:
-                opt = case_option(case)
+                exe = solver_bin(solver, case)
                 for nx, ny, nz in case_grids[case]:
-                    cmd = [exe, opt, "--nx", str(nx), "--ny", str(ny), "--nz", str(nz), "--backend", backend, *debug_args]
+                    cmd = [exe, "--nx", str(nx), "--ny", str(ny), "--nz", str(nz), "--backend", backend, *debug_args]
                     out = run_checked(build_dir, cmd, args.verbose, args.show_output)
                     parsed = parse_mode_table(out)
                     for row in parsed:

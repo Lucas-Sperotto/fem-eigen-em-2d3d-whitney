@@ -234,7 +234,8 @@ equacoes numeradas do artigo, estao nos READMEs de cada modulo.
 - [src/helmvec1/README.md](src/helmvec1/README.md): sistema misto vetorial + escalar para `kc` (Secao 2.2.2).
 - [src/helmvec2/README.md](src/helmvec2/README.md): sistema acoplado para obter `k0` com `beta` dado (Secao 2.2.3).
 - [src/helmvec3/README.md](src/helmvec3/README.md): sistema acoplado para obter `beta` com `k0` dado (Secao 2.2.4).
-- [docs/Artefatos_Espectrais_CSV_Referencia.md](docs/Artefatos_Espectrais_CSV_Referencia.md): formato dos CSVs em `linop/`, com matrizes em CRS, autovalores ordenados e autovetores ordenados das familias `HELM10` a `HELMVEC3`.
+- [docs/Artefatos_Espectrais_CSV_Referencia.md](docs/Artefatos_Espectrais_CSV_Referencia.md): formato dos CSVs em `linop/`, com matrizes em CRS, autovalores ordenados e autovetores ordenados das familias `HELM10` a `FEM3D1`.
+- [docs/FEM3D_CSV_Referencia.md](docs/FEM3D_CSV_Referencia.md): referencia operacional dos artefatos 3D (`run.log`, `run_timing.csv`, `modes.csv` e `linop/`) por caso de `FEM3D0` e `FEM3D1`.
 - [src/explicit/README.md](src/explicit/README.md): backend `closed-form`, mapeamento de equacoes locais e rearranjos.
 - [src/fem3d/README.md](src/fem3d/README.md): infraestrutura comum de validacao 3D (Secao 3.1).
 - [src/fem3d0/README.md](src/fem3d0/README.md): solver 3D denso (`FEM3D0`).
@@ -284,8 +285,9 @@ Exemplos:
 ./build/edge_rect 14 14 8 --debug-candidates
 ./build/mixed_rect 12 6 --backend closed-form --debug-local-blocks --debug-candidates
 ./build/helmvec2_rect 10 6 6 --backend closed-form --debug-local-blocks
-./build/helmvec3_rect 0.20 10 5 --backend closed-form --debug-candidates
-./build/fem3d0_rect --air --backend closed-form --debug-local-blocks
+./build/helmvec3_fig12_rect 10 5 --backend closed-form --debug-candidates
+./build/helmvec3_fig13_rect 0.20 10 5 --backend closed-form --debug-candidates
+./build/fem3d0_air --backend closed-form --debug-local-blocks
 ```
 
 ## 4) Executaveis 2D
@@ -377,49 +379,73 @@ Observacao:
 ### 4.5) Secao 2.2.4 (`helmvec3`)
 
 ```bash
-./build/helmvec3_rect 0.20 10 5
-./build/helmvec3_rect 0.20 10 5 1
-./build/helmvec3_rect 0.20 10 5 --backend closed-form
-# args: d_over_a nx ny [debug]
+./build/helmvec3_fig12_rect 10 5
+./build/helmvec3_fig12_rect 10 5 1
+./build/helmvec3_fig12_rect 10 5 --backend closed-form
+# args: nx ny [debug]
+
+./build/helmvec3_fig13_rect 0.20 10 5
+./build/helmvec3_fig13_rect 0.20 10 5 1
+./build/helmvec3_fig13_rect 0.20 10 5 --backend closed-form
+# args: d_over_a_preview nx ny [debug]
 ```
 
 Saidas tipicas:
 
-- Tabela 9 (Figura 12)
-- preview de ramo para Figura 13
-- validacao da Tabela 10 (Figura 13)
-- `out/helmvec3/rect/run.log`
-- `out/helmvec3/rect/run_timing.csv`
-- `out/helmvec3/rect/csv/helmvec3_rect_table9.csv`
-- `out/helmvec3/rect/csv/helmvec3_rect_preview.csv`
-- `out/helmvec3/rect/csv/helmvec3_rect_table10.csv`
-- CSVs espaciais por ponto exportado, com `Et` por celula e `Ez` por no
-- VTKs por ponto exportado em `out/helmvec3/rect/vtk`
-- imagens geradas por `python3 scripts/helmvec3.py` em
-  `out/helmvec3/rect/img`, incluindo resumos da Figura 12/13 e imagens
-  espaciais `Et`/`Ez`
+- `helmvec3_fig12_rect`
+  - Tabela 9 (Figura 12)
+  - `out/helmvec3/fig12_rect/run.log`
+  - `out/helmvec3/fig12_rect/run_timing.csv`
+  - `out/helmvec3/fig12_rect/csv/helmvec3_fig12_rect_table9.csv`
+  - CSVs espaciais por ponto exportado da Figura 12, com `Et` por celula e `Ez` por no
+  - VTKs por ponto exportado em `out/helmvec3/fig12_rect/vtk`
+- `helmvec3_fig13_rect`
+  - preview de ramo para Figura 13
+  - validacao da Tabela 10 (Figura 13)
+  - `out/helmvec3/fig13_rect/run.log`
+  - `out/helmvec3/fig13_rect/run_timing.csv`
+  - `out/helmvec3/fig13_rect/csv/helmvec3_fig13_rect_preview.csv`
+  - `out/helmvec3/fig13_rect/csv/helmvec3_fig13_rect_table10.csv`
+  - CSVs espaciais por ponto exportado, com `Et` por celula e `Ez` por no
+  - VTKs por ponto exportado em `out/helmvec3/fig13_rect/vtk`
 
 ## 5) Executaveis 3D (Secao 3.1)
 
 ### 5.1) FEM3D0 (denso)
 
 ```bash
-./build/fem3d0_rect
-./build/fem3d0_rect --half
-./build/fem3d0_rect --cyl
-./build/fem3d0_rect --sphere
-./build/fem3d0_rect --all --nx 5 --ny 4 --nz 4
+./build/fem3d0_air
+./build/fem3d0_half
+./build/fem3d0_cyl
+./build/fem3d0_sphere
+./build/fem3d0_air --nx 5 --ny 4 --nz 4
 ```
+
+Saidas tipicas por caso (`air`, `half`, `cyl`, `sphere`):
+
+- `out/fem3d0/run.log` com a trilha textual completa da execucao
+- `out/fem3d0/<caso>/run.log`
+- `out/fem3d0/<caso>/run_timing.csv`
+- `out/fem3d0/<caso>/csv/fem3d0_<caso>_modes.csv`
+- `out/fem3d0/<caso>/linop/` com `S`, `T`, autovalores e autovetores em CSV
 
 ### 5.2) FEM3D1 (montagem esparsa)
 
 ```bash
-./build/fem3d1_rect --air
-./build/fem3d1_rect --half
-./build/fem3d1_rect --cyl
-./build/fem3d1_rect --sphere
-./build/fem3d1_rect --all --nx 6 --ny 4 --nz 4
+./build/fem3d1_air
+./build/fem3d1_half
+./build/fem3d1_cyl
+./build/fem3d1_sphere
+./build/fem3d1_half --nx 6 --ny 4 --nz 4
 ```
+
+Saidas tipicas por caso (`air`, `half`, `cyl`, `sphere`):
+
+- `out/fem3d1/run.log` com a trilha textual completa da execucao
+- `out/fem3d1/<caso>/run.log`
+- `out/fem3d1/<caso>/run_timing.csv`
+- `out/fem3d1/<caso>/csv/fem3d1_<caso>_modes.csv`
+- `out/fem3d1/<caso>/linop/` com `S`, `T`, autovalores e autovetores em CSV
 
 ## 6) Scripts de validacao
 
@@ -514,7 +540,7 @@ Saidas do lote:
 
 1. Compilar (`cmake --build . -j`).
 2. Rodar casos 2D-base (`helm10_*`, `edge_*`, `mixed_*`).
-3. Rodar acoplados (`helmvec2_rect`, `helmvec3_rect`).
+3. Rodar acoplados (`helmvec2_rect`, `helmvec3_fig12_rect`, `helmvec3_fig13_rect`).
 4. Rodar validacao 2D (`validate_2d_22.py`).
 5. Rodar validacao 3D (`validate_3d_31.py`).
 6. Gerar figuras (`plot_vtk_quiver.py --all-img ...`).
@@ -594,14 +620,21 @@ Use esta sequencia para reproduzir os blocos numericos em ordem de tabelas/figur
 7. Figura 12 / Tabela 9 e Figura 13 / Tabela 10 (`beta` dado `k0`, Sec. 2.2.4):
 
 ```bash
-./build/helmvec3_rect 0.20 10 5
+./build/helmvec3_fig12_rect 10 5
+./build/helmvec3_fig13_rect 0.20 10 5
 ```
 
 8. Secao 3.1 em cavidades 3D (Tabelas 12-15):
 
 ```bash
-./build/fem3d0_rect --all
-./build/fem3d1_rect --all
+./build/fem3d0_air
+./build/fem3d0_half
+./build/fem3d0_cyl
+./build/fem3d0_sphere
+./build/fem3d1_air
+./build/fem3d1_half
+./build/fem3d1_cyl
+./build/fem3d1_sphere
 ```
 
 9. Validacao automatica consolidada:

@@ -4,9 +4,10 @@ Este arquivo documenta o script:
 
 - [scripts/helmvec3.py](/home/sperotto/tp3485-fem-eigen-em/scripts/helmvec3.py)
 
-Ele le os CSVs produzidos hoje pelo executavel:
+Ele le os CSVs produzidos hoje pelos executaveis:
 
-- `helmvec3_rect`
+- `helmvec3_fig12_rect`
+- `helmvec3_fig13_rect`
 
 e gera imagens da Secao 2.2.4 a partir da Eq. `(136)`.
 
@@ -21,46 +22,53 @@ primeiro e:
 
 Por isso, o script trabalha sobre:
 
-- `out/helmvec3/rect/csv/helmvec3_rect_table9.csv`
-- `out/helmvec3/rect/csv/helmvec3_rect_preview.csv`
-- `out/helmvec3/rect/csv/helmvec3_rect_table10.csv`
-- `out/helmvec3/rect/csv/*_Et_fields.csv`
-- `out/helmvec3/rect/csv/*_Ez_fields.csv`
-- `out/helmvec3/rect/vtk/*_Et.vtk`
-- `out/helmvec3/rect/vtk/*_Ez.vtk`
-- `out/helmvec3/rect/run_timing.csv`
+- `out/helmvec3/fig12_rect/csv/helmvec3_fig12_rect_table9.csv`
+- `out/helmvec3/fig13_rect/csv/helmvec3_fig13_rect_preview.csv`
+- `out/helmvec3/fig13_rect/csv/helmvec3_fig13_rect_table10.csv`
+- `out/helmvec3/fig12_rect/csv/*_Et_fields.csv`
+- `out/helmvec3/fig12_rect/csv/*_Ez_fields.csv`
+- `out/helmvec3/fig13_rect/csv/*_Et_fields.csv`
+- `out/helmvec3/fig13_rect/csv/*_Ez_fields.csv`
+- `out/helmvec3/fig12_rect/vtk/*_Et.vtk`
+- `out/helmvec3/fig12_rect/vtk/*_Ez.vtk`
+- `out/helmvec3/fig13_rect/vtk/*_Et.vtk`
+- `out/helmvec3/fig13_rect/vtk/*_Ez.vtk`
+- `out/helmvec3/fig12_rect/run_timing.csv`
+- `out/helmvec3/fig13_rect/run_timing.csv`
 
 e salva as imagens em:
 
-- `out/helmvec3/rect/img/`
+- `out/helmvec3/fig12_rect/img/`
+- `out/helmvec3/fig13_rect/img/`
 
 ## Como executar
 
 ```bash
 python3 scripts/helmvec3.py
-python3 scripts/helmvec3.py --case rect
+python3 scripts/helmvec3.py --case fig12_rect
+python3 scripts/helmvec3.py --case fig13_rect
 python3 scripts/helmvec3.py --dpi 120
-python3 scripts/helmvec3.py --case rect --dpi 120 --show-mesh
+python3 scripts/helmvec3.py --case fig13_rect --dpi 120 --show-mesh
 ```
 
 ## Imagens geradas
 
-- `helmvec3_rect_table9_beta_over_k0.png`
+- `helmvec3_fig12_rect_table9_beta_over_k0.png`
   - compara `beta/k0(FEM)` com as referencias analitica e `HELMVEC3` da
     Figura 12 / Tabela 9.
 
-- `helmvec3_rect_table9_error_by_point.png`
+- `helmvec3_fig12_rect_table9_error_by_point.png`
   - mostra o erro relativo absoluto por ponto contra as duas referencias da
     Tabela 9.
 
-- `helmvec3_rect_preview_branch.png`
+- `helmvec3_fig13_rect_preview_branch.png`
   - mostra o ramo rastreado por continuidade para o `d/a` escolhido na linha
     de comando.
 
-- `helmvec3_rect_table10_fem_branches.png`
+- `helmvec3_fig13_rect_table10_fem_branches.png`
   - mostra, no mesmo plano, as curvas FEM da Tabela 10 para cada bloco `d/a`.
 
-- `helmvec3_rect_table10_error_by_branch.png`
+- `helmvec3_fig13_rect_table10_error_by_branch.png`
   - mostra o erro relativo absoluto contra a referencia analitica para cada
     bloco `d/a`.
 
@@ -139,6 +147,15 @@ Este material deve ser lido junto com:
 - [2.2.4_Caracteristicas_de_Dispersao_de_Guias_de_Onda.md](traducao/2.2.4_Caracteristicas_de_Dispersao_de_Guias_de_Onda.md)
 
 ## Observacao importante
+
+A separacao do `HELMVEC3` em dois executaveis publicos mudou a origem
+dos CSVs e VTKs:
+
+- `helmvec3_fig12_rect` produz a parte da Figura 12 / Tabela 9;
+- `helmvec3_fig13_rect` produz o preview e a Tabela 10.
+
+O `scripts/helmvec3.py` ja foi adaptado para essa nova casca publica. A leitura
+conceitual das imagens, porem, continua a mesma.
 
 O `HELMVEC3` agora exporta, para cada ponto publicado da Figura 12, do preview
 e da Tabela 10:

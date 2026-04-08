@@ -62,12 +62,41 @@ struct CliOptions
 struct PreparedCase
 {
   CaseId id = CaseId::air;
+  std::string case_name;
   std::string header;
+  Grid3D grid;
   Mesh3D mesh;
   std::vector<double> eps_r_tet;
   std::vector<double> mu_r_tet;
   std::vector<RefRow> rows;
 };
+
+/******************************************************************************/
+/* FUNCAO: case_defaults                                                     */
+/* DESCRICAO: Retorna a configuracao padrao de selecao para um unico caso 3D.*/
+/* ENTRADA: id: CaseId.                                                      */
+/* SAIDA: CliDefaults.                                                       */
+/******************************************************************************/
+inline CliDefaults case_defaults(CaseId id)
+{
+  CliDefaults out{/*run_air=*/false, /*run_half=*/false, /*run_cyl=*/false, /*run_sphere=*/false};
+  switch (id)
+  {
+  case CaseId::air:
+    out.run_air = true;
+    break;
+  case CaseId::half:
+    out.run_half = true;
+    break;
+  case CaseId::cyl:
+    out.run_cyl = true;
+    break;
+  case CaseId::sphere:
+    out.run_sphere = true;
+    break;
+  }
+  return out;
+}
 
 /******************************************************************************/
 /* FUNCAO: print_usage                                                        */
@@ -80,6 +109,20 @@ inline void print_usage(const char *bin_name)
 {
   std::cout << "Usage: " << bin_name
             << " [--air|--half|--cyl|--sphere|--all] [--nx N --ny N --nz N]"
+            << " [--backend closed-form|gauss]"
+            << " [--debug-local-blocks] [--debug-candidates]\n";
+}
+
+/******************************************************************************/
+/* FUNCAO: print_single_case_usage                                           */
+/* DESCRICAO: Imprime o uso de um executavel 3D fixo em um unico caso.       */
+/* ENTRADA: bin_name: const char *.                                          */
+/* SAIDA: sem retorno explicito (void).                                      */
+/******************************************************************************/
+inline void print_single_case_usage(const char *bin_name)
+{
+  std::cout << "Usage: " << bin_name
+            << " [--nx N --ny N --nz N]"
             << " [--backend closed-form|gauss]"
             << " [--debug-local-blocks] [--debug-candidates]\n";
 }
@@ -188,6 +231,80 @@ inline std::optional<CliOptions> parse_cli(
 }
 
 /******************************************************************************/
+/* FUNCAO: parse_single_case_cli                                             */
+/* DESCRICAO: Analisa a CLI de um executavel 3D dedicado a um unico caso.    */
+/* ENTRADA: argc: int; argv: char **; fixed_case: CaseId; bin_name: const char*. */
+/* SAIDA: std::optional<CliOptions>.                                          */
+/******************************************************************************/
+inline std::optional<CliOptions> parse_single_case_cli(
+    int argc,
+    char **argv,
+    CaseId fixed_case,
+    const char *bin_name)
+{
+  CliOptions opt;
+  const auto defaults = case_defaults(fixed_case);
+  opt.run_air = defaults.run_air;
+  opt.run_half = defaults.run_half;
+  opt.run_cyl = defaults.run_cyl;
+  opt.run_sphere = defaults.run_sphere;
+
+  for (int i = 1; i < argc; ++i)
+  {
+    const std::string a = argv[i];
+    if (a == "--air" || a == "--half" || a == "--cyl" || a == "--sphere" || a == "--all")
+    {
+      std::cerr << "Erro: " << bin_name
+                << " ja representa um caso 3D especifico; nao use flags de selecao de caso.\n";
+      print_single_case_usage(bin_name);
+      return std::nullopt;
+    }
+    else if (a == "--nx" && i + 1 < argc)
+    {
+      opt.nx = std::atoi(argv[++i]);
+      opt.custom_mesh = true;
+    }
+    else if (a == "--ny" && i + 1 < argc)
+    {
+      opt.ny = std::atoi(argv[++i]);
+      opt.custom_mesh = true;
+    }
+    else if (a == "--nz" && i + 1 < argc)
+    {
+      opt.nz = std::atoi(argv[++i]);
+      opt.custom_mesh = true;
+    }
+    else if (a == "--backend" && i + 1 < argc)
+    {
+      opt.backend = parse_element_assembly_backend(argv[++i]);
+    }
+    else if (a == "--debug" || a == "--debug-all")
+    {
+      opt.debug_local_blocks = true;
+      opt.debug_candidates = true;
+    }
+    else if (a == "--debug-local-blocks")
+    {
+      opt.debug_local_blocks = true;
+    }
+    else if (a == "--debug-candidates")
+    {
+      opt.debug_candidates = true;
+    }
+    else if (a.rfind("--backend=", 0) == 0)
+    {
+      opt.backend = parse_element_assembly_backend(a.substr(std::string("--backend=").size()));
+    }
+    else if (a == "--help")
+    {
+      print_single_case_usage(bin_name);
+      return std::nullopt;
+    }
+  }
+  return opt;
+}
+
+/******************************************************************************/
 /* FUNCAO: selected_cases                                                     */
 /* DESCRICAO: Converte flags da CLI em lista ordenada de casos efetivamente   */
 /* selecionados.                                                              */
@@ -242,11 +359,13 @@ inline PreparedCase build_case(CaseId id, const Grid3D &g, const char *solver_ta
 {
   PreparedCase out;
   out.id = id;
+  out.grid = g;
 
   switch (id)
   {
   case CaseId::air:
   {
+    out.case_name = "air";
     const auto geom = fig15_geom();
     out.mesh = make_rect_tet_mesh(geom.lx, geom.ly, geom.lz, g.nx, g.ny, g.nz);
     out.eps_r_tet.assign(out.mesh.tets.size(), 1.0);
@@ -257,6 +376,7 @@ inline PreparedCase build_case(CaseId id, const Grid3D &g, const char *solver_ta
   }
   case CaseId::half:
   {
+    out.case_name = "half";
     const auto geom = fig16_geom();
     out.mesh = make_rect_tet_mesh(geom.lx, geom.ly, geom.lz, g.nx, g.ny, g.nz);
     out.eps_r_tet = make_eps_r_tets_by_z(out.mesh, 0.5 * geom.lz, 1.0, 2.0);
@@ -267,6 +387,7 @@ inline PreparedCase build_case(CaseId id, const Grid3D &g, const char *solver_ta
   }
   case CaseId::cyl:
   {
+    out.case_name = "cyl";
     const auto geom = fig17_geom();
     out.mesh = make_cylinder_tet_mesh_cartesian(geom.radius, geom.height, g.nx, g.ny, g.nz);
     out.eps_r_tet.assign(out.mesh.tets.size(), 1.0);
@@ -277,6 +398,7 @@ inline PreparedCase build_case(CaseId id, const Grid3D &g, const char *solver_ta
   }
   case CaseId::sphere:
   {
+    out.case_name = "sphere";
     const auto geom = table15_geom();
     out.mesh = make_sphere_tet_mesh_cartesian(geom.radius, g.nx, g.ny, g.nz);
     out.eps_r_tet.assign(out.mesh.tets.size(), 1.0);

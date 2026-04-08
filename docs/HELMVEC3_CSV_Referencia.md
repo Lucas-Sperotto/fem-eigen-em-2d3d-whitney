@@ -1,8 +1,9 @@
 # HELMVEC3: Referencia dos CSVs de Saida
 
-Este arquivo documenta os CSVs gerados hoje pelo executavel:
+Este arquivo documenta os CSVs gerados hoje pelos executaveis:
 
-- `helmvec3_rect`
+- `helmvec3_fig12_rect`
+- `helmvec3_fig13_rect`
 
 Eles devem ser lidos junto com:
 
@@ -16,25 +17,29 @@ Eles devem ser lidos junto com:
 Ao rodar:
 
 ```bash
-./build/helmvec3_rect 0.20 10 5 --backend closed-form
+./build/helmvec3_fig12_rect 10 5 --backend closed-form
+./build/helmvec3_fig13_rect 0.20 10 5 --backend closed-form
 ```
 
 o projeto grava em:
 
-- `out/helmvec3/rect/run.log`
-- `out/helmvec3/rect/run_timing.csv`
-- `out/helmvec3/rect/csv/helmvec3_rect_table9.csv`
-- `out/helmvec3/rect/csv/helmvec3_rect_preview.csv`
-- `out/helmvec3/rect/csv/helmvec3_rect_table10.csv`
-- `out/helmvec3/rect/csv/helmvec3_rect_figure12_br*_Et_fields.csv`
-- `out/helmvec3/rect/csv/helmvec3_rect_figure12_br*_Ez_fields.csv`
-- `out/helmvec3/rect/csv/helmvec3_rect_preview_da*_br*_Et_fields.csv`
-- `out/helmvec3/rect/csv/helmvec3_rect_preview_da*_br*_Ez_fields.csv`
-- `out/helmvec3/rect/csv/helmvec3_rect_table10_da*_br*_Et_fields.csv`
-- `out/helmvec3/rect/csv/helmvec3_rect_table10_da*_br*_Ez_fields.csv`
-- `out/helmvec3/rect/vtk/*.vtk`
+- `out/helmvec3/fig12_rect/run.log`
+- `out/helmvec3/fig12_rect/run_timing.csv`
+- `out/helmvec3/fig12_rect/csv/helmvec3_fig12_rect_table9.csv`
+- `out/helmvec3/fig12_rect/csv/helmvec3_fig12_rect_figure12_br*_Et_fields.csv`
+- `out/helmvec3/fig12_rect/csv/helmvec3_fig12_rect_figure12_br*_Ez_fields.csv`
+- `out/helmvec3/fig13_rect/run.log`
+- `out/helmvec3/fig13_rect/run_timing.csv`
+- `out/helmvec3/fig13_rect/csv/helmvec3_fig13_rect_preview.csv`
+- `out/helmvec3/fig13_rect/csv/helmvec3_fig13_rect_table10.csv`
+- `out/helmvec3/fig13_rect/csv/helmvec3_fig13_rect_preview_da*_br*_Et_fields.csv`
+- `out/helmvec3/fig13_rect/csv/helmvec3_fig13_rect_preview_da*_br*_Ez_fields.csv`
+- `out/helmvec3/fig13_rect/csv/helmvec3_fig13_rect_table10_da*_br*_Et_fields.csv`
+- `out/helmvec3/fig13_rect/csv/helmvec3_fig13_rect_table10_da*_br*_Ez_fields.csv`
+- `out/helmvec3/fig12_rect/vtk/*.vtk`
+- `out/helmvec3/fig13_rect/vtk/*.vtk`
 
-## 1) `helmvec3_rect_table9.csv`
+## 1) `helmvec3_fig12_rect_table9.csv`
 
 Este e o CSV principal da Figura 12 / Tabela 9.
 
@@ -101,7 +106,7 @@ ez_ratio = ||Ez||^2 / (||Et||^2 + ||Ez||^2)
 - `et_vtk_file`, `ez_vtk_file`
   - nomes dos VTKs espaciais por ponto para `Et` e `Ez`.
 
-## 2) `helmvec3_rect_preview.csv`
+## 2) `helmvec3_fig13_rect_preview.csv`
 
 Este CSV registra o preview de ramo da Figura 13 para um unico `d/a` escolhido
 na linha de comando.
@@ -141,7 +146,7 @@ d_over_a_preview,br_over_lambda0,beta_over_k0_fem_branch,selected_candidate_rank
   `et_vtk_file`, `ez_vtk_file`
   - metadados e artefatos espaciais do mesmo ponto do ramo.
 
-## 3) `helmvec3_rect_table10.csv`
+## 3) `helmvec3_fig13_rect_table10.csv`
 
 Este CSV guarda a validacao completa da Figura 13 / Tabela 10.
 
@@ -250,14 +255,14 @@ case_label,geometry,backend,debug_local_blocks,debug_candidates,a,b,d12,d13_prev
 
 ## Como os CSVs se complementam
 
-- `helmvec3_rect_table9.csv`
+- `helmvec3_fig12_rect_table9.csv`
   - explica a comparacao estatica da Figura 12 / Tabela 9.
 
-- `helmvec3_rect_preview.csv`
+- `helmvec3_fig13_rect_preview.csv`
   - explica o preview de um ramo continuo da Figura 13 para um `d/a`
     escolhido.
 
-- `helmvec3_rect_table10.csv`
+- `helmvec3_fig13_rect_table10.csv`
   - explica a validacao completa por blocos da Tabela 10.
 
 - `*_Et_fields.csv` e `*_Ez_fields.csv`

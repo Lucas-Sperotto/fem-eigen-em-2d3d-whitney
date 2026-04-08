@@ -19,7 +19,14 @@ Diferenca principal:
 - `S` e `T` sao montadas no triangulo inferior esparso,
 - solve atual ainda converte para denso antes de `dsygv`.
 
-Arquivo principal:
+Entradas publicas:
+
+- `main_fem3d1_air.cpp`
+- `main_fem3d1_half.cpp`
+- `main_fem3d1_cyl.cpp`
+- `main_fem3d1_sphere.cpp`
+
+Implementacao compartilhada:
 
 - `main_fem3d1_rect.cpp`
 
@@ -85,30 +92,28 @@ A diferenca deste modulo esta apenas na estrutura de armazenamento global
 
 ## 3) Casos suportados
 
-- `--air` (Figura 15 / Tabela 12)
-- `--half` (Figura 16 / Tabela 13)
-- `--cyl` (Figura 17 / Tabela 14)
-- `--sphere` (Tabela 15)
-- `--all`
+- `fem3d1_air` (Figura 15 / Tabela 12)
+- `fem3d1_half` (Figura 16 / Tabela 13)
+- `fem3d1_cyl` (Figura 17 / Tabela 14)
+- `fem3d1_sphere` (Tabela 15)
 
-Defaults do executavel:
+Cada executavel ja nasce fixo em um caso do artigo:
 
-- sem flags: roda `--air` e `--half`.
-- com `--nx --ny --nz`: sobrescreve malha padrao do caso selecionado.
+- sem flags de caso;
+- com `--nx --ny --nz`: sobrescreve a malha padrao daquele caso;
 - sem `--backend`: usa `closed-form` como fluxo publico padrao.
 
 ## 4) Uso
 
 ```bash
-./build/fem3d1_rect --air
-./build/fem3d1_rect --half
-./build/fem3d1_rect --cyl
-./build/fem3d1_rect --sphere
-./build/fem3d1_rect --all
-./build/fem3d1_rect --all --nx 6 --ny 4 --nz 4
-./build/fem3d1_rect --half --backend closed-form --debug-local-blocks
-./build/fem3d1_rect --half --debug-candidates
-./build/fem3d1_rect --help
+./build/fem3d1_air
+./build/fem3d1_half
+./build/fem3d1_cyl
+./build/fem3d1_sphere
+./build/fem3d1_half --nx 6 --ny 4 --nz 4
+./build/fem3d1_half --backend closed-form --debug-local-blocks
+./build/fem3d1_half --debug-candidates
+./build/fem3d1_half --help
 ```
 
 ## 5) Saida tipica
@@ -126,6 +131,33 @@ Flags de depuracao:
 - `--debug-local-blocks`: imprime `Sel` e `Tel` do primeiro tetraedro
 - `--debug-candidates`: imprime as primeiras raizes positivas `k0`
 - `--debug` / `--debug-all`: ativa os dois
+
+## 5.1) Artefatos salvos por caso
+
+Cada caso agora grava:
+
+- `out/fem3d1/run.log`
+  - trilha textual completa da execucao, cobrindo todos os casos selecionados.
+- `out/fem3d1/<caso>/run.log`
+  - trilha textual especifica do caso.
+- `out/fem3d1/<caso>/run_timing.csv`
+  - configuracao da malha, estrutura esparsa e tempos de montagem, solve e pos-processamento.
+- `out/fem3d1/<caso>/csv/fem3d1_<caso>_modes.csv`
+  - resumo modal alinhado com as Tabelas 12-15.
+- `out/fem3d1/<caso>/linop/`
+  - `S`, `T`, autovalores e autovetores em CSV.
+
+Exemplo para `fem3d1_half`:
+
+```text
+out/fem3d1/half/run.log
+out/fem3d1/half/run_timing.csv
+out/fem3d1/half/csv/fem3d1_half_modes.csv
+out/fem3d1/half/linop/fem3d1_half_S_crs.csv
+out/fem3d1/half/linop/fem3d1_half_T_crs.csv
+out/fem3d1/half/linop/fem3d1_half_eigenvalues.csv
+out/fem3d1/half/linop/fem3d1_half_eigenvectors.csv
+```
 
 ## 6) Dependencias internas
 

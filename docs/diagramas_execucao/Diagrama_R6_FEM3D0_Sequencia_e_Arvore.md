@@ -9,9 +9,17 @@ Casos do artigo cobertos por esta raiz:
 - Caso 13: cavidade cilíndrica com ar, Figura 17 / Tabela 14
 - Caso 14: cavidade esférica com ar, Tabela 15
 
-Executável atual correspondente:
+Executáveis atuais correspondentes:
 
-- `fem3d0_rect`
+- `fem3d0_air`
+- `fem3d0_half`
+- `fem3d0_cyl`
+- `fem3d0_sphere`
+
+Observacao de implementacao:
+
+- `main_fem3d0_rect.cpp` permanece como nucleo compartilhado;
+- os wrappers publicos por caso ficam em `main_fem3d0_{air,half,cyl,sphere}.cpp`.
 
 Entrada didática por equação:
 

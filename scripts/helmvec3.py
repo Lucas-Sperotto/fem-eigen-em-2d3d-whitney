@@ -4,9 +4,9 @@ Generate HELMVEC3 images directly from the CSV outputs.
 
 The HELMVEC3 family exports:
 
-- `out/helmvec3/rect/csv/helmvec3_rect_table9.csv`
-- `out/helmvec3/rect/csv/helmvec3_rect_preview.csv`
-- `out/helmvec3/rect/csv/helmvec3_rect_table10.csv`
+- `out/helmvec3/fig12_rect/csv/helmvec3_fig12_rect_table9.csv`
+- `out/helmvec3/fig13_rect/csv/helmvec3_fig13_rect_preview.csv`
+- `out/helmvec3/fig13_rect/csv/helmvec3_fig13_rect_table10.csv`
 - one Et CSV + VTK per exported point
 - one Ez CSV + VTK per exported point
 
@@ -193,7 +193,7 @@ class Table9Row:
     def spatial_stem(self) -> str:
         if self.et_fields_csv_file.endswith("_Et_fields.csv"):
             return self.et_fields_csv_file[: -len("_Et_fields.csv")]
-        return f"helmvec3_rect_table9_br{self.br_over_lambda0:g}"
+        return f"helmvec3_fig12_rect_table9_br{self.br_over_lambda0:g}"
 
     def spatial_group(self, timing: Optional[TimingRow]) -> str:
         if timing is None or timing.a is None or timing.d12 is None:
@@ -300,7 +300,7 @@ class PreviewRow:
     def spatial_stem(self) -> str:
         if self.et_fields_csv_file.endswith("_Et_fields.csv"):
             return self.et_fields_csv_file[: -len("_Et_fields.csv")]
-        return f"helmvec3_rect_preview_da{self.d_over_a_preview:g}_br{self.br_over_lambda0:g}"
+        return f"helmvec3_fig13_rect_preview_da{self.d_over_a_preview:g}_br{self.br_over_lambda0:g}"
 
     def spatial_group(self, timing: Optional[TimingRow]) -> str:
         return f"preview_da_{_label_number(self.d_over_a_preview)}"
@@ -421,7 +421,7 @@ class Table10Row:
     def spatial_stem(self) -> str:
         if self.et_fields_csv_file.endswith("_Et_fields.csv"):
             return self.et_fields_csv_file[: -len("_Et_fields.csv")]
-        return f"helmvec3_rect_table10_da{self.d_over_a:g}_br{self.br_over_lambda0:g}"
+        return f"helmvec3_fig13_rect_table10_da{self.d_over_a:g}_br{self.br_over_lambda0:g}"
 
     def spatial_group(self, timing: Optional[TimingRow]) -> str:
         return f"table10_da_{_label_number(self.d_over_a)}"
@@ -502,7 +502,7 @@ def _plot_table9(rows: List[Table9Row], img_root: Path, dpi: int, title_suffix: 
     ax.set_title(f"HELMVEC3 | Figura 12 / Tabela 9 | {title_suffix}")
     ax.grid(True, alpha=0.28)
     ax.legend()
-    _save_figure(fig, img_root / "helmvec3_rect_table9_beta_over_k0.png", dpi)
+    _save_figure(fig, img_root / "helmvec3_fig12_rect_table9_beta_over_k0.png", dpi)
 
 
 def _plot_table9_error(rows: List[Table9Row], img_root: Path, dpi: int, title_suffix: str) -> None:
@@ -518,7 +518,7 @@ def _plot_table9_error(rows: List[Table9Row], img_root: Path, dpi: int, title_su
     ax.set_title(f"HELMVEC3 | Erro da Tabela 9 | {title_suffix}")
     ax.grid(True, alpha=0.28)
     ax.legend()
-    _save_figure(fig, img_root / "helmvec3_rect_table9_error_by_point.png", dpi)
+    _save_figure(fig, img_root / "helmvec3_fig12_rect_table9_error_by_point.png", dpi)
 
 
 def _plot_preview(
@@ -538,7 +538,7 @@ def _plot_preview(
     ax.set_ylabel(r"$\beta / k_0$")
     ax.set_title(f"HELMVEC3 | Preview de Ramo | {title_suffix} | {da_label}")
     ax.grid(True, alpha=0.28)
-    _save_figure(fig, img_root / "helmvec3_rect_preview_branch.png", dpi)
+    _save_figure(fig, img_root / "helmvec3_fig13_rect_preview_branch.png", dpi)
 
 
 def _plot_table10_branches(rows: List[Table10Row], img_root: Path, dpi: int, title_suffix: str) -> None:
@@ -566,7 +566,7 @@ def _plot_table10_branches(rows: List[Table10Row], img_root: Path, dpi: int, tit
     ax.set_title(f"HELMVEC3 | Figura 13 / Tabela 10 | {title_suffix}")
     ax.grid(True, alpha=0.28)
     ax.legend(ncol=2, fontsize=8)
-    _save_figure(fig, img_root / "helmvec3_rect_table10_fem_branches.png", dpi)
+    _save_figure(fig, img_root / "helmvec3_fig13_rect_table10_fem_branches.png", dpi)
 
 
 def _plot_table10_error(rows: List[Table10Row], img_root: Path, dpi: int, title_suffix: str) -> None:
@@ -594,7 +594,7 @@ def _plot_table10_error(rows: List[Table10Row], img_root: Path, dpi: int, title_
     ax.set_title(f"HELMVEC3 | Erro da Tabela 10 | {title_suffix}")
     ax.grid(True, alpha=0.28)
     ax.legend(ncol=2, fontsize=8)
-    _save_figure(fig, img_root / "helmvec3_rect_table10_error_by_branch.png", dpi)
+    _save_figure(fig, img_root / "helmvec3_fig13_rect_table10_error_by_branch.png", dpi)
 
 
 def _read_legacy_vtk_connectivity(vtk_path: Path) -> Tuple[np.ndarray, np.ndarray]:
@@ -893,22 +893,36 @@ def _generate_spatial_images_for_rows(
         )
 
 
-def _plot_case(case_root: Path, dpi: int, show_mesh: bool, max_arrows: int) -> None:
-    print("Processing HELMVEC3 case: rect")
-    table9_path = case_root / "csv" / "helmvec3_rect_table9.csv"
-    preview_path = case_root / "csv" / "helmvec3_rect_preview.csv"
-    table10_path = case_root / "csv" / "helmvec3_rect_table10.csv"
+def _plot_fig12_case(case_root: Path, dpi: int, show_mesh: bool, max_arrows: int) -> None:
+    print("Processing HELMVEC3 case: fig12_rect")
+    table9_path = case_root / "csv" / "helmvec3_fig12_rect_table9.csv"
     if not table9_path.exists():
         raise FileNotFoundError(f"Arquivo ausente: {table9_path}")
+
+    table9_rows = [Table9Row(case_root, row) for row in _read_rows(table9_path)]
+    table9_rows.sort(key=lambda item: item.br_over_lambda0)
+    timing = _load_timing(case_root)
+    title_suffix = _title_suffix(timing)
+
+    img_root = case_root / "img"
+    img_root.mkdir(parents=True, exist_ok=True)
+
+    _plot_table9(table9_rows, img_root, dpi, title_suffix)
+    _plot_table9_error(table9_rows, img_root, dpi, title_suffix)
+    _generate_spatial_images_for_rows(table9_rows, timing, img_root, dpi, show_mesh, max_arrows)
+
+
+def _plot_fig13_case(case_root: Path, dpi: int, show_mesh: bool, max_arrows: int) -> None:
+    print("Processing HELMVEC3 case: fig13_rect")
+    preview_path = case_root / "csv" / "helmvec3_fig13_rect_preview.csv"
+    table10_path = case_root / "csv" / "helmvec3_fig13_rect_table10.csv"
     if not preview_path.exists():
         raise FileNotFoundError(f"Arquivo ausente: {preview_path}")
     if not table10_path.exists():
         raise FileNotFoundError(f"Arquivo ausente: {table10_path}")
 
-    table9_rows = [Table9Row(case_root, row) for row in _read_rows(table9_path)]
     preview_rows = [PreviewRow(case_root, row) for row in _read_rows(preview_path)]
     table10_rows = [Table10Row(case_root, row) for row in _read_rows(table10_path)]
-    table9_rows.sort(key=lambda item: item.br_over_lambda0)
     preview_rows.sort(key=lambda item: item.br_over_lambda0)
     table10_rows.sort(key=lambda item: (item.d_over_a, item.br_over_lambda0))
     timing = _load_timing(case_root)
@@ -918,13 +932,10 @@ def _plot_case(case_root: Path, dpi: int, show_mesh: bool, max_arrows: int) -> N
     img_root = case_root / "img"
     img_root.mkdir(parents=True, exist_ok=True)
 
-    _plot_table9(table9_rows, img_root, dpi, title_suffix)
-    _plot_table9_error(table9_rows, img_root, dpi, title_suffix)
     _plot_preview(preview_rows, img_root, dpi, title_suffix, preview_da)
     _plot_table10_branches(table10_rows, img_root, dpi, title_suffix)
     _plot_table10_error(table10_rows, img_root, dpi, title_suffix)
 
-    _generate_spatial_images_for_rows(table9_rows, timing, img_root, dpi, show_mesh, max_arrows)
     _generate_spatial_images_for_rows(preview_rows, timing, img_root, dpi, show_mesh, max_arrows)
     _generate_spatial_images_for_rows(table10_rows, timing, img_root, dpi, show_mesh, max_arrows)
 
@@ -933,7 +944,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(
         description=(
             "Le os CSVs do HELMVEC3 e gera imagens da Eq. (136): "
-            "Tabela 9, preview de ramo, Tabela 10 e visualizacoes espaciais Et/Ez."
+            "Figura 12/Tabela 9 em fig12_rect e preview/Tabela 10 em fig13_rect."
         )
     )
     parser.add_argument(
@@ -945,7 +956,7 @@ def main() -> None:
     parser.add_argument(
         "--case",
         action="append",
-        choices=["rect", "all"],
+        choices=["fig12_rect", "fig13_rect", "all"],
         default=None,
         help="Seleciona quais casos processar. Pode ser repetido.",
     )
@@ -967,20 +978,28 @@ def main() -> None:
     cases: List[str] = []
     for item in raw_cases:
         if item == "all":
-            cases.append("rect")
+            cases.extend(["fig12_rect", "fig13_rect"])
         else:
             cases.append(item)
     ordered_cases = list(dict.fromkeys(cases))
 
     for case_name in ordered_cases:
-        if case_name != "rect":
-            print(f"Warning: caso nao suportado ainda em HELMVEC3: {case_name}")
+        if case_name == "fig12_rect":
+            case_root = root / "fig12_rect"
+            if not case_root.exists():
+                print(f"Warning: caso ausente, pulando: {case_root}")
+                continue
+            _plot_fig12_case(case_root, args.dpi, args.show_mesh, args.max_arrows)
+            continue
+        if case_name == "fig13_rect":
+            case_root = root / "fig13_rect"
+            if not case_root.exists():
+                print(f"Warning: caso ausente, pulando: {case_root}")
+                continue
+            _plot_fig13_case(case_root, args.dpi, args.show_mesh, args.max_arrows)
             continue
         case_root = root / case_name
-        if not case_root.exists():
-            print(f"Warning: caso ausente, pulando: {case_root}")
-            continue
-        _plot_case(case_root, args.dpi, args.show_mesh, args.max_arrows)
+        print(f"Warning: caso nao suportado ainda em HELMVEC3: {case_root}")
 
 
 if __name__ == "__main__":

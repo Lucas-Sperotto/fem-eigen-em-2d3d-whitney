@@ -7,6 +7,8 @@ Este arquivo documenta os artefatos espectrais exportados pelas familias:
 - `HELMVEC1`
 - `HELMVEC2`
 - `HELMVEC3`
+- `FEM3D0`
+- `FEM3D1`
 
 O objetivo e deixar audivel, para verificacoes externas, nao apenas a saida
 modal resumida, mas tambem:
@@ -30,6 +32,8 @@ Exemplos:
 - `out/helmvec1/coax/linop/`
 - `out/helmvec2/rect/linop/`
 - `out/helmvec3/rect/linop/`
+- `out/fem3d0/air/linop/`
+- `out/fem3d1/half/linop/`
 
 ## 1) Matrizes em CRS
 
@@ -214,9 +218,9 @@ dispersao, os artefatos sao exportados por ponto amostrado.
 
 Exemplos de prefixos:
 
-- `helmvec3_rect_figure12_br0_4_*`
-- `helmvec3_rect_preview_da0_2_br0_5_*`
-- `helmvec3_rect_table10_da0_375_br0_8_*`
+- `helmvec3_fig12_rect_figure12_br0_4_*`
+- `helmvec3_fig13_rect_preview_da0_2_br0_5_*`
+- `helmvec3_fig13_rect_table10_da0_375_br0_8_*`
 
 Em cada prefixo, o par global sai como:
 
@@ -227,6 +231,26 @@ e os blocos nomeados da Eq. `(136)` saem como:
 
 - `P_tt`, `P_zz`
 - `Q_tt`, `Q_tz`, `Q_zt`, `Q_zz`
+
+### `FEM3D0` e `FEM3D1`
+
+Cada caso 3D exporta um pacote por solver e por geometria:
+
+- `fem3d0_air_*`
+- `fem3d0_half_*`
+- `fem3d0_cyl_*`
+- `fem3d0_sphere_*`
+- `fem3d1_air_*`
+- `fem3d1_half_*`
+- `fem3d1_cyl_*`
+- `fem3d1_sphere_*`
+
+Em todos eles, o par global sai como:
+
+- `..._S_crs.csv`
+- `..._T_crs.csv`
+- `..._eigenvalues.csv`
+- `..._eigenvectors.csv`
 
 ## 5) Relacao com os outros CSVs do projeto
 

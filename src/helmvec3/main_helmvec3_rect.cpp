@@ -6,17 +6,18 @@
 /* E-mail: speroto@unemat.br                                                  */
 /* Versao: 2.0 | Ano: 2026                                                    */
 /*****************************************************************************/
-/* Descricao: Sistema acoplado vetorial+escalar para obter beta dado k0.      */
+/* Descricao: Implementacao compartilhada dos drivers publicos do HELMVEC3.   */
 /*****************************************************************************/
 /* Artigo base: NASA 19950011772. Referencias principais: Secao 2.2.4, Eq.    */
 /* (126)-(127), Fig. 12-13, Tabelas 9-10.                                     */
 /*****************************************************************************/
-/* Observacao: Este driver desempenha o papel do programa HELMVEC3 do         */
-/* apendice em FORTRAN. A montagem global correspondente a Eq. (136) ocorre em*/
-/* src/helmvec2/helmvec2_coupled_system.cpp. Comentarios priorizam didatica,  */
-/* rastreabilidade e validacao.                                               */
+/* Observacao: Este arquivo concentra o miolo numerico comum das entradas     */
+/* publicas `helmvec3_fig12_rect` e `helmvec3_fig13_rect`. A montagem global  */
+/* correspondente a Eq. (136) ocorre em src/helmvec2/helmvec2_coupled_system. */
+/* Comentarios priorizam didatica, rastreabilidade e validacao.               */
 /*****************************************************************************/
 
+#include "helmvec3/helmvec3_driver_entry.hpp"
 #include "article/tp3485_systems.hpp"
 #include "core/error_metrics.hpp"
 #include "core/execution_log.hpp"
@@ -463,88 +464,80 @@ std::vector<SelectedRatioPoint> trace_ratio_branch(
     return out;
 }
 
-} // namespace
-
-/******************************************************************************/
-/* FUNCAO: main                                                               */
-/* DESCRICAO: Ponto de entrada do executavel: interpreta argumentos, prepara o*/
-/* caso e executa o fluxo numerico principal.                                 */
-/* ENTRADA: argc: int; argv: char **.                                         */
-/* SAIDA: int.                                                                */
-/******************************************************************************/
-int main(int argc, char **argv)
+struct Fig12CliConfig
 {
-    timing::Breakdown perf;
-    timing::Stopwatch total_watch;
-    // Parametros das Figuras 12/13 da secao 2.2.4.5.
-    // Objetivo: obter beta para k0 conhecido e reconstruir curvas de dispersao.
-    const double a = 1.0;
-    const double b = 0.45;
-    const double d12 = 0.5 * b;
-    const double eps_fill = 2.45;
-
-    // Configuracoes opcionais em tempo de execucao:
-    // argv[1] = d/a para uma pre-visualizacao de continuacao da Figura 13.
-    // argv[2], argv[3] = nx, ny for the rectangular mesh.
-    // argv[4] = debug legado (0/1).
-    double d13_over_a = 0.20;
-    int nx = 10, ny = 5; // 100 triangulos, como nos exemplos do artigo.
     helmvec2::CoupledCliOptions cli;
-    try
-    {
-        cli = helmvec2::parse_coupled_cli_options(argc, argv);
-    }
-    catch (const std::exception &e)
-    {
-        std::cerr << "Erro ao interpretar argumentos: " << e.what() << "\n";
-        std::cerr << "Uso: ./helmvec3_rect [d_over_a [nx ny [debug]]]"
-                  << " [--backend closed-form|gauss]"
-                  << " [--debug-local-blocks] [--debug-candidates]\n";
-        return 2;
-    }
+    int nx = 10;
+    int ny = 5;
+};
 
-    if (!cli.positionals.empty())
-        d13_over_a = std::atof(cli.positionals[0].c_str());
-    if (cli.positionals.size() >= 3)
-    {
-        nx = std::atoi(cli.positionals[1].c_str());
-        ny = std::atoi(cli.positionals[2].c_str());
-    }
-    if (cli.positionals.size() >= 4)
-    {
-        const bool legacy_debug = (std::atoi(cli.positionals[3].c_str()) != 0);
-        if (legacy_debug)
-        {
-            cli.debug_local_blocks = true;
-            cli.debug_candidates = true;
-        }
-    }
+struct Fig13CliConfig
+{
+    helmvec2::CoupledCliOptions cli;
+    double d13_over_a = 0.20;
+    int nx = 10;
+    int ny = 5;
+};
 
-    const auto out_dirs = helmvec3_output::ensure_case_dirs("rect");
-    execution_log::ExecutionLogScope log_scope((out_dirs.root / "run.log").string());
-    if (!log_scope.active())
-    {
-        std::cerr << "Aviso: nao foi possivel abrir run.log em "
-                  << (out_dirs.root / "run.log")
-                  << " (" << log_scope.error_message() << ")\n";
-    }
-
-    Mesh2D mesh = make_rect_mesh(a, b, nx, ny);
-    std::vector<double> mu(mesh.tris.size(), 1.0);
-
+void print_output_dirs(const helmvec3_output::CaseDirs &out_dirs)
+{
     std::cout << "[output] root_dir=\"" << out_dirs.root.string() << "\"\n";
     std::cout << "[output] csv_dir=\"" << out_dirs.csv.string() << "\"\n";
     std::cout << "[output] vtk_dir=\"" << out_dirs.vtk.string() << "\"\n";
     std::cout << "[output] img_dir=\"" << out_dirs.img.string() << "\"\n";
     std::cout << "[output] linop_dir=\"" << out_dirs.linop.string() << "\"\n";
+}
 
-    const std::vector<double> br_over_lambda_9 = {0.2, 0.3, 0.4, 0.5, 0.6};
-    const std::vector<double> ref_ana_9 = {0.48, 1.00, 1.18, 1.26, 1.30};
-    const std::vector<double> ref_hvec3_9 = {0.47, 1.01, 1.17, 1.28, 1.35};
+Fig12CliConfig parse_fig12_cli(int argc, char **argv)
+{
+    Fig12CliConfig cfg;
+    cfg.cli = helmvec2::parse_coupled_cli_options(argc, argv);
 
-    const std::vector<double> br_over_lambda_10 = {0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0};
+    if (!cfg.cli.positionals.empty())
+        cfg.nx = std::atoi(cfg.cli.positionals[0].c_str());
+    if (cfg.cli.positionals.size() >= 2)
+        cfg.ny = std::atoi(cfg.cli.positionals[1].c_str());
+    if (cfg.cli.positionals.size() >= 3)
+    {
+        const bool legacy_debug = (std::atoi(cfg.cli.positionals[2].c_str()) != 0);
+        if (legacy_debug)
+        {
+            cfg.cli.debug_local_blocks = true;
+            cfg.cli.debug_candidates = true;
+        }
+    }
+
+    return cfg;
+}
+
+Fig13CliConfig parse_fig13_cli(int argc, char **argv)
+{
+    Fig13CliConfig cfg;
+    cfg.cli = helmvec2::parse_coupled_cli_options(argc, argv);
+
+    if (!cfg.cli.positionals.empty())
+        cfg.d13_over_a = std::atof(cfg.cli.positionals[0].c_str());
+    if (cfg.cli.positionals.size() >= 2)
+        cfg.nx = std::atoi(cfg.cli.positionals[1].c_str());
+    if (cfg.cli.positionals.size() >= 3)
+        cfg.ny = std::atoi(cfg.cli.positionals[2].c_str());
+    if (cfg.cli.positionals.size() >= 4)
+    {
+        const bool legacy_debug = (std::atoi(cfg.cli.positionals[3].c_str()) != 0);
+        if (legacy_debug)
+        {
+            cfg.cli.debug_local_blocks = true;
+            cfg.cli.debug_candidates = true;
+        }
+    }
+
+    return cfg;
+}
+
+std::vector<Table10Block> make_table10_blocks()
+{
     const double nan = std::numeric_limits<double>::quiet_NaN();
-    const std::vector<Table10Block> table10 = {
+    return {
         {0.0, {nan, 0.03, 0.52, 0.70, 0.79, 0.83, 0.88}, {nan, 0.04, 0.56, 0.71, 0.78, 0.83, 0.87}},
         {0.167, {nan, 0.21, 0.60, 0.72, 0.82, 0.88, 0.91}, {nan, 0.18, 0.59, 0.74, 0.81, 0.87, 0.90}},
         {0.286, {nan, 0.51, 0.78, 0.90, 0.99, 1.03, 1.10}, {nan, 0.44, 0.74, 0.88, 1.05, 1.03, 1.09}},
@@ -553,13 +546,57 @@ int main(int argc, char **argv)
         {0.6, {0.70, 1.02, 1.18, 1.23, 1.31, 1.38, 1.41}, {0.67, 1.03, 1.19, 1.27, 1.33, 1.37, 1.40}},
         {0.8, {0.90, 1.18, 1.29, 1.38, 1.41, 1.43, 1.44}, {0.91, 1.18, 1.30, 1.37, 1.42, 1.44, 1.47}},
     };
+}
+
+} // namespace
+
+int run_helmvec3_fig12_rect(int argc, char **argv)
+{
+    timing::Breakdown perf;
+    timing::Stopwatch total_watch;
+    const double a = 1.0;
+    const double b = 0.45;
+    const double d12 = 0.5 * b;
+    const double eps_fill = 2.45;
+
+    Fig12CliConfig cfg;
+    try
+    {
+        cfg = parse_fig12_cli(argc, argv);
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << "Erro ao interpretar argumentos: " << e.what() << "\n";
+        std::cerr << "Uso: ./helmvec3_fig12_rect [nx [ny [debug]]]"
+                  << " [--backend closed-form|gauss]"
+                  << " [--debug-local-blocks] [--debug-candidates]\n";
+        return 2;
+    }
+
+    const auto out_dirs = helmvec3_output::ensure_case_dirs("fig12_rect");
+    execution_log::ExecutionLogScope log_scope((out_dirs.root / "run.log").string());
+    if (!log_scope.active())
+    {
+        std::cerr << "Aviso: nao foi possivel abrir run.log em "
+                  << (out_dirs.root / "run.log")
+                  << " (" << log_scope.error_message() << ")\n";
+    }
+
+    Mesh2D mesh = make_rect_mesh(a, b, cfg.nx, cfg.ny);
+    std::vector<double> mu(mesh.tris.size(), 1.0);
+    print_output_dirs(out_dirs);
+
+    const std::vector<double> br_over_lambda_9 = {0.2, 0.3, 0.4, 0.5, 0.6};
+    const std::vector<double> ref_ana_9 = {0.48, 1.00, 1.18, 1.26, 1.30};
+    const std::vector<double> ref_hvec3_9 = {0.47, 1.01, 1.17, 1.28, 1.35};
 
     auto eps12 = helmvec23::eps_step_y(mesh, d12, eps_fill, 1.0);
-    if (cli.debug_local_blocks)
+    if (cfg.cli.debug_local_blocks)
     {
         const double k0_sample = 2.0 * M_PI * br_over_lambda_9.front() / b;
         print_first_triangle_closed_form_debug(mesh, k0_sample, eps12, mu);
     }
+
     auto ratio9 = match_ratio_to_reference(
         mesh,
         eps12,
@@ -567,20 +604,20 @@ int main(int argc, char **argv)
         br_over_lambda_9,
         b,
         ref_ana_9,
-        cli.debug_candidates,
-        cli.backend,
+        cfg.cli.debug_candidates,
+        cfg.cli.backend,
         &perf,
         &out_dirs.linop,
-        "helmvec3_rect_figure12",
+        "helmvec3_fig12_rect_figure12",
         &out_dirs);
+
     std::vector<helmvec3_output::Table9CsvRecord> table9_records;
     table9_records.reserve(br_over_lambda_9.size());
-    // Bloco acima corresponde ao caso da Figura 12 (interface horizontal).
 
     std::cout << "[2.2.4] beta from given k0 (Figure 12)\n";
     std::cout << "a=" << a << " b=" << b << " d=" << d12 << " eps_fill=" << eps_fill
-              << " nx=" << nx << " ny=" << ny << " tris=" << mesh.tris.size()
-              << " backend=" << element_assembly_backend_name(cli.backend) << "\n";
+              << " nx=" << cfg.nx << " ny=" << cfg.ny << " tris=" << mesh.tris.size()
+              << " backend=" << element_assembly_backend_name(cfg.cli.backend) << "\n";
     std::cout << "br/lambda0  beta/k0(FEM)  Analytic(ref)  HELMVEC3(ref)\n";
     for (int i = 0; i < (int)br_over_lambda_9.size(); ++i)
     {
@@ -614,8 +651,91 @@ int main(int argc, char **argv)
             });
     }
 
-    // Pre-visualizacao opcional de continuacao para um valor de d/a (depuracao visual).
-    auto eps13_single = helmvec23::eps_step_x(mesh, d13_over_a * a, eps_fill, 1.0);
+    perf.total_ms = total_watch.elapsed_ms();
+    perf.post_ms = std::max(0.0, perf.total_ms - perf.assembly_ms - perf.solve_ms);
+
+    const auto table9_csv_path = out_dirs.csv / "helmvec3_fig12_rect_table9.csv";
+    if (!helmvec3_output::write_table9_csv(table9_csv_path, table9_records))
+        std::cerr << "Aviso: falha ao escrever " << table9_csv_path << "\n";
+
+    run_timing_dispersion_csv::Record timing_record;
+    timing_record.case_label = "helmvec3_fig12_rect";
+    timing_record.geometry = "rect";
+    timing_record.backend = element_assembly_backend_name(cfg.cli.backend);
+    timing_record.debug_local_blocks = cfg.cli.debug_local_blocks ? 1 : 0;
+    timing_record.debug_candidates = cfg.cli.debug_candidates ? 1 : 0;
+    timing_record.a = a;
+    timing_record.b = b;
+    timing_record.d12 = d12;
+    timing_record.d13_preview_over_a = 0.0;
+    timing_record.eps_fill = eps_fill;
+    timing_record.nx = cfg.nx;
+    timing_record.ny = cfg.ny;
+    timing_record.mesh_nodes = static_cast<int>(mesh.nodes.size());
+    timing_record.mesh_tris = static_cast<int>(mesh.tris.size());
+    timing_record.table9_sample_count = static_cast<int>(table9_records.size());
+    timing_record.preview_sample_count = 0;
+    timing_record.table10_block_count = 0;
+    timing_record.table10_row_count = 0;
+    timing_record.assembly_ms = perf.assembly_ms;
+    timing_record.solve_ms = perf.solve_ms;
+    timing_record.post_ms = perf.post_ms;
+    timing_record.total_ms = perf.total_ms;
+    const auto timing_csv_path = out_dirs.root / "run_timing.csv";
+    if (!run_timing_dispersion_csv::write_csv(timing_csv_path.string(), timing_record))
+        std::cerr << "Aviso: falha ao escrever " << timing_csv_path << "\n";
+
+    timing::print_breakdown("helmvec3_fig12_rect", perf);
+    return 0;
+}
+
+int run_helmvec3_fig13_rect(int argc, char **argv)
+{
+    timing::Breakdown perf;
+    timing::Stopwatch total_watch;
+    const double a = 1.0;
+    const double b = 0.45;
+    const double d12 = 0.5 * b;
+    const double eps_fill = 2.45;
+
+    Fig13CliConfig cfg;
+    try
+    {
+        cfg = parse_fig13_cli(argc, argv);
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << "Erro ao interpretar argumentos: " << e.what() << "\n";
+        std::cerr << "Uso: ./helmvec3_fig13_rect [d_over_a_preview [nx [ny [debug]]]]"
+                  << " [--backend closed-form|gauss]"
+                  << " [--debug-local-blocks] [--debug-candidates]\n";
+        return 2;
+    }
+
+    const auto out_dirs = helmvec3_output::ensure_case_dirs("fig13_rect");
+    execution_log::ExecutionLogScope log_scope((out_dirs.root / "run.log").string());
+    if (!log_scope.active())
+    {
+        std::cerr << "Aviso: nao foi possivel abrir run.log em "
+                  << (out_dirs.root / "run.log")
+                  << " (" << log_scope.error_message() << ")\n";
+    }
+
+    Mesh2D mesh = make_rect_mesh(a, b, cfg.nx, cfg.ny);
+    std::vector<double> mu(mesh.tris.size(), 1.0);
+    print_output_dirs(out_dirs);
+
+    const std::vector<double> br_over_lambda_9 = {0.2, 0.3, 0.4, 0.5, 0.6};
+    const std::vector<double> br_over_lambda_10 = {0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0};
+    const std::vector<Table10Block> table10 = make_table10_blocks();
+
+    auto eps13_single = helmvec23::eps_step_x(mesh, cfg.d13_over_a * a, eps_fill, 1.0);
+    if (cfg.cli.debug_local_blocks)
+    {
+        const double k0_sample = 2.0 * M_PI * br_over_lambda_9.front() / b;
+        print_first_triangle_closed_form_debug(mesh, k0_sample, eps13_single, mu);
+    }
+
     auto ratio13_preview = trace_ratio_branch(
         mesh,
         eps13_single,
@@ -623,23 +743,27 @@ int main(int argc, char **argv)
         br_over_lambda_9,
         b,
         0.5,
-        cli.backend,
+        cfg.cli.backend,
         &perf,
         &out_dirs.linop,
-        std::string("helmvec3_rect_preview_da") + label_number(d13_over_a),
+        std::string("helmvec3_fig13_rect_preview_da") + label_number(cfg.d13_over_a),
         &out_dirs);
     std::vector<helmvec3_output::PreviewCsvRecord> preview_records;
     preview_records.reserve(br_over_lambda_9.size());
-    // Bloco acima reproduz a logica da Figura 13 (interface vertical).
-    std::cout << "\n[2.2.4] beta from given k0 (Figure 13, single d/a preview)\n";
-    std::cout << "d/a=" << d13_over_a << "\n";
+
+    std::cout << "[2.2.4] beta from given k0 (Figure 13, single d/a preview)\n";
+    std::cout << "a=" << a << " b=" << b << " eps_fill=" << eps_fill
+              << " d/a=" << cfg.d13_over_a
+              << " nx=" << cfg.nx << " ny=" << cfg.ny
+              << " tris=" << mesh.tris.size()
+              << " backend=" << element_assembly_backend_name(cfg.cli.backend) << "\n";
     std::cout << "br/lambda0  beta/k0(FEM branch)\n";
     for (int i = 0; i < (int)br_over_lambda_9.size(); ++i)
     {
         std::cout << br_over_lambda_9[i] << "  " << ratio13_preview[i].beta_ratio << "\n";
         preview_records.push_back(
             {
-                d13_over_a,
+                cfg.d13_over_a,
                 br_over_lambda_9[i],
                 ratio13_preview[i].beta_ratio,
                 ratio13_preview[i].selected_candidate_rank,
@@ -654,17 +778,14 @@ int main(int argc, char **argv)
             });
     }
 
-    // Validacao completa alinhada com a Tabela 10.
     std::cout << "\n[2.2.4] Figure 13 / Table 10 validation\n";
     std::cout << "d/a  br/lambda0  beta/k0(FEM matched)  Analytical(ref)  HELMVEC3(ref)\n";
     std::vector<helmvec3_output::Table10CsvRecord> table10_records;
     for (const auto &blk : table10)
     {
-        if (cli.debug_candidates)
+        if (cfg.cli.debug_candidates)
             std::cout << "  [debug] Figure13 block d/a=" << blk.d_over_a << "\n";
 
-        // Para cada d/a, calcula beta/k0 e faz casamento por proximidade
-        // com a familia analitica correspondente da Tabela 10.
         auto eps13 = helmvec23::eps_step_x(mesh, blk.d_over_a * a, eps_fill, 1.0);
         auto fem = match_ratio_to_reference(
             mesh,
@@ -673,11 +794,11 @@ int main(int argc, char **argv)
             br_over_lambda_10,
             b,
             blk.analytic_beta_over_k0,
-            cli.debug_candidates,
-            cli.backend,
+            cfg.cli.debug_candidates,
+            cfg.cli.backend,
             &perf,
             &out_dirs.linop,
-            std::string("helmvec3_rect_table10_da") + label_number(blk.d_over_a),
+            std::string("helmvec3_fig13_rect_table10_da") + label_number(blk.d_over_a),
             &out_dirs);
 
         for (int i = 0; i < (int)br_over_lambda_10.size(); ++i)
@@ -722,38 +843,29 @@ int main(int argc, char **argv)
     perf.total_ms = total_watch.elapsed_ms();
     perf.post_ms = std::max(0.0, perf.total_ms - perf.assembly_ms - perf.solve_ms);
 
-    const auto table9_csv_path = out_dirs.csv / "helmvec3_rect_table9.csv";
-    const auto preview_csv_path = out_dirs.csv / "helmvec3_rect_preview.csv";
-    const auto table10_csv_path = out_dirs.csv / "helmvec3_rect_table10.csv";
-    if (!helmvec3_output::write_table9_csv(table9_csv_path, table9_records))
-    {
-        std::cerr << "Aviso: falha ao escrever " << table9_csv_path << "\n";
-    }
+    const auto preview_csv_path = out_dirs.csv / "helmvec3_fig13_rect_preview.csv";
+    const auto table10_csv_path = out_dirs.csv / "helmvec3_fig13_rect_table10.csv";
     if (!helmvec3_output::write_preview_csv(preview_csv_path, preview_records))
-    {
         std::cerr << "Aviso: falha ao escrever " << preview_csv_path << "\n";
-    }
     if (!helmvec3_output::write_table10_csv(table10_csv_path, table10_records))
-    {
         std::cerr << "Aviso: falha ao escrever " << table10_csv_path << "\n";
-    }
 
     run_timing_dispersion_csv::Record timing_record;
-    timing_record.case_label = "helmvec3_rect";
+    timing_record.case_label = "helmvec3_fig13_rect";
     timing_record.geometry = "rect";
-    timing_record.backend = element_assembly_backend_name(cli.backend);
-    timing_record.debug_local_blocks = cli.debug_local_blocks ? 1 : 0;
-    timing_record.debug_candidates = cli.debug_candidates ? 1 : 0;
+    timing_record.backend = element_assembly_backend_name(cfg.cli.backend);
+    timing_record.debug_local_blocks = cfg.cli.debug_local_blocks ? 1 : 0;
+    timing_record.debug_candidates = cfg.cli.debug_candidates ? 1 : 0;
     timing_record.a = a;
     timing_record.b = b;
     timing_record.d12 = d12;
-    timing_record.d13_preview_over_a = d13_over_a;
+    timing_record.d13_preview_over_a = cfg.d13_over_a;
     timing_record.eps_fill = eps_fill;
-    timing_record.nx = nx;
-    timing_record.ny = ny;
+    timing_record.nx = cfg.nx;
+    timing_record.ny = cfg.ny;
     timing_record.mesh_nodes = static_cast<int>(mesh.nodes.size());
     timing_record.mesh_tris = static_cast<int>(mesh.tris.size());
-    timing_record.table9_sample_count = static_cast<int>(table9_records.size());
+    timing_record.table9_sample_count = 0;
     timing_record.preview_sample_count = static_cast<int>(preview_records.size());
     timing_record.table10_block_count = static_cast<int>(table10.size());
     timing_record.table10_row_count = static_cast<int>(table10_records.size());
@@ -763,10 +875,8 @@ int main(int argc, char **argv)
     timing_record.total_ms = perf.total_ms;
     const auto timing_csv_path = out_dirs.root / "run_timing.csv";
     if (!run_timing_dispersion_csv::write_csv(timing_csv_path.string(), timing_record))
-    {
         std::cerr << "Aviso: falha ao escrever " << timing_csv_path << "\n";
-    }
 
-    timing::print_breakdown("helmvec3_rect", perf);
+    timing::print_breakdown("helmvec3_fig13_rect", perf);
     return 0;
 }

@@ -105,7 +105,8 @@ add_executable(helmvec2_rect
   src/core/mesh2d_rect.cpp
 )
 
-add_executable(helmvec3_rect
+add_executable(helmvec3_fig12_rect
+  src/helmvec3/main_helmvec3_fig12_rect.cpp
   src/helmvec3/main_helmvec3_rect.cpp
   src/helmvec2/helmvec2_coupled_system.cpp
   src/edge/edge_assembly.cpp
@@ -116,7 +117,20 @@ add_executable(helmvec3_rect
   src/core/mesh2d_rect.cpp
 )
 
-add_executable(fem3d0_rect
+add_executable(helmvec3_fig13_rect
+  src/helmvec3/main_helmvec3_fig13_rect.cpp
+  src/helmvec3/main_helmvec3_rect.cpp
+  src/helmvec2/helmvec2_coupled_system.cpp
+  src/edge/edge_assembly.cpp
+  src/edge/edge_basis.cpp
+  src/edge/edge_dofs.cpp
+  src/core/helm10_scalar_system.cpp
+  src/core/fem_scalar_helm10.cpp
+  src/core/mesh2d_rect.cpp
+)
+
+add_executable(fem3d0_air
+  src/fem3d0/main_fem3d0_air.cpp
   src/fem3d0/main_fem3d0_rect.cpp
   src/core/mesh3d_rect.cpp
   src/core/mesh3d_cylinder.cpp
@@ -126,7 +140,74 @@ add_executable(fem3d0_rect
   src/edge3d/edge3d_assembly.cpp
 )
 
-add_executable(fem3d1_rect
+add_executable(fem3d0_half
+  src/fem3d0/main_fem3d0_half.cpp
+  src/fem3d0/main_fem3d0_rect.cpp
+  src/core/mesh3d_rect.cpp
+  src/core/mesh3d_cylinder.cpp
+  src/core/mesh3d_sphere.cpp
+  src/edge3d/edge3d_basis.cpp
+  src/edge3d/edge3d_dofs.cpp
+  src/edge3d/edge3d_assembly.cpp
+)
+
+add_executable(fem3d0_cyl
+  src/fem3d0/main_fem3d0_cyl.cpp
+  src/fem3d0/main_fem3d0_rect.cpp
+  src/core/mesh3d_rect.cpp
+  src/core/mesh3d_cylinder.cpp
+  src/core/mesh3d_sphere.cpp
+  src/edge3d/edge3d_basis.cpp
+  src/edge3d/edge3d_dofs.cpp
+  src/edge3d/edge3d_assembly.cpp
+)
+
+add_executable(fem3d0_sphere
+  src/fem3d0/main_fem3d0_sphere.cpp
+  src/fem3d0/main_fem3d0_rect.cpp
+  src/core/mesh3d_rect.cpp
+  src/core/mesh3d_cylinder.cpp
+  src/core/mesh3d_sphere.cpp
+  src/edge3d/edge3d_basis.cpp
+  src/edge3d/edge3d_dofs.cpp
+  src/edge3d/edge3d_assembly.cpp
+)
+
+add_executable(fem3d1_air
+  src/fem3d1/main_fem3d1_air.cpp
+  src/fem3d1/main_fem3d1_rect.cpp
+  src/core/mesh3d_rect.cpp
+  src/core/mesh3d_cylinder.cpp
+  src/core/mesh3d_sphere.cpp
+  src/edge3d/edge3d_basis.cpp
+  src/edge3d/edge3d_dofs.cpp
+  src/edge3d/edge3d_assembly.cpp
+)
+
+add_executable(fem3d1_half
+  src/fem3d1/main_fem3d1_half.cpp
+  src/fem3d1/main_fem3d1_rect.cpp
+  src/core/mesh3d_rect.cpp
+  src/core/mesh3d_cylinder.cpp
+  src/core/mesh3d_sphere.cpp
+  src/edge3d/edge3d_basis.cpp
+  src/edge3d/edge3d_dofs.cpp
+  src/edge3d/edge3d_assembly.cpp
+)
+
+add_executable(fem3d1_cyl
+  src/fem3d1/main_fem3d1_cyl.cpp
+  src/fem3d1/main_fem3d1_rect.cpp
+  src/core/mesh3d_rect.cpp
+  src/core/mesh3d_cylinder.cpp
+  src/core/mesh3d_sphere.cpp
+  src/edge3d/edge3d_basis.cpp
+  src/edge3d/edge3d_dofs.cpp
+  src/edge3d/edge3d_assembly.cpp
+)
+
+add_executable(fem3d1_sphere
+  src/fem3d1/main_fem3d1_sphere.cpp
   src/fem3d1/main_fem3d1_rect.cpp
   src/core/mesh3d_rect.cpp
   src/core/mesh3d_cylinder.cpp
@@ -147,9 +228,25 @@ target_include_directories(mixed_rect PRIVATE src)
 target_include_directories(mixed_circle PRIVATE src)
 target_include_directories(mixed_coax PRIVATE src)
 target_include_directories(helmvec2_rect PRIVATE src)
-target_include_directories(helmvec3_rect PRIVATE src)
-target_include_directories(fem3d0_rect PRIVATE src)
-target_include_directories(fem3d1_rect PRIVATE src)
+target_include_directories(helmvec3_fig12_rect PRIVATE src)
+target_include_directories(helmvec3_fig13_rect PRIVATE src)
+target_include_directories(fem3d0_air PRIVATE src)
+target_include_directories(fem3d0_half PRIVATE src)
+target_include_directories(fem3d0_cyl PRIVATE src)
+target_include_directories(fem3d0_sphere PRIVATE src)
+target_include_directories(fem3d1_air PRIVATE src)
+target_include_directories(fem3d1_half PRIVATE src)
+target_include_directories(fem3d1_cyl PRIVATE src)
+target_include_directories(fem3d1_sphere PRIVATE src)
+
+target_compile_definitions(fem3d0_air PRIVATE FEM3D0_NO_LEGACY_MAIN)
+target_compile_definitions(fem3d0_half PRIVATE FEM3D0_NO_LEGACY_MAIN)
+target_compile_definitions(fem3d0_cyl PRIVATE FEM3D0_NO_LEGACY_MAIN)
+target_compile_definitions(fem3d0_sphere PRIVATE FEM3D0_NO_LEGACY_MAIN)
+target_compile_definitions(fem3d1_air PRIVATE FEM3D1_NO_LEGACY_MAIN)
+target_compile_definitions(fem3d1_half PRIVATE FEM3D1_NO_LEGACY_MAIN)
+target_compile_definitions(fem3d1_cyl PRIVATE FEM3D1_NO_LEGACY_MAIN)
+target_compile_definitions(fem3d1_sphere PRIVATE FEM3D1_NO_LEGACY_MAIN)
 
 
 # LAPACKE + BLAS/LAPACK
@@ -171,6 +268,13 @@ target_link_libraries(mixed_rect PRIVATE ${LAPACKE_LIB} ${LAPACK_LIB} ${BLAS_LIB
 target_link_libraries(mixed_circle PRIVATE ${LAPACKE_LIB} ${LAPACK_LIB} ${BLAS_LIB})
 target_link_libraries(mixed_coax PRIVATE ${LAPACKE_LIB} ${LAPACK_LIB} ${BLAS_LIB})
 target_link_libraries(helmvec2_rect PRIVATE ${LAPACKE_LIB} ${LAPACK_LIB} ${BLAS_LIB})
-target_link_libraries(helmvec3_rect PRIVATE ${LAPACKE_LIB} ${LAPACK_LIB} ${BLAS_LIB})
-target_link_libraries(fem3d0_rect PRIVATE ${LAPACKE_LIB} ${LAPACK_LIB} ${BLAS_LIB})
-target_link_libraries(fem3d1_rect PRIVATE ${LAPACKE_LIB} ${LAPACK_LIB} ${BLAS_LIB})
+target_link_libraries(helmvec3_fig12_rect PRIVATE ${LAPACKE_LIB} ${LAPACK_LIB} ${BLAS_LIB})
+target_link_libraries(helmvec3_fig13_rect PRIVATE ${LAPACKE_LIB} ${LAPACK_LIB} ${BLAS_LIB})
+target_link_libraries(fem3d0_air PRIVATE ${LAPACKE_LIB} ${LAPACK_LIB} ${BLAS_LIB})
+target_link_libraries(fem3d0_half PRIVATE ${LAPACKE_LIB} ${LAPACK_LIB} ${BLAS_LIB})
+target_link_libraries(fem3d0_cyl PRIVATE ${LAPACKE_LIB} ${LAPACK_LIB} ${BLAS_LIB})
+target_link_libraries(fem3d0_sphere PRIVATE ${LAPACKE_LIB} ${LAPACK_LIB} ${BLAS_LIB})
+target_link_libraries(fem3d1_air PRIVATE ${LAPACKE_LIB} ${LAPACK_LIB} ${BLAS_LIB})
+target_link_libraries(fem3d1_half PRIVATE ${LAPACKE_LIB} ${LAPACK_LIB} ${BLAS_LIB})
+target_link_libraries(fem3d1_cyl PRIVATE ${LAPACKE_LIB} ${LAPACK_LIB} ${BLAS_LIB})
+target_link_libraries(fem3d1_sphere PRIVATE ${LAPACKE_LIB} ${LAPACK_LIB} ${BLAS_LIB})

@@ -66,7 +66,8 @@ VALIDATION_2D_CASE_IDS = {
     "mixed_circle",
     "mixed_coax",
     "helmvec2_rect",
-    "helmvec3_rect",
+    "helmvec3_fig12_rect",
+    "helmvec3_fig13_rect",
 }
 
 
@@ -123,15 +124,16 @@ CASE_SPECS: list[CaseSpec] = [
     CaseSpec("mixed_circle", "2.2.2", "2d", "mixed_circle", "Mixed circular cutoff snapshots"),
     CaseSpec("mixed_coax", "2.2.2", "2d", "mixed_coax", "Mixed coaxial cutoff snapshots"),
     CaseSpec("helmvec2_rect", "2.2.3", "2d", "helmvec2_rect", "Figure 11 / Table 8 validation"),
-    CaseSpec("helmvec3_rect", "2.2.4", "2d", "helmvec3_rect", "Figure 12-13 / Table 9-10 validation"),
-    CaseSpec("fem3d0_air", "3.1", "3d", "fem3d0_rect", "3D air cavity with fem3d0"),
-    CaseSpec("fem3d1_air", "3.1", "3d", "fem3d1_rect", "3D air cavity with fem3d1"),
-    CaseSpec("fem3d0_half", "3.1", "3d", "fem3d0_rect", "3D half-filled cavity with fem3d0"),
-    CaseSpec("fem3d1_half", "3.1", "3d", "fem3d1_rect", "3D half-filled cavity with fem3d1"),
-    CaseSpec("fem3d0_cyl", "3.1", "3d", "fem3d0_rect", "3D cylindrical cavity with fem3d0"),
-    CaseSpec("fem3d1_cyl", "3.1", "3d", "fem3d1_rect", "3D cylindrical cavity with fem3d1"),
-    CaseSpec("fem3d0_sphere", "3.1", "3d", "fem3d0_rect", "3D spherical cavity with fem3d0"),
-    CaseSpec("fem3d1_sphere", "3.1", "3d", "fem3d1_rect", "3D spherical cavity with fem3d1"),
+    CaseSpec("helmvec3_fig12_rect", "2.2.4", "2d", "helmvec3_fig12_rect", "Figure 12 / Table 9 validation"),
+    CaseSpec("helmvec3_fig13_rect", "2.2.4", "2d", "helmvec3_fig13_rect", "Figure 13 / Table 10 validation"),
+    CaseSpec("fem3d0_air", "3.1", "3d", "fem3d0_air", "3D air cavity with fem3d0"),
+    CaseSpec("fem3d1_air", "3.1", "3d", "fem3d1_air", "3D air cavity with fem3d1"),
+    CaseSpec("fem3d0_half", "3.1", "3d", "fem3d0_half", "3D half-filled cavity with fem3d0"),
+    CaseSpec("fem3d1_half", "3.1", "3d", "fem3d1_half", "3D half-filled cavity with fem3d1"),
+    CaseSpec("fem3d0_cyl", "3.1", "3d", "fem3d0_cyl", "3D cylindrical cavity with fem3d0"),
+    CaseSpec("fem3d1_cyl", "3.1", "3d", "fem3d1_cyl", "3D cylindrical cavity with fem3d1"),
+    CaseSpec("fem3d0_sphere", "3.1", "3d", "fem3d0_sphere", "3D spherical cavity with fem3d0"),
+    CaseSpec("fem3d1_sphere", "3.1", "3d", "fem3d1_sphere", "3D spherical cavity with fem3d1"),
 ]
 
 CASE_BY_ID = {spec.case_id: spec for spec in CASE_SPECS}
@@ -475,7 +477,9 @@ def config_id_for_case(case_id: str, params: dict[str, object]) -> str:
         return f"nr{params['nr']}_nt{params['nt']}"
     if case_id == "helmvec2_rect":
         return f"beta{format_number_tag(float(params['beta']))}_nx{params['nx']}_ny{params['ny']}"
-    if case_id == "helmvec3_rect":
+    if case_id == "helmvec3_fig12_rect":
+        return f"nx{params['nx']}_ny{params['ny']}"
+    if case_id == "helmvec3_fig13_rect":
         return f"d_over_a{format_number_tag(float(params['d_over_a']))}_nx{params['nx']}_ny{params['ny']}"
     if case_id.startswith("fem3d"):
         return f"nx{params['nx']}_ny{params['ny']}_nz{params['nz']}"
@@ -487,7 +491,7 @@ def scale_config_params(case_id: str, params: dict[str, object], node_scale: flo
     if math.isclose(node_scale, 1.0, rel_tol=0.0, abs_tol=1e-12):
         return scaled
 
-    if case_id in {"helm10_rect", "edge_rect", "mixed_rect", "helmvec2_rect", "helmvec3_rect"}:
+    if case_id in {"helm10_rect", "edge_rect", "mixed_rect", "helmvec2_rect", "helmvec3_fig12_rect", "helmvec3_fig13_rect"}:
         scaled["nx"], scaled["ny"] = scale_rect_grid_2d(int(params["nx"]), int(params["ny"]), node_scale)
         return scaled
 
@@ -582,11 +586,20 @@ def config_specs_for_case(
                 params={"beta": 10.0, "nx": 6, "ny": 6, "legacy_debug": 0},
             )
         ], node_scale)
-    if case.case_id == "helmvec3_rect":
+    if case.case_id == "helmvec3_fig12_rect":
+        return finalize_config_specs(case, [
+            ConfigSpec(
+                config_id="nx10_ny5",
+                label="Figure 12 / Table 9 default run",
+                purposes=("direct_default", "validation_default"),
+                params={"nx": 10, "ny": 5, "legacy_debug": 0},
+            )
+        ], node_scale)
+    if case.case_id == "helmvec3_fig13_rect":
         return finalize_config_specs(case, [
             ConfigSpec(
                 config_id=f"d_over_a{format_number_tag(0.20)}_nx10_ny5",
-                label="Figure 12-13 / Table 9-10 default run",
+                label="Figure 13 / Table 10 default run",
                 purposes=("direct_default", "validation_default"),
                 params={"d_over_a": 0.20, "nx": 10, "ny": 5, "legacy_debug": 0},
             )
@@ -1284,7 +1297,16 @@ def build_command(entry: ConfigEntry, build_dir: Path) -> list[str]:
             "--backend",
             entry.backend,
         ]
-    if case_id == "helmvec3_rect":
+    if case_id == "helmvec3_fig12_rect":
+        return [
+            str(exe),
+            str(params["nx"]),
+            str(params["ny"]),
+            str(params["legacy_debug"]),
+            "--backend",
+            entry.backend,
+        ]
+    if case_id == "helmvec3_fig13_rect":
         return [
             str(exe),
             str(params["d_over_a"]),
@@ -1295,10 +1317,8 @@ def build_command(entry: ConfigEntry, build_dir: Path) -> list[str]:
             entry.backend,
         ]
     if case_id.startswith("fem3d0_") or case_id.startswith("fem3d1_"):
-        case_name = case_id.split("_", 1)[1]
         return [
             str(exe),
-            f"--{case_name}",
             "--nx",
             str(params["nx"]),
             "--ny",
@@ -1383,8 +1403,9 @@ def build_validation_2d_rows(entry: ConfigEntry, stdout_text: str) -> list[dict[
                 )
     elif case_id == "helmvec2_rect":
         rows.extend(parse_helmvec2_table(stdout_text))
-    elif case_id == "helmvec3_rect":
+    elif case_id == "helmvec3_fig12_rect":
         rows.extend(parse_helmvec3_table9(stdout_text))
+    elif case_id == "helmvec3_fig13_rect":
         rows.extend(parse_helmvec3_table10(stdout_text))
 
     for row in rows:

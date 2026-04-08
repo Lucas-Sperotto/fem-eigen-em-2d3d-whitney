@@ -430,7 +430,8 @@ if [[ "$RUN_21" -eq 1 || "$RUN_221" -eq 1 || "$RUN_222" -eq 1 || "$RUN_223" -eq 
     fi
 
     if [[ "$RUN_224" -eq 1 ]]; then
-      run ./helmvec3_rect 0.20 10 5 --backend "$BACKEND" "${DEBUG_ARGS[@]}"
+      run ./helmvec3_fig12_rect 10 5 --backend "$BACKEND" "${DEBUG_ARGS[@]}"
+      run ./helmvec3_fig13_rect 0.20 10 5 --backend "$BACKEND" "${DEBUG_ARGS[@]}"
     fi
   )
 else
@@ -443,20 +444,20 @@ if [[ "$SKIP_3D" -eq 0 ]]; then
     (
       cd "$BUILD_DIR"
       if [[ "$RUN_3D_AIR" -eq 1 ]]; then
-        run ./fem3d0_rect --air --backend "$BACKEND" "${DEBUG_ARGS[@]}"
-        run ./fem3d1_rect --air --backend "$BACKEND" "${DEBUG_ARGS[@]}"
+        run ./fem3d0_air --backend "$BACKEND" "${DEBUG_ARGS[@]}"
+        run ./fem3d1_air --backend "$BACKEND" "${DEBUG_ARGS[@]}"
       fi
       if [[ "$RUN_3D_HALF" -eq 1 ]]; then
-        run ./fem3d0_rect --half --backend "$BACKEND" "${DEBUG_ARGS[@]}"
-        run ./fem3d1_rect --half --backend "$BACKEND" "${DEBUG_ARGS[@]}"
+        run ./fem3d0_half --backend "$BACKEND" "${DEBUG_ARGS[@]}"
+        run ./fem3d1_half --backend "$BACKEND" "${DEBUG_ARGS[@]}"
       fi
       if [[ "$RUN_3D_CYL" -eq 1 ]]; then
-        run ./fem3d0_rect --cyl --backend "$BACKEND" "${DEBUG_ARGS[@]}"
-        run ./fem3d1_rect --cyl --backend "$BACKEND" "${DEBUG_ARGS[@]}"
+        run ./fem3d0_cyl --backend "$BACKEND" "${DEBUG_ARGS[@]}"
+        run ./fem3d1_cyl --backend "$BACKEND" "${DEBUG_ARGS[@]}"
       fi
       if [[ "$RUN_3D_SPHERE" -eq 1 ]]; then
-        run ./fem3d0_rect --sphere --backend "$BACKEND" "${DEBUG_ARGS[@]}"
-        run ./fem3d1_rect --sphere --backend "$BACKEND" "${DEBUG_ARGS[@]}"
+        run ./fem3d0_sphere --backend "$BACKEND" "${DEBUG_ARGS[@]}"
+        run ./fem3d1_sphere --backend "$BACKEND" "${DEBUG_ARGS[@]}"
       fi
     )
   else

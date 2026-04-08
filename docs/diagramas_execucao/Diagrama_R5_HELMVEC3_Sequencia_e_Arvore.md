@@ -7,9 +7,16 @@ Casos do artigo cobertos por esta raiz:
 - Caso 9: dispersão com interface horizontal, Figura 12 / Tabela 9
 - Caso 10: dispersão com interface vertical, Figura 13 / Tabela 10
 
-Executável atual correspondente:
+Executáveis atuais correspondentes:
 
-- `helmvec3_rect`
+- `helmvec3_fig12_rect`
+- `helmvec3_fig13_rect`
+
+Observacao de implementacao:
+
+- `main_helmvec3_rect.cpp` permanece como nucleo compartilhado;
+- os wrappers publicos ficam em `main_helmvec3_fig12_rect.cpp` e
+  `main_helmvec3_fig13_rect.cpp`.
 
 Entrada didática por equação:
 

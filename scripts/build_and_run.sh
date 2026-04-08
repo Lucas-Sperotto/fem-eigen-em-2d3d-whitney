@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -e  # para parar se der erro
+set -euo pipefail
 
 # Ir para a raiz do projeto (script está em scripts/)
 cd "$(dirname "$0")/.."
@@ -22,37 +22,69 @@ mkdir -p out
 echo "🔧 Configurando projeto..."
 cmake -S . -B build
 
-echo "⚙️ Compilando helm..."
-cmake --build build --target helm10_rect helm10_circle helm10_coax -j$(nproc)
+JOBS="$(nproc)"
 
-echo "🚀 Executando helm..."
-./build/helm10_rect 1.0 13 28 20 --backend closed-form
-./build/helm10_circle 10 40 20 --backend closed-form
-./build/helm10_coax 10 40 20 --backend closed-form
+echo "⚙️ Compilando a suíte didática 2D + 3D..."
+cmake --build build \
+    --target \
+    helm10_rect helm10_circle helm10_coax \
+    edge_rect edge_circle edge_coax \
+    mixed_rect mixed_circle mixed_coax \
+    helmvec2_rect \
+    helmvec3_fig12_rect helmvec3_fig13_rect \
+    fem3d0_air fem3d0_half fem3d0_cyl fem3d0_sphere \
+    fem3d1_air fem3d1_half fem3d1_cyl fem3d1_sphere \
+    -j"${JOBS}"
 
-echo "📊 Plotando helm..."
+echo "🚀 Executando HELM10 com a discretização de referência do artigo..."
+./build/helm10_rect 1.0 10 20 10 --backend closed-form #400 elementos
+./build/helm10_circle 8 15 10 --backend closed-form #200 elementos
+./build/helm10_coax 10 17 10 --backend closed-form #340 elementos
+
+echo "📊 Gerando imagens do HELM10..."
 python3 scripts/helm10.py
 
-echo "⚙️ Compilando edge..."
-cmake --build build --target edge_rect edge_circle edge_coax -j$(nproc)
+echo "🚀 Executando HELMVEC com a discretização de referência do artigo..."
+./build/edge_rect 10 20 10 --backend closed-form #400 elementos
+./build/edge_circle 8 15 10 --backend closed-form #200 elementos
+./build/edge_coax 10 17 10 --backend closed-form #340 elementos
 
-echo "🚀 Executando edge..."
-./build/edge_rect 13 28 20 --backend closed-form
-./build/edge_circle 10 40 20 --backend closed-form
-./build/edge_coax 10 40 20 --backend closed-form
-
-echo "📊 Plotando edge..."
+echo "📊 Gerando imagens do HELMVEC..."
 python3 scripts/helmvec.py
 
-echo "⚙️ Compilando mixed..."
-cmake --build build --target mixed_rect mixed_circle mixed_coax -j$(nproc)
+echo "🚀 Executando HELMVEC1 com a discretização de referência do artigo..."
+./build/mixed_rect 10 20 10 --backend closed-form #400 elementos
+./build/mixed_circle 8 15 10 --backend closed-form #200 elementos
+./build/mixed_coax 10 17 10 --backend closed-form #340 elementos
 
-echo "🚀 Executando mixed..."
-./build/mixed_rect 13 28 --backend closed-form
-./build/mixed_circle 10 40 --backend closed-form
-./build/mixed_coax 10 40 --backend closed-form
-
-echo "📊 Plotando mixed..."
+echo "📊 Gerando imagens do HELMVEC1..."
 python3 scripts/helmvec1.py
 
+echo "🚀 Executando HELMVEC2 com a discretização de referência do artigo..."
+./build/helmvec2_rect 10 20 20 10 --backend closed-form #seguindo o padrão do retangular
+
+echo "📊 Gerando imagens do HELMVEC2..."
+python3 scripts/helmvec2.py
+
+echo "🚀 Executando HELMVEC3 com a discretização de referência do artigo..."
+./build/helmvec3_fig12_rect 10 5 --backend closed-form #100 elementos
+./build/helmvec3_fig13_rect 0.20 10 5 --backend closed-form #100 elementos
+
+echo "📊 Gerando imagens do HELMVEC3..."
+python3 scripts/helmvec3.py
+
+echo "🚀 Executando FEM3D0/FEM3D1 com as discretizações de referência do artigo..."
+./build/fem3d0_air --backend closed-form #343 elementos
+./build/fem3d1_air --backend closed-form #343 elementos
+./build/fem3d0_half --backend closed-form #615 elementos
+./build/fem3d1_half --backend closed-form #615 elementos
+./build/fem3d0_cyl --backend closed-form #633 elementos
+./build/fem3d1_cyl --backend closed-form #633 elementos
+./build/fem3d0_sphere --backend closed-form #473 elementos
+./build/fem3d1_sphere --backend closed-form #473 elementos
+
 echo "✅ Tudo finalizado!"
+# air-filled: 343 elementos
+# half-filled: 615 elementos
+# circular cylindrical cavity: 633 elementos
+# spherical cavity: 473 elementos

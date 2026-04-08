@@ -496,10 +496,12 @@ def main() -> int:
             # 2.2.4
             hv3_rows: list[dict[str, object]] = []
             if wants("helmvec3_rect", "2d"):
-                stdout = run_exe("helmvec3_rect", "2.2.4", f"{hv3[0]}x{hv3[1]}",
-                                 [str(build_dir / "helmvec3_rect"), "0.20", str(hv3[0]), str(hv3[1]), "--backend", backend])
-                hv3_rows += [{**row, "backend": backend, "level": level, "resolution": f"{hv3[0]}x{hv3[1]}"} for row in parse_helmvec3_table9(stdout)]
-                hv3_rows += [{**row, "backend": backend, "level": level, "resolution": f"{hv3[0]}x{hv3[1]}"} for row in parse_helmvec3_table10(stdout)]
+                stdout_fig12 = run_exe("helmvec3_fig12_rect", "2.2.4", f"{hv3[0]}x{hv3[1]}",
+                                       [str(build_dir / "helmvec3_fig12_rect"), str(hv3[0]), str(hv3[1]), "--backend", backend])
+                stdout_fig13 = run_exe("helmvec3_fig13_rect", "2.2.4", f"{hv3[0]}x{hv3[1]}",
+                                       [str(build_dir / "helmvec3_fig13_rect"), "0.20", str(hv3[0]), str(hv3[1]), "--backend", backend])
+                hv3_rows += [{**row, "backend": backend, "level": level, "resolution": f"{hv3[0]}x{hv3[1]}"} for row in parse_helmvec3_table9(stdout_fig12)]
+                hv3_rows += [{**row, "backend": backend, "level": level, "resolution": f"{hv3[0]}x{hv3[1]}"} for row in parse_helmvec3_table10(stdout_fig13)]
 
             if mixed_2d_rows or hv2_rows or hv3_rows:
                 csv_22 = level_root / "validation" / "validation_2d_22.csv"

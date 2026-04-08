@@ -47,9 +47,9 @@ CORE_CASES = [
     CaseSpec("edge_rect", "2.2.1", "edge_rect", ("14", "14", "0"), "retangular vetorial, sem exportacao"),
     CaseSpec("mixed_rect", "2.2.2", "mixed_rect", ("12", "6"), "sistema misto retangular"),
     CaseSpec("helmvec2_rect", "2.2.3", "helmvec2_rect", ("10", "6", "6", "0"), "k0 dado beta, Figura 11"),
-    CaseSpec("helmvec3_rect", "2.2.4", "helmvec3_rect", ("0.20", "10", "5", "0"), "beta dado k0, Fig. 12/13"),
-    CaseSpec("fem3d0_air", "3.1", "fem3d0_rect", ("--air", "--nx", "8", "--ny", "4", "--nz", "6"), "cavidade retangular 3D densa"),
-    CaseSpec("fem3d1_air", "3.1", "fem3d1_rect", ("--air", "--nx", "8", "--ny", "4", "--nz", "6"), "cavidade retangular 3D esparsa"),
+    CaseSpec("helmvec3_fig13_rect", "2.2.4", "helmvec3_fig13_rect", ("0.20", "10", "5", "0"), "beta dado k0, Fig. 13 / Tabela 10"),
+    CaseSpec("fem3d0_air", "3.1", "fem3d0_air", ("--nx", "8", "--ny", "4", "--nz", "6"), "cavidade retangular 3D densa"),
+    CaseSpec("fem3d1_air", "3.1", "fem3d1_air", ("--nx", "8", "--ny", "4", "--nz", "6"), "cavidade retangular 3D esparsa"),
 ]
 
 ALL_CASES = CORE_CASES + [
@@ -59,8 +59,8 @@ ALL_CASES = CORE_CASES + [
     CaseSpec("edge_coax", "2.2.1", "edge_coax", ("16", "96", "0"), "coaxial vetorial, sem exportacao"),
     CaseSpec("mixed_circle", "2.2.2", "mixed_circle", ("14", "72"), "sistema misto circular"),
     CaseSpec("mixed_coax", "2.2.2", "mixed_coax", ("14", "72"), "sistema misto coaxial"),
-    CaseSpec("fem3d0_half", "3.1", "fem3d0_rect", ("--half", "--nx", "8", "--ny", "6", "--nz", "6"), "cavidade meia-preenchida 3D densa"),
-    CaseSpec("fem3d1_half", "3.1", "fem3d1_rect", ("--half", "--nx", "8", "--ny", "6", "--nz", "6"), "cavidade meia-preenchida 3D esparsa"),
+    CaseSpec("fem3d0_half", "3.1", "fem3d0_half", ("--nx", "8", "--ny", "6", "--nz", "6"), "cavidade meia-preenchida 3D densa"),
+    CaseSpec("fem3d1_half", "3.1", "fem3d1_half", ("--nx", "8", "--ny", "6", "--nz", "6"), "cavidade meia-preenchida 3D esparsa"),
 ]
 
 

@@ -33,16 +33,21 @@ Evitar duplicacao de:
 
 - `fem3d_case_driver.hpp`
   - parser de CLI comum (`--air`, `--half`, `--cyl`, `--sphere`, `--all`, `--nx --ny --nz`),
+  - parser dedicado por caso (`parse_single_case_cli(...)`),
   - selecao de casos,
   - construcao de malha/material por caso (`PreparedCase`),
   - fluxo `for_each_selected_case(...)`.
+- `fem3d_case_output.hpp`
+  - padronizacao de pastas `out/fem3d{0,1}/<caso>/`,
+  - escrita de `modes.csv`,
+  - apoio a `run.log` e `linop/`.
 
 ## 3) Estruturas principais
 
 - `Grid3D {nx, ny, nz}`
 - `RefRow {mode, analytical, ref_paper}`
 - `PreparedCase`
-  - `id`, `header`, `mesh`,
+  - `id`, `case_name`, `header`, `grid`, `mesh`,
   - `eps_r_tet`, `mu_r_tet`,
   - `rows` (referencias modais).
 
@@ -120,14 +125,22 @@ Essas expressoes sao as que aparecem materializadas no backend
 
 ## 4) Beneficios para o projeto
 
-- `main_fem3d0_rect.cpp` e `main_fem3d1_rect.cpp` ficam curtos e focados no solver.
+- `main_fem3d0_rect.cpp` e `main_fem3d1_rect.cpp` concentram o nucleo compartilhado do solver.
+- os wrappers `main_fem3d{0,1}_{air,half,cyl,sphere}.cpp` deixam explicito
+  qual executavel reproduz cada caso do artigo.
 - Mudancas de caso/parametro de referencia ficam em um unico lugar.
 - Scripts de validacao (`validate_3d_31.py`) continuam com formato de saida
   estavel mesmo apos refatoracoes internas.
+- Cada caso 3D agora gera um pacote didatico rastreavel com:
+  - `run.log`,
+  - `run_timing.csv`,
+  - `csv/<solver>_<caso>_modes.csv`,
+  - `linop/` com `S`, `T`, autovalores e autovetores.
 
 ## 4.1) Flags de depuracao compartilhadas
 
-Os drivers `fem3d0_rect` e `fem3d1_rect` aceitam:
+Os modulos internos compartilhados `main_fem3d0_rect.cpp` e
+`main_fem3d1_rect.cpp` aceitam:
 
 - `--debug-local-blocks`
   - imprime os blocos locais `Sel` e `Tel` do primeiro tetraedro,
@@ -148,6 +161,11 @@ Para acompanhar a saida completa durante a validacao automatica:
 ```bash
 python3 scripts/validate_3d_31.py --backend closed-form --show-output --debug-candidates
 ```
+
+Na casca publica atual, a recomendacao e usar os executaveis por caso:
+
+- `fem3d0_air`, `fem3d0_half`, `fem3d0_cyl`, `fem3d0_sphere`
+- `fem3d1_air`, `fem3d1_half`, `fem3d1_cyl`, `fem3d1_sphere`
 
 ## 5) Relacao com a secao 3.1 do artigo
 

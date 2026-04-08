@@ -21,7 +21,13 @@ com comparacao contra:
 - analitico,
 - referencia publicada (FEM3D1 / ref. 17 do artigo).
 
-Arquivo principal:
+Entradas publicas:
+- `main_fem3d0_air.cpp`
+- `main_fem3d0_half.cpp`
+- `main_fem3d0_cyl.cpp`
+- `main_fem3d0_sphere.cpp`
+
+Implementacao compartilhada:
 - `main_fem3d0_rect.cpp`
 
 ## 2) Pipeline numerico
@@ -83,34 +89,28 @@ Os detalhes de `K_mn` e `I1..I10` ficam documentados em:
 
 ## 3) Casos suportados
 
-- `--air` (Figura 15 / Tabela 12)
-  - cavidade retangular com ar.
-- `--half` (Figura 16 / Tabela 13)
-  - cavidade retangular meio preenchida em `z`.
-- `--cyl` (Figura 17 / Tabela 14)
-  - cavidade cilindrica com ar.
-- `--sphere` (Tabela 15)
-  - cavidade esferica com ar.
-- `--all`
-  - executa os quatro casos.
+- `fem3d0_air` (Figura 15 / Tabela 12)
+- `fem3d0_half` (Figura 16 / Tabela 13)
+- `fem3d0_cyl` (Figura 17 / Tabela 14)
+- `fem3d0_sphere` (Tabela 15)
 
-Defaults do executavel:
-- sem flags: roda apenas `--air`.
-- com `--nx --ny --nz`: sobrescreve malha padrao do caso selecionado.
+Cada executavel ja nasce fixo em um caso do artigo:
+
+- sem flags de caso;
+- com `--nx --ny --nz`: sobrescreve a malha padrao daquele caso;
 - sem `--backend`: usa `closed-form` como fluxo publico padrao.
 
 ## 4) Uso
 
 ```bash
-./build/fem3d0_rect
-./build/fem3d0_rect --half
-./build/fem3d0_rect --cyl
-./build/fem3d0_rect --sphere
-./build/fem3d0_rect --all
-./build/fem3d0_rect --all --nx 5 --ny 4 --nz 4
-./build/fem3d0_rect --air --backend closed-form --debug-local-blocks
-./build/fem3d0_rect --air --debug-candidates
-./build/fem3d0_rect --help
+./build/fem3d0_air
+./build/fem3d0_half
+./build/fem3d0_cyl
+./build/fem3d0_sphere
+./build/fem3d0_air --nx 5 --ny 4 --nz 4
+./build/fem3d0_air --backend closed-form --debug-local-blocks
+./build/fem3d0_air --debug-candidates
+./build/fem3d0_air --help
 ```
 
 ## 5) Saida tipica
@@ -126,6 +126,33 @@ Para cada caso:
 
 A tabela usa matching agrupado por degenerescencia para evitar trocas
 artificiais de ordem modal.
+
+## 5.1) Artefatos salvos por caso
+
+Cada caso agora grava:
+
+- `out/fem3d0/run.log`
+  - trilha textual completa da execucao, cobrindo todos os casos selecionados.
+- `out/fem3d0/<caso>/run.log`
+  - trilha textual especifica do caso.
+- `out/fem3d0/<caso>/run_timing.csv`
+  - configuracao da malha e tempos de montagem, solve e pos-processamento.
+- `out/fem3d0/<caso>/csv/fem3d0_<caso>_modes.csv`
+  - resumo modal alinhado com as Tabelas 12-15.
+- `out/fem3d0/<caso>/linop/`
+  - `S`, `T`, autovalores e autovetores em CSV.
+
+Exemplo para `fem3d0_air`:
+
+```text
+out/fem3d0/air/run.log
+out/fem3d0/air/run_timing.csv
+out/fem3d0/air/csv/fem3d0_air_modes.csv
+out/fem3d0/air/linop/fem3d0_air_S_crs.csv
+out/fem3d0/air/linop/fem3d0_air_T_crs.csv
+out/fem3d0/air/linop/fem3d0_air_eigenvalues.csv
+out/fem3d0/air/linop/fem3d0_air_eigenvectors.csv
+```
 
 Flags de depuracao:
 - `--debug-local-blocks`: imprime `Sel` e `Tel` do primeiro tetraedro

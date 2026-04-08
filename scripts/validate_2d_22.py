@@ -253,7 +253,7 @@ def parse_args() -> argparse.Namespace:
     ap.add_argument("--beta", type=float, default=10.0, help="beta*L for helmvec2_rect.")
     ap.add_argument("--hv2-nx", type=int, default=6)
     ap.add_argument("--hv2-ny", type=int, default=6)
-    ap.add_argument("--d-over-a", type=float, default=0.20, help="Figure 13 preview parameter for helmvec3_rect.")
+    ap.add_argument("--d-over-a", type=float, default=0.20, help="Figure 13 preview parameter for helmvec3_fig13_rect.")
     ap.add_argument("--hv3-nx", type=int, default=10)
     ap.add_argument("--hv3-ny", type=int, default=5)
     ap.add_argument("--debug-local-blocks", action="store_true", help="Propaga --debug-local-blocks para helmvec2/helmvec3.")
@@ -304,17 +304,23 @@ def main() -> None:
             args.verbose,
             args.show_output,
         )
-        out_hv3 = run_checked(
+        out_hv3_fig12 = run_checked(
             build_dir,
-            ["./helmvec3_rect", f"{args.d_over_a}", str(args.hv3_nx), str(args.hv3_ny), "0", "--backend", backend, *debug_args],
+            ["./helmvec3_fig12_rect", str(args.hv3_nx), str(args.hv3_ny), "0", "--backend", backend, *debug_args],
+            args.verbose,
+            args.show_output,
+        )
+        out_hv3_fig13 = run_checked(
+            build_dir,
+            ["./helmvec3_fig13_rect", f"{args.d_over_a}", str(args.hv3_nx), str(args.hv3_ny), "0", "--backend", backend, *debug_args],
             args.verbose,
             args.show_output,
         )
 
         backend_rows: list[dict] = []
         backend_rows.extend(parse_helmvec2_table(out_hv2))
-        backend_rows.extend(parse_helmvec3_table9(out_hv3))
-        backend_rows.extend(parse_helmvec3_table10(out_hv3))
+        backend_rows.extend(parse_helmvec3_table9(out_hv3_fig12))
+        backend_rows.extend(parse_helmvec3_table10(out_hv3_fig13))
         backend_rows.extend(
             parse_mixed_rect_table(
                 out_mixed_rect,

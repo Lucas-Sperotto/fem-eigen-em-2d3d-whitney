@@ -726,6 +726,17 @@ O salto para 3D não abandona a lógica construída em 2D. O artigo continua tra
 - A passagem de (152) para (163) merece atenção especial: ali a base de Whitney deixa de ser apenas uma definição abstrata e passa a ter forma explícita em função das coordenadas do tetraedro.
 - As relações $B_{ym} = -B_{xm}$, $B_{zm} = -C_{xm}$ e $C_{zm} = -C_{ym}$ são úteis para verificar coerência algébrica entre os coeficientes auxiliares.
 
+### Ligações diretas com o código atual
+
+- `FEM3D0` e `FEM3D1` hoje gravam, para cada caso 3D, um pacote didático com:
+  - `run.log`
+  - `run_timing.csv`
+  - `modes.csv`
+  - `linop/` com `S`, `T`, autovalores e autovetores
+- a referência operacional dessas saídas está em:
+  - [FEM3D_CSV_Referencia.md](../FEM3D_CSV_Referencia.md)
+  - [Artefatos_Espectrais_CSV_Referencia.md](../Artefatos_Espectrais_CSV_Referencia.md)
+
 ---
 
 ## Navegação
