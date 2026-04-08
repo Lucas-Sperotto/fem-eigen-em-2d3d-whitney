@@ -31,7 +31,8 @@
 inline void write_vtk_unstructured_tri_scalar(
     const std::string &path,
     const Mesh2D &mesh,
-    const std::vector<double> &nodal_scalar)
+    const std::vector<double> &nodal_scalar,
+    const std::string &scalar_name = "phi")
 {
     std::ofstream f(path);
     f << "# vtk DataFile Version 3.0\n";
@@ -55,7 +56,7 @@ inline void write_vtk_unstructured_tri_scalar(
         f << "5\n"; // VTK_TRIANGLE
 
     f << "POINT_DATA " << mesh.nodes.size() << "\n";
-    f << "SCALARS phi double 1\n";
+    f << "SCALARS " << scalar_name << " double 1\n";
     f << "LOOKUP_TABLE default\n";
     for (size_t i = 0; i < nodal_scalar.size(); i++)
     {

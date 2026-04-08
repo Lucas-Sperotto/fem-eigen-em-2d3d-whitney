@@ -19,7 +19,7 @@ Ele deve ser lido junto com:
 O CSV de modos usa hoje o cabecalho:
 
 ```text
-formulation,dominant_block,component_label,family,mode_label,positive_rank,eig_index,m,n,p,ar_m,b_m,r_m,r1_m,r2_m,kc_fem,kc_ana,kc_ar_fem,kc_ar_ana,kc_r_fem,kc_r_ana,kc_r1_fem,kc_r1_ana,error_percent,rho_abs,edge_energy,scalar_energy,dominant_energy_ratio,match_space,match_method,mode_status
+formulation,dominant_block,component_label,family,mode_label,positive_rank,eig_index,m,n,p,ar_m,b_m,r_m,r1_m,r2_m,kc_fem,kc_ana,kc_ar_fem,kc_ar_ana,kc_r_fem,kc_r_ana,kc_r1_fem,kc_r1_ana,error_percent,rho_abs,edge_energy,scalar_energy,dominant_energy_ratio,match_space,match_method,mode_status,field_data_kind,field_status,fields_csv_file,vtk_file
 ```
 
 As colunas geometricas e analiticas que nao se aplicam ao caso ficam vazias.
@@ -135,10 +135,10 @@ kc_r1_fem = kc_fem * r1
   - forma normalizada do cutoff analitico no caso coaxial.
 
 - `error_percent`
-  - erro percentual entre `kc_fem` e `kc_ana`:
+  - erro percentual relativo absoluto entre `kc_fem` e `kc_ana`:
 
 ```text
-error_percent = 100 * (kc_fem - kc_ana) / kc_ana
+error_percent = 100 * abs(kc_ana - kc_fem) / abs(kc_ana)
 ```
 
 - `rho_abs`
@@ -185,6 +185,26 @@ dominant_energy_ratio =
   - valores tipicos:
     - `edge_dominant`
     - `scalar_dominant`
+
+- `field_data_kind`
+  - tipo de artefato espacial associado ao modo.
+  - valores atuais:
+    - `edge_vector_cell`
+    - `scalar_nodal`
+
+- `field_status`
+  - status textual resumido da exportacao espacial.
+  - valores atuais:
+    - `cell_centroid_unit_peak_normalized`
+    - `nodal_unit_peak_normalized`
+
+- `fields_csv_file`
+  - nome do CSV espacial correspondente ao modo.
+  - o formato depende de `field_data_kind`.
+
+- `vtk_file`
+  - nome do arquivo VTK correspondente ao mesmo modo.
+  - ele guarda a conectividade da malha usada pelo script de imagens.
 
 ## Como a classificacao por energia funciona
 
@@ -258,6 +278,27 @@ onde:
   [main_mixed_rect.cpp](/home/sperotto/tp3485-fem-eigen-em/src/helmvec1/main_mixed_rect.cpp)
 - matching circular:
   [main_mixed_circle.cpp](/home/sperotto/tp3485-fem-eigen-em/src/helmvec1/main_mixed_circle.cpp)
+
+## Como a exportacao espacial funciona
+
+Depois do matching e da classificacao por bloco dominante, o repositorio agora
+exporta um artefato espacial coerente com o tipo fisico do modo:
+
+- `dominant_block = edge`
+  - exporta campo transversal por celula
+  - `Et` na formulacao `E`
+  - `Ht` na formulacao `H`
+
+- `dominant_block = scalar`
+  - exporta componente longitudinal por no
+  - `Ez` na formulacao `E`
+  - `Hz` na formulacao `H`
+
+Isso evita fingir que todos os modos do `HELMVEC1` sao do mesmo tipo.
+
+Os detalhes dos CSVs espaciais ficam em:
+
+- [HELMVEC1_CSV_Campos_Referencia.md](HELMVEC1_CSV_Campos_Referencia.md)
 - matching coaxial:
   [main_mixed_coax.cpp](/home/sperotto/tp3485-fem-eigen-em/src/helmvec1/main_mixed_coax.cpp)
 

@@ -27,7 +27,9 @@ struct CaseDirs
 {
     std::filesystem::path root;
     std::filesystem::path csv;
+    std::filesystem::path vtk;
     std::filesystem::path img;
+    std::filesystem::path linop;
 };
 
 struct ModeCsvRecord
@@ -63,6 +65,10 @@ struct ModeCsvRecord
     std::string match_space;
     std::string match_method;
     std::string mode_status;
+    std::string field_data_kind;
+    std::string field_status;
+    std::string fields_csv_file;
+    std::string vtk_file;
 };
 
 inline std::string format_float(double value)
@@ -77,10 +83,14 @@ inline CaseDirs ensure_case_dirs(const std::string &case_name)
     CaseDirs dirs;
     dirs.root = output_paths::ensure_case_dir("helmvec1/" + case_name);
     dirs.csv = dirs.root / "csv";
+    dirs.vtk = dirs.root / "vtk";
     dirs.img = dirs.root / "img";
+    dirs.linop = dirs.root / "linop";
     std::error_code ec;
     std::filesystem::create_directories(dirs.csv, ec);
+    std::filesystem::create_directories(dirs.vtk, ec);
     std::filesystem::create_directories(dirs.img, ec);
+    std::filesystem::create_directories(dirs.linop, ec);
     return dirs;
 }
 
@@ -97,7 +107,8 @@ inline bool write_modes_csv(
            "positive_rank,eig_index,m,n,p,ar_m,b_m,r_m,r1_m,r2_m,"
            "kc_fem,kc_ana,kc_ar_fem,kc_ar_ana,kc_r_fem,kc_r_ana,"
            "kc_r1_fem,kc_r1_ana,error_percent,rho_abs,edge_energy,scalar_energy,"
-           "dominant_energy_ratio,match_space,match_method,mode_status\n";
+           "dominant_energy_ratio,match_space,match_method,mode_status,"
+           "field_data_kind,field_status,fields_csv_file,vtk_file\n";
 
     for (const ModeCsvRecord &rec : records)
     {
@@ -131,7 +142,11 @@ inline bool write_modes_csv(
             << rec.dominant_energy_ratio << ","
             << rec.match_space << ","
             << rec.match_method << ","
-            << rec.mode_status << "\n";
+            << rec.mode_status << ","
+            << rec.field_data_kind << ","
+            << rec.field_status << ","
+            << rec.fields_csv_file << ","
+            << rec.vtk_file << "\n";
     }
 
     return static_cast<bool>(out);

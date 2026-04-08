@@ -72,6 +72,7 @@ Todos os arquivos da trilha principal agora terminam com links de `Anterior` e `
 - [Casos_de_Teste_do_Artigo.md](Casos_de_Teste_do_Artigo.md): tabela consolidada com os casos numéricos do artigo.
 - [Matriz_Casos_Executaveis_Arvore_de_Chamada.md](Matriz_Casos_Executaveis_Arvore_de_Chamada.md): ponte entre casos do artigo, executáveis atuais e raízes da árvore de chamada.
 - [Tabela_Executaveis_Entradas_Saidas.md](Tabela_Executaveis_Entradas_Saidas.md): tabela direta `executável -> entrada -> saída`, útil para operação e estudo.
+- [Artefatos_Espectrais_CSV_Referencia.md](Artefatos_Espectrais_CSV_Referencia.md): referencia central dos arquivos `linop/*.csv`, cobrindo matrizes em CRS, autovalores ordenados e autovetores ordenados das familias `HELM10` a `HELMVEC3`.
 - [HELM10_CSV_Modos_Referencia.md](HELM10_CSV_Modos_Referencia.md): glossario didatico das colunas do CSV de modos do `HELM10`, ligado à Secao 2.1, incluindo a explicacao de `rho_abs` e do matching por correlacao de massa.
 - [HELM10_CSV_Campos_Referencia.md](HELM10_CSV_Campos_Referencia.md): glossario didatico das colunas do CSV de campos nodais do `HELM10`, ligado à Secao 2.1.
 - [HELM10_Imagens_Referencia.md](HELM10_Imagens_Referencia.md): guia do script `scripts/helm10.py`, que lê os CSVs do `HELM10` e gera isolinhas, diagramas de setas e resumo de erro por modo.
@@ -79,8 +80,12 @@ Todos os arquivos da trilha principal agora terminam com links de `Anterior` e `
 - [HELMVEC_CSV_Campos_Referencia.md](HELMVEC_CSV_Campos_Referencia.md): glossario didatico das colunas do CSV de campos por celula do `HELMVEC`, ligado à Secao 2.2.1.
 - [HELMVEC_Imagens_Referencia.md](HELMVEC_Imagens_Referencia.md): guia do script `scripts/helmvec.py`, que lê os CSVs do `HELMVEC` e gera mapas de magnitude, diagramas de setas e resumos de erro e `rho`.
 - [HELMVEC1_CSV_Modos_Referencia.md](HELMVEC1_CSV_Modos_Referencia.md): glossario didatico das colunas do CSV de modos do `HELMVEC1`, ligado à Secao 2.2.2, incluindo a explicacao da classificacao por energia de bloco e do `rho_abs` por correlacao de massa no bloco dominante.
-- [HELMVEC1_Imagens_Referencia.md](HELMVEC1_Imagens_Referencia.md): guia do script `scripts/helmvec1.py`, que lê o `modes.csv` do `HELMVEC1` e gera imagens-resumo do sistema misto da Eq. `(92)`, incluindo cutoff, `rho`, energia dominante e energias de bloco.
-- [HELMVEC2_CSV_Referencia.md](HELMVEC2_CSV_Referencia.md): referencia didatica dos CSVs do `HELMVEC2`, ligando o espectro de candidatos da Eq. `(119)` ao matching final da Tabela 8.
+- [HELMVEC1_CSV_Campos_Referencia.md](HELMVEC1_CSV_Campos_Referencia.md): glossario didatico dos CSVs espaciais do `HELMVEC1`, separando os casos `edge_vector_cell` e `scalar_nodal`.
+- [HELMVEC1_Imagens_Referencia.md](HELMVEC1_Imagens_Referencia.md): guia do script `scripts/helmvec1.py`, que lê o `modes.csv` do `HELMVEC1`, os CSVs espaciais e os VTKs por modo para gerar imagens-resumo e imagens espaciais coerentes com o bloco dominante.
+- [HELMVEC2_CSV_Referencia.md](HELMVEC2_CSV_Referencia.md): referencia didatica dos CSVs do `HELMVEC2`, ligando o espectro de candidatos da Eq. `(119)` ao matching final da Tabela 8 e aos artefatos espaciais `Et`/`Ez` de cada modo casado.
+- [HELMVEC2_Imagens_Referencia.md](HELMVEC2_Imagens_Referencia.md): guia do script `scripts/helmvec2.py`, que lê os CSVs do `HELMVEC2` e gera tanto o resumo grafico da Tabela 8 quanto as imagens espaciais `Et`/`Ez` por modo casado.
+- [HELMVEC3_CSV_Referencia.md](HELMVEC3_CSV_Referencia.md): referencia didatica dos CSVs do `HELMVEC3`, ligando a Eq. `(136)` aos dados estruturados da Figura 12 / Tabela 9, da Figura 13 / Tabela 10 e aos artefatos espaciais `Et`/`Ez` por ponto exportado.
+- [HELMVEC3_Imagens_Referencia.md](HELMVEC3_Imagens_Referencia.md): guia do script `scripts/helmvec3.py`, que lê os CSVs do `HELMVEC3` e gera tanto os resumos graficos quanto as imagens espaciais `Et`/`Ez` por ponto exportado.
 - [diagramas_execucao/README.md](diagramas_execucao/README.md): caderno de navegação da coleção de diagramas de execução.
 - [diagramas_execucao/Diagrama_Mestre_R1_a_R7.md](diagramas_execucao/Diagrama_Mestre_R1_a_R7.md): visão global resumida da coleção `R1 -> R7`.
 - [Diagrama_R1_HELM10_Sequencia_e_Arvore.md](diagramas_execucao/Diagrama_R1_HELM10_Sequencia_e_Arvore.md) a [Diagrama_R7_FEM3D1_Sequencia_e_Arvore.md](diagramas_execucao/Diagrama_R7_FEM3D1_Sequencia_e_Arvore.md): diagramas-base por família de executáveis.
@@ -97,14 +102,22 @@ Todos os arquivos da trilha principal agora terminam com links de `Anterior` e `
   - apoio grafico: [HELMVEC_Imagens_Referencia.md](HELMVEC_Imagens_Referencia.md)
 - [2.2.2 Três Componentes](traducao/2.2.2_Guias_de_Onda_Nao_Homogeneos_Tres_Componentes.md) -> `src/helmvec1`
   - apoio operacional: [HELMVEC1_CSV_Modos_Referencia.md](HELMVEC1_CSV_Modos_Referencia.md)
+  - apoio operacional espacial: [HELMVEC1_CSV_Campos_Referencia.md](HELMVEC1_CSV_Campos_Referencia.md)
   - apoio grafico: [HELMVEC1_Imagens_Referencia.md](HELMVEC1_Imagens_Referencia.md)
   - apoio operacional: [Rastreabilidade_Equacoes_Artigo_Codigo.md](Rastreabilidade_Equacoes_Artigo_Codigo.md)
   - apoio de navegacao: [Matriz_Casos_Executaveis_Arvore_de_Chamada.md](Matriz_Casos_Executaveis_Arvore_de_Chamada.md)
   - apoio de uso: [Tabela_Executaveis_Entradas_Saidas.md](Tabela_Executaveis_Entradas_Saidas.md)
 - [2.2.3 Determinação do Número de Onda](traducao/2.2.3_Determinação%20do%20número%20de%20onda.md) -> `src/helmvec2`
   - apoio operacional: [HELMVEC2_CSV_Referencia.md](HELMVEC2_CSV_Referencia.md)
+  - apoio grafico: [HELMVEC2_Imagens_Referencia.md](HELMVEC2_Imagens_Referencia.md)
+  - apoio espacial: campos `Et`/`Ez` exportados por modo casado
   - apoio de uso: [Tabela_Executaveis_Entradas_Saidas.md](Tabela_Executaveis_Entradas_Saidas.md)
 - [2.2.4 Características de Dispersão](traducao/2.2.4_Caracteristicas_de_Dispersao_de_Guias_de_Onda.md) -> `src/helmvec3`
+  - apoio operacional: [HELMVEC3_CSV_Referencia.md](HELMVEC3_CSV_Referencia.md)
+  - apoio grafico: [HELMVEC3_Imagens_Referencia.md](HELMVEC3_Imagens_Referencia.md)
+  - apoio espacial: campos `Et`/`Ez` exportados por ponto da Figura 12, do preview e da Tabela 10
+  - apoio espectral: [Artefatos_Espectrais_CSV_Referencia.md](Artefatos_Espectrais_CSV_Referencia.md)
+  - apoio de uso: [Tabela_Executaveis_Entradas_Saidas.md](Tabela_Executaveis_Entradas_Saidas.md)
 - [3. Problemas Tridimensionais](traducao/3_Problemas_Tridimensionais.md) -> `src/fem3d0` e `src/fem3d1`
 
 Se a ideia for estudar a teoria antes de mergulhar na implementação, esta pasta deve vir antes dos READMEs em `src/`.

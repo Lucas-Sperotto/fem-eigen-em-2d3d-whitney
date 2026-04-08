@@ -18,19 +18,27 @@
 /*****************************************************************************/
 
 #include "article/tp3485_systems.hpp"
+#include "core/error_metrics.hpp"
+#include "core/execution_log.hpp"
 #include "core/lapack_eig.hpp"
 #include "core/mesh2d.hpp"
 #include "core/mesh2d_rect.hpp"
+#include "core/run_timing_dispersion_csv.hpp"
+#include "core/spectral_csv.hpp"
 #include "core/timing_utils.hpp"
 #include "explicit/tri2d_coupled_explicit.hpp"
 #include "helmvec2/helmvec23_shared.hpp"
 #include "helmvec2/coupled_cli_options.hpp"
 #include "helmvec2/helmvec2_coupled_system.hpp"
+#include "helmvec3_case_output.hpp"
+#include "helmvec3_field_output.hpp"
 #include <algorithm>
 #include <cmath>
 #include <cstdlib>
+#include <filesystem>
 #include <iostream>
 #include <limits>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -41,6 +49,31 @@ struct Table10Block
     double d_over_a = 0.0;
     std::vector<double> analytic_beta_over_k0;
     std::vector<double> helmvec3_beta_over_k0;
+};
+
+struct RatioCandidate
+{
+    int candidate_rank = 0;
+    int eig_index = -1;
+    double beta_ratio = std::numeric_limits<double>::quiet_NaN();
+    double ez_ratio = 0.0;
+};
+
+struct SelectedRatioPoint
+{
+    double beta_ratio = std::numeric_limits<double>::quiet_NaN();
+    int selected_candidate_rank = 0;
+    int selected_eig_index = -1;
+    double ez_ratio = 0.0;
+    std::string match_status = "missing_candidate";
+    helmvec3_field::SpatialArtifacts spatial;
+};
+
+struct BetaPointSolve
+{
+    CoupledBetaSystem sys;
+    GenEigGeneralResult eig;
+    std::vector<RatioCandidate> candidates;
 };
 
 /******************************************************************************/
@@ -60,6 +93,23 @@ void print_block_3x3(const char *name, const double M[3][3])
             std::cout << " " << M[i][j];
         std::cout << "\n";
     }
+}
+
+std::string label_number(double value)
+{
+    std::string text = std::to_string(value);
+    for (char &ch : text)
+    {
+        if (ch == '.')
+            ch = '_';
+    }
+    while (!text.empty() && text.back() == '0')
+        text.pop_back();
+    if (!text.empty() && text.back() == '_')
+        text.pop_back();
+    if (text.empty())
+        text = "0";
+    return text;
 }
 
 /******************************************************************************/
@@ -121,38 +171,119 @@ void print_first_triangle_closed_form_debug(
 /* std::vector<double> &; k0: double; backend: ElementAssemblyBackend.        */
 /* SAIDA: std::vector<double>.                                                */
 /******************************************************************************/
-std::vector<double> beta_ratio_candidates_from_k0(
+BetaPointSolve solve_beta_point(
     const Mesh2D &mesh,
     const std::vector<double> &eps,
     const std::vector<double> &mu,
     double k0,
     ElementAssemblyBackend backend,
-    timing::Breakdown *perf = nullptr)
+    timing::Breakdown *perf = nullptr,
+    const std::filesystem::path *linop_dir = nullptr,
+    const std::string *artifact_prefix = nullptr)
 {
     timing::Stopwatch stage;
-    auto sys = tp3485::build_eq136_helmvec3_system_E(mesh, k0, eps, mu, backend);
+    BetaPointSolve result;
+    result.sys = tp3485::build_eq136_helmvec3_system_E(mesh, k0, eps, mu, backend);
     if (perf != nullptr)
         perf->assembly_ms += stage.elapsed_ms();
     stage.reset();
-    auto eig = generalized_eigs_real_vec(sys.P, sys.Q);
+    result.eig = generalized_eigs_real_vec(result.sys.P, result.sys.Q);
     if (perf != nullptr)
         perf->solve_ms += stage.elapsed_ms();
-    auto beta = helmvec23::collect_positive_real_roots(eig, 1e-4);
+    if (linop_dir != nullptr && artifact_prefix != nullptr)
+    {
+        const std::string &prefix = *artifact_prefix;
+        if (!spectral_csv::write_general_problem_exports_named(*linop_dir, prefix, "P", "Q", result.sys.P, result.sys.Q, result.eig) ||
+            !spectral_csv::write_dense_crs_csv((*linop_dir) / (prefix + "_P_tt_crs.csv"), result.sys.P_tt) ||
+            !spectral_csv::write_dense_crs_csv((*linop_dir) / (prefix + "_P_zz_crs.csv"), result.sys.P_zz) ||
+            !spectral_csv::write_dense_crs_csv((*linop_dir) / (prefix + "_Q_tt_crs.csv"), result.sys.Q_tt) ||
+            !spectral_csv::write_rect_like_crs_csv(
+                (*linop_dir) / (prefix + "_Q_tz_crs.csv"),
+                result.sys.Q_tz.nr,
+                result.sys.Q_tz.nc,
+                [&](int i, int j)
+                { return result.sys.Q_tz(i, j); }) ||
+            !spectral_csv::write_rect_like_crs_csv(
+                (*linop_dir) / (prefix + "_Q_zt_crs.csv"),
+                result.sys.Q_zt.nr,
+                result.sys.Q_zt.nc,
+                [&](int i, int j)
+                { return result.sys.Q_zt(i, j); }) ||
+            !spectral_csv::write_dense_crs_csv((*linop_dir) / (prefix + "_Q_zz_crs.csv"), result.sys.Q_zz))
+        {
+            throw std::runtime_error("Falha ao escrever artefatos espectrais de " + prefix);
+        }
+    }
 
     double eps_max = 1.0;
     for (double e : eps)
         eps_max = std::max(eps_max, e);
     const double ratio_max = std::sqrt(eps_max) + 0.25;
 
-    std::vector<double> ratios;
-    for (double b : beta)
+    struct RawRatioCandidate
     {
-        const double r = b / k0;
-        if (r <= 1e-6 || r > ratio_max)
+        int eig_index = -1;
+        double beta_ratio = 0.0;
+        double ez_ratio = 0.0;
+    };
+
+    std::vector<RawRatioCandidate> raw;
+    const int n = result.eig.n;
+    for (int i = 0; i < n; ++i)
+    {
+        if (!std::isfinite(result.eig.lambda_re[i]))
             continue;
-        ratios.push_back(r);
+        if (std::abs(result.eig.lambda_im[i]) > 1e-7)
+            continue;
+        if (result.eig.lambda_re[i] <= 1e-10)
+            continue;
+
+        const double beta = std::sqrt(result.eig.lambda_re[i]);
+        const double ratio = beta / k0;
+        if (ratio <= 1e-6 || ratio > ratio_max)
+            continue;
+
+        double et = 0.0;
+        double ez = 0.0;
+        for (int r = 0; r < result.sys.nt; ++r)
+        {
+            const double v = result.eig.VRcol[(size_t)i * (size_t)n + (size_t)r];
+            et += v * v;
+        }
+        for (int r = 0; r < result.sys.nz; ++r)
+        {
+            const double v = result.eig.VRcol[(size_t)i * (size_t)n + (size_t)(result.sys.nt + r)];
+            ez += v * v;
+        }
+        const double den = et + ez;
+        const double ratio_ez = (den > 0.0) ? (ez / den) : 0.0;
+        raw.push_back({i, ratio, ratio_ez});
     }
-    return helmvec23::unique_sorted(std::move(ratios));
+    std::sort(raw.begin(), raw.end(), [](const RawRatioCandidate &a, const RawRatioCandidate &b)
+              { return a.beta_ratio < b.beta_ratio; });
+
+    for (const RawRatioCandidate &cand : raw)
+    {
+        if (!result.candidates.empty() &&
+            std::abs(cand.beta_ratio - result.candidates.back().beta_ratio) < 1e-8)
+        {
+            if (cand.ez_ratio > result.candidates.back().ez_ratio)
+            {
+                result.candidates.back().eig_index = cand.eig_index;
+                result.candidates.back().ez_ratio = cand.ez_ratio;
+            }
+            continue;
+        }
+
+        RatioCandidate rep;
+        rep.candidate_rank = static_cast<int>(result.candidates.size()) + 1;
+        rep.eig_index = cand.eig_index;
+        rep.beta_ratio = cand.beta_ratio;
+        rep.ez_ratio = cand.ez_ratio;
+        result.candidates.push_back(rep);
+    }
+
+    return result;
 }
 
 /******************************************************************************/
@@ -165,7 +296,7 @@ std::vector<double> beta_ratio_candidates_from_k0(
 /* backend: ElementAssemblyBackend.                                           */
 /* SAIDA: std::vector<double>.                                                */
 /******************************************************************************/
-std::vector<double> match_ratio_to_reference(
+std::vector<SelectedRatioPoint> match_ratio_to_reference(
     const Mesh2D &mesh,
     const std::vector<double> &eps,
     const std::vector<double> &mu,
@@ -174,46 +305,76 @@ std::vector<double> match_ratio_to_reference(
     const std::vector<double> &ref_ratio,
     bool debug_candidates,
     ElementAssemblyBackend backend,
-    timing::Breakdown *perf = nullptr)
+    timing::Breakdown *perf = nullptr,
+    const std::filesystem::path *linop_dir = nullptr,
+    const std::string &prefix_base = "",
+    const helmvec3_output::CaseDirs *out_dirs = nullptr)
 {
-    std::vector<double> out;
+    std::vector<SelectedRatioPoint> out;
     out.reserve(br_over_lambda.size());
 
     for (int i = 0; i < (int)br_over_lambda.size(); ++i)
     {
         if (!std::isfinite(ref_ratio[i]))
         {
-            out.push_back(std::numeric_limits<double>::quiet_NaN());
+            out.push_back(SelectedRatioPoint{});
             continue;
         }
 
         const double s = br_over_lambda[i];
         const double k0 = 2.0 * M_PI * s / b;
-        auto cands = beta_ratio_candidates_from_k0(mesh, eps, mu, k0, backend, perf);
-        if (cands.empty())
+        const std::string point_prefix =
+            prefix_base.empty() ? std::string() : (prefix_base + "_br" + label_number(s));
+        auto solve = solve_beta_point(
+            mesh,
+            eps,
+            mu,
+            k0,
+            backend,
+            perf,
+            linop_dir,
+            prefix_base.empty() ? nullptr : &point_prefix);
+        if (solve.candidates.empty())
         {
-            out.push_back(std::numeric_limits<double>::quiet_NaN());
+            out.push_back(SelectedRatioPoint{});
             continue;
         }
 
         int best = 0;
-        double best_err = std::abs(cands[0] - ref_ratio[i]);
-        for (int j = 1; j < (int)cands.size(); ++j)
+        double best_err = std::abs(solve.candidates[0].beta_ratio - ref_ratio[i]);
+        for (int j = 1; j < (int)solve.candidates.size(); ++j)
         {
-            const double e = std::abs(cands[j] - ref_ratio[i]);
+            const double e = std::abs(solve.candidates[j].beta_ratio - ref_ratio[i]);
             if (e < best_err)
             {
                 best_err = e;
                 best = j;
             }
         }
-        out.push_back(cands[best]);
+
+        SelectedRatioPoint selected;
+        selected.beta_ratio = solve.candidates[best].beta_ratio;
+        selected.selected_candidate_rank = solve.candidates[best].candidate_rank;
+        selected.selected_eig_index = solve.candidates[best].eig_index;
+        selected.ez_ratio = solve.candidates[best].ez_ratio;
+        selected.match_status = "matched";
+        if (out_dirs != nullptr && !point_prefix.empty())
+        {
+            selected.spatial = helmvec3_field::export_mode(
+                *out_dirs,
+                mesh,
+                solve.sys,
+                solve.eig.VRcol,
+                selected.selected_eig_index,
+                point_prefix);
+        }
+        out.push_back(selected);
 
         if (debug_candidates)
         {
             std::cout << "  [debug] s=" << s << " cands:";
-            for (double c : cands)
-                std::cout << " " << c;
+            for (const RatioCandidate &c : solve.candidates)
+                std::cout << " " << c.beta_ratio;
             std::cout << "\n";
         }
     }
@@ -231,7 +392,7 @@ std::vector<double> match_ratio_to_reference(
 /* double; seed_ratio: double; backend: ElementAssemblyBackend.               */
 /* SAIDA: std::vector<double>.                                                */
 /******************************************************************************/
-std::vector<double> trace_ratio_branch(
+std::vector<SelectedRatioPoint> trace_ratio_branch(
     const Mesh2D &mesh,
     const std::vector<double> &eps,
     const std::vector<double> &mu,
@@ -239,35 +400,65 @@ std::vector<double> trace_ratio_branch(
     double b,
     double seed_ratio,
     ElementAssemblyBackend backend,
-    timing::Breakdown *perf = nullptr)
+    timing::Breakdown *perf = nullptr,
+    const std::filesystem::path *linop_dir = nullptr,
+    const std::string &prefix_base = "",
+    const helmvec3_output::CaseDirs *out_dirs = nullptr)
 {
-    std::vector<double> out;
+    std::vector<SelectedRatioPoint> out;
     out.reserve(br_over_lambda.size());
 
     double prev = seed_ratio;
     for (double s : br_over_lambda)
     {
         const double k0 = 2.0 * M_PI * s / b;
-        auto cands = beta_ratio_candidates_from_k0(mesh, eps, mu, k0, backend, perf);
-        if (cands.empty())
+        const std::string point_prefix =
+            prefix_base.empty() ? std::string() : (prefix_base + "_br" + label_number(s));
+        auto solve = solve_beta_point(
+            mesh,
+            eps,
+            mu,
+            k0,
+            backend,
+            perf,
+            linop_dir,
+            prefix_base.empty() ? nullptr : &point_prefix);
+        if (solve.candidates.empty())
         {
-            out.push_back(std::numeric_limits<double>::quiet_NaN());
+            out.push_back(SelectedRatioPoint{});
             continue;
         }
 
         int best = 0;
-        double best_err = std::abs(cands[0] - prev);
-        for (int i = 1; i < (int)cands.size(); ++i)
+        double best_err = std::abs(solve.candidates[0].beta_ratio - prev);
+        for (int i = 1; i < (int)solve.candidates.size(); ++i)
         {
-            const double e = std::abs(cands[i] - prev);
+            const double e = std::abs(solve.candidates[i].beta_ratio - prev);
             if (e < best_err)
             {
                 best_err = e;
                 best = i;
             }
         }
-        out.push_back(cands[best]);
-        prev = cands[best];
+
+        SelectedRatioPoint selected;
+        selected.beta_ratio = solve.candidates[best].beta_ratio;
+        selected.selected_candidate_rank = solve.candidates[best].candidate_rank;
+        selected.selected_eig_index = solve.candidates[best].eig_index;
+        selected.ez_ratio = solve.candidates[best].ez_ratio;
+        selected.match_status = "tracked_branch";
+        if (out_dirs != nullptr && !point_prefix.empty())
+        {
+            selected.spatial = helmvec3_field::export_mode(
+                *out_dirs,
+                mesh,
+                solve.sys,
+                solve.eig.VRcol,
+                selected.selected_eig_index,
+                point_prefix);
+        }
+        out.push_back(selected);
+        prev = selected.beta_ratio;
     }
     return out;
 }
@@ -329,8 +520,23 @@ int main(int argc, char **argv)
         }
     }
 
+    const auto out_dirs = helmvec3_output::ensure_case_dirs("rect");
+    execution_log::ExecutionLogScope log_scope((out_dirs.root / "run.log").string());
+    if (!log_scope.active())
+    {
+        std::cerr << "Aviso: nao foi possivel abrir run.log em "
+                  << (out_dirs.root / "run.log")
+                  << " (" << log_scope.error_message() << ")\n";
+    }
+
     Mesh2D mesh = make_rect_mesh(a, b, nx, ny);
     std::vector<double> mu(mesh.tris.size(), 1.0);
+
+    std::cout << "[output] root_dir=\"" << out_dirs.root.string() << "\"\n";
+    std::cout << "[output] csv_dir=\"" << out_dirs.csv.string() << "\"\n";
+    std::cout << "[output] vtk_dir=\"" << out_dirs.vtk.string() << "\"\n";
+    std::cout << "[output] img_dir=\"" << out_dirs.img.string() << "\"\n";
+    std::cout << "[output] linop_dir=\"" << out_dirs.linop.string() << "\"\n";
 
     const std::vector<double> br_over_lambda_9 = {0.2, 0.3, 0.4, 0.5, 0.6};
     const std::vector<double> ref_ana_9 = {0.48, 1.00, 1.18, 1.26, 1.30};
@@ -363,7 +569,12 @@ int main(int argc, char **argv)
         ref_ana_9,
         cli.debug_candidates,
         cli.backend,
-        &perf);
+        &perf,
+        &out_dirs.linop,
+        "helmvec3_rect_figure12",
+        &out_dirs);
+    std::vector<helmvec3_output::Table9CsvRecord> table9_records;
+    table9_records.reserve(br_over_lambda_9.size());
     // Bloco acima corresponde ao caso da Figura 12 (interface horizontal).
 
     std::cout << "[2.2.4] beta from given k0 (Figure 12)\n";
@@ -374,9 +585,33 @@ int main(int argc, char **argv)
     for (int i = 0; i < (int)br_over_lambda_9.size(); ++i)
     {
         std::cout << br_over_lambda_9[i]
-                  << "  " << ratio9[i]
+                  << "  " << ratio9[i].beta_ratio
                   << "  " << ref_ana_9[i]
                   << "  " << ref_hvec3_9[i] << "\n";
+        const double err_ana =
+            std::isfinite(ratio9[i].beta_ratio) ? error_metrics::absolute_relative_error_percent(ref_ana_9[i], ratio9[i].beta_ratio)
+                                                : std::numeric_limits<double>::quiet_NaN();
+        const double err_hvec3 =
+            std::isfinite(ratio9[i].beta_ratio) ? error_metrics::absolute_relative_error_percent(ref_hvec3_9[i], ratio9[i].beta_ratio)
+                                                : std::numeric_limits<double>::quiet_NaN();
+        table9_records.push_back(
+            {
+                br_over_lambda_9[i],
+                ratio9[i].beta_ratio,
+                ref_ana_9[i],
+                ref_hvec3_9[i],
+                ratio9[i].selected_candidate_rank,
+                ratio9[i].selected_eig_index,
+                ratio9[i].ez_ratio,
+                err_ana,
+                err_hvec3,
+                ratio9[i].match_status,
+                ratio9[i].spatial.field_status,
+                ratio9[i].spatial.et_fields_csv_file,
+                ratio9[i].spatial.ez_fields_csv_file,
+                ratio9[i].spatial.et_vtk_file,
+                ratio9[i].spatial.ez_vtk_file,
+            });
     }
 
     // Pre-visualizacao opcional de continuacao para um valor de d/a (depuracao visual).
@@ -389,19 +624,40 @@ int main(int argc, char **argv)
         b,
         0.5,
         cli.backend,
-        &perf);
+        &perf,
+        &out_dirs.linop,
+        std::string("helmvec3_rect_preview_da") + label_number(d13_over_a),
+        &out_dirs);
+    std::vector<helmvec3_output::PreviewCsvRecord> preview_records;
+    preview_records.reserve(br_over_lambda_9.size());
     // Bloco acima reproduz a logica da Figura 13 (interface vertical).
     std::cout << "\n[2.2.4] beta from given k0 (Figure 13, single d/a preview)\n";
     std::cout << "d/a=" << d13_over_a << "\n";
     std::cout << "br/lambda0  beta/k0(FEM branch)\n";
     for (int i = 0; i < (int)br_over_lambda_9.size(); ++i)
     {
-        std::cout << br_over_lambda_9[i] << "  " << ratio13_preview[i] << "\n";
+        std::cout << br_over_lambda_9[i] << "  " << ratio13_preview[i].beta_ratio << "\n";
+        preview_records.push_back(
+            {
+                d13_over_a,
+                br_over_lambda_9[i],
+                ratio13_preview[i].beta_ratio,
+                ratio13_preview[i].selected_candidate_rank,
+                ratio13_preview[i].selected_eig_index,
+                ratio13_preview[i].ez_ratio,
+                ratio13_preview[i].match_status,
+                ratio13_preview[i].spatial.field_status,
+                ratio13_preview[i].spatial.et_fields_csv_file,
+                ratio13_preview[i].spatial.ez_fields_csv_file,
+                ratio13_preview[i].spatial.et_vtk_file,
+                ratio13_preview[i].spatial.ez_vtk_file,
+            });
     }
 
     // Validacao completa alinhada com a Tabela 10.
     std::cout << "\n[2.2.4] Figure 13 / Table 10 validation\n";
     std::cout << "d/a  br/lambda0  beta/k0(FEM matched)  Analytical(ref)  HELMVEC3(ref)\n";
+    std::vector<helmvec3_output::Table10CsvRecord> table10_records;
     for (const auto &blk : table10)
     {
         if (cli.debug_candidates)
@@ -419,7 +675,10 @@ int main(int argc, char **argv)
             blk.analytic_beta_over_k0,
             cli.debug_candidates,
             cli.backend,
-            &perf);
+            &perf,
+            &out_dirs.linop,
+            std::string("helmvec3_rect_table10_da") + label_number(blk.d_over_a),
+            &out_dirs);
 
         for (int i = 0; i < (int)br_over_lambda_10.size(); ++i)
         {
@@ -428,13 +687,86 @@ int main(int argc, char **argv)
 
             std::cout << blk.d_over_a
                       << "  " << br_over_lambda_10[i]
-                      << "  " << fem[i]
+                      << "  " << fem[i].beta_ratio
                       << "  " << blk.analytic_beta_over_k0[i]
                       << "  " << blk.helmvec3_beta_over_k0[i] << "\n";
+
+            const double err_ana =
+                std::isfinite(fem[i].beta_ratio) ? error_metrics::absolute_relative_error_percent(blk.analytic_beta_over_k0[i], fem[i].beta_ratio)
+                                                 : std::numeric_limits<double>::quiet_NaN();
+            const double err_hvec3 =
+                std::isfinite(fem[i].beta_ratio) ? error_metrics::absolute_relative_error_percent(blk.helmvec3_beta_over_k0[i], fem[i].beta_ratio)
+                                                 : std::numeric_limits<double>::quiet_NaN();
+            table10_records.push_back(
+                {
+                    blk.d_over_a,
+                    br_over_lambda_10[i],
+                    fem[i].beta_ratio,
+                    blk.analytic_beta_over_k0[i],
+                    blk.helmvec3_beta_over_k0[i],
+                    fem[i].selected_candidate_rank,
+                    fem[i].selected_eig_index,
+                    fem[i].ez_ratio,
+                    err_ana,
+                    err_hvec3,
+                    fem[i].match_status,
+                    fem[i].spatial.field_status,
+                    fem[i].spatial.et_fields_csv_file,
+                    fem[i].spatial.ez_fields_csv_file,
+                    fem[i].spatial.et_vtk_file,
+                    fem[i].spatial.ez_vtk_file,
+                });
         }
     }
 
     perf.total_ms = total_watch.elapsed_ms();
+    perf.post_ms = std::max(0.0, perf.total_ms - perf.assembly_ms - perf.solve_ms);
+
+    const auto table9_csv_path = out_dirs.csv / "helmvec3_rect_table9.csv";
+    const auto preview_csv_path = out_dirs.csv / "helmvec3_rect_preview.csv";
+    const auto table10_csv_path = out_dirs.csv / "helmvec3_rect_table10.csv";
+    if (!helmvec3_output::write_table9_csv(table9_csv_path, table9_records))
+    {
+        std::cerr << "Aviso: falha ao escrever " << table9_csv_path << "\n";
+    }
+    if (!helmvec3_output::write_preview_csv(preview_csv_path, preview_records))
+    {
+        std::cerr << "Aviso: falha ao escrever " << preview_csv_path << "\n";
+    }
+    if (!helmvec3_output::write_table10_csv(table10_csv_path, table10_records))
+    {
+        std::cerr << "Aviso: falha ao escrever " << table10_csv_path << "\n";
+    }
+
+    run_timing_dispersion_csv::Record timing_record;
+    timing_record.case_label = "helmvec3_rect";
+    timing_record.geometry = "rect";
+    timing_record.backend = element_assembly_backend_name(cli.backend);
+    timing_record.debug_local_blocks = cli.debug_local_blocks ? 1 : 0;
+    timing_record.debug_candidates = cli.debug_candidates ? 1 : 0;
+    timing_record.a = a;
+    timing_record.b = b;
+    timing_record.d12 = d12;
+    timing_record.d13_preview_over_a = d13_over_a;
+    timing_record.eps_fill = eps_fill;
+    timing_record.nx = nx;
+    timing_record.ny = ny;
+    timing_record.mesh_nodes = static_cast<int>(mesh.nodes.size());
+    timing_record.mesh_tris = static_cast<int>(mesh.tris.size());
+    timing_record.table9_sample_count = static_cast<int>(table9_records.size());
+    timing_record.preview_sample_count = static_cast<int>(preview_records.size());
+    timing_record.table10_block_count = static_cast<int>(table10.size());
+    timing_record.table10_row_count = static_cast<int>(table10_records.size());
+    timing_record.assembly_ms = perf.assembly_ms;
+    timing_record.solve_ms = perf.solve_ms;
+    timing_record.post_ms = perf.post_ms;
+    timing_record.total_ms = perf.total_ms;
+    const auto timing_csv_path = out_dirs.root / "run_timing.csv";
+    if (!run_timing_dispersion_csv::write_csv(timing_csv_path.string(), timing_record))
+    {
+        std::cerr << "Aviso: falha ao escrever " << timing_csv_path << "\n";
+    }
+
     timing::print_breakdown("helmvec3_rect", perf);
     return 0;
 }

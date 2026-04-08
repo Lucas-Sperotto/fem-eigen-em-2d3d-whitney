@@ -229,6 +229,11 @@ Cada caso agora grava:
   - VTK por modo e aliases legados do primeiro modo.
 - `img/`
   - imagens geradas por `python3 scripts/helmvec.py`.
+- `linop/`
+  - matrizes globais `S` e `T` em CSV no formato CRS.
+  - `*_eigenvalues.csv` com os autovalores ordenados.
+  - `*_eigenvectors.csv` com os autovetores na mesma ordem.
+  - no `HELMVEC`, isso aparece separado por ramo `TE` e `TM`.
 
 Cabecalho atual do `modes.csv`:
 
@@ -279,6 +284,7 @@ Referencias didaticas:
 - `docs/HELMVEC_CSV_Modos_Referencia.md`
 - `docs/HELMVEC_CSV_Campos_Referencia.md`
 - `docs/HELMVEC_Imagens_Referencia.md`
+- `docs/Artefatos_Espectrais_CSV_Referencia.md`
 
 ## 9) Relacao com o artigo
 

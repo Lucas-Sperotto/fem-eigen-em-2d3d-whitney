@@ -25,6 +25,13 @@ def _resolve(path: Path) -> Path:
     return path if path.is_absolute() else ROOT / path
 
 
+def abs_rel_err_pct(reference: float, computed: float) -> float:
+    reference_abs = abs(reference)
+    if reference_abs <= 1.0e-30:
+        return 0.0 if abs(computed) <= 1.0e-30 else float("inf")
+    return 100.0 * abs(reference - computed) / reference_abs
+
+
 def run_checked(build_dir: Path, cmd: list[str], verbose: bool, show_output: bool) -> str:
     if verbose:
         print(f"Running: {' '.join(cmd)}")
@@ -52,8 +59,8 @@ def parse_helmvec2_table(text: str) -> list[dict]:
         fem = float(m.group(2))
         ref_helmvec2 = float(m.group(3))
         ref_hayata = float(m.group(4))
-        err_hvec = 100.0 * (fem - ref_helmvec2) / ref_helmvec2
-        err_hay = 100.0 * (fem - ref_hayata) / ref_hayata
+        err_hvec = abs_rel_err_pct(ref_helmvec2, fem)
+        err_hay = abs_rel_err_pct(ref_hayata, fem)
         rows.append(
             {
                 "section": "2.2.3",
@@ -90,8 +97,8 @@ def parse_helmvec3_table9(text: str) -> list[dict]:
         fem = float(m.group(2))
         ref_ana = float(m.group(3))
         ref_hvec3 = float(m.group(4))
-        err_ana = 100.0 * (fem - ref_ana) / ref_ana
-        err_hv3 = 100.0 * (fem - ref_hvec3) / ref_hvec3
+        err_ana = abs_rel_err_pct(ref_ana, fem)
+        err_hv3 = abs_rel_err_pct(ref_hvec3, fem)
         rows.append(
             {
                 "section": "2.2.4",
@@ -129,8 +136,8 @@ def parse_helmvec3_table10(text: str) -> list[dict]:
         fem = float(m.group(3))
         ref_ana = float(m.group(4))
         ref_hvec3 = float(m.group(5))
-        err_ana = 100.0 * (fem - ref_ana) / ref_ana
-        err_hv3 = 100.0 * (fem - ref_hvec3) / ref_hvec3
+        err_ana = abs_rel_err_pct(ref_ana, fem)
+        err_hv3 = abs_rel_err_pct(ref_hvec3, fem)
         rows.append(
             {
                 "section": "2.2.4",

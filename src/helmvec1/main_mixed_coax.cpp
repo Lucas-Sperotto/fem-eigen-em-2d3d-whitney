@@ -19,18 +19,21 @@
 /*****************************************************************************/
 
 #include "article/tp3485_systems.hpp"
+#include "core/error_metrics.hpp"
 #include "core/mode_match_coax.hpp"
 #include "core/execution_log.hpp"
 #include "core/lapack_eig.hpp"
 #include "core/mesh2d_coax.hpp"
 #include "core/output_paths.hpp"
 #include "core/run_timing_mixed_csv.hpp"
+#include "core/spectral_csv.hpp"
 #include "core/timing_utils.hpp"
 #include "mixed_coax_edge_match_wrapper.hpp"
 #include "helmvec1_mixed_system.hpp"
 #include "mixed_case_output.hpp"
 #include "mixed_cli_options.hpp"
 #include "mixed_debug.hpp"
+#include "mixed_field_output.hpp"
 #include "mixed_mode_match.hpp"
 #include "mixed_mode_utils.hpp"
 #include <cstdlib>
@@ -83,6 +86,8 @@ void append_coax_mode_records(
     const char *component_label,
     const char *family,
     const std::vector<BlockEnergyMode> &modes,
+    const char *case_name,
+    const helmvec1_output::CaseDirs &dirs,
     const Mesh2D &mesh,
     const MixedSystem92 &sys,
     const std::vector<double> &mixed_zcol,
@@ -131,11 +136,18 @@ void append_coax_mode_records(
             rec.p = std::to_string(id.p);
             rec.kc_ana = helmvec1_output::format_float(id.kc_ana);
             rec.kc_r1_ana = helmvec1_output::format_float(id.kc_ana * r1);
-            const double err = 100.0 * (mode.kc - id.kc_ana) / id.kc_ana;
+            const double err = error_metrics::absolute_relative_error_percent(id.kc_ana, mode.kc);
             rec.error_percent = helmvec1_output::format_float(err);
             rec.rho_abs = id.rho;
             rec.mode_label = std::string(family) + "_m" + rec.m + "_p" + rec.p;
             table_row = {rec.positive_rank, id.m, id.p, id.kc_ana, mode.kc, err, id.rho};
+
+            const auto artifacts = helmvec1_field::export_edge_mode(
+                case_name, dirs, mesh, sys, mixed_zcol, mode.eig_index, rec);
+            rec.field_data_kind = artifacts.field_data_kind;
+            rec.field_status = artifacts.field_status;
+            rec.fields_csv_file = artifacts.fields_csv_file;
+            rec.vtk_file = artifacts.vtk_file;
         }
         else
         {
@@ -156,11 +168,18 @@ void append_coax_mode_records(
             rec.p = std::to_string(id.p);
             rec.kc_ana = helmvec1_output::format_float(id.kc_ana);
             rec.kc_r1_ana = helmvec1_output::format_float(id.kc_ana * r1);
-            const double err = 100.0 * (mode.kc - id.kc_ana) / id.kc_ana;
+            const double err = error_metrics::absolute_relative_error_percent(id.kc_ana, mode.kc);
             rec.error_percent = helmvec1_output::format_float(err);
             rec.rho_abs = id.rho;
             rec.mode_label = std::string(family) + "_m" + rec.m + "_p" + rec.p;
             table_row = {rec.positive_rank, id.m, id.p, id.kc_ana, mode.kc, err, id.rho};
+
+            const auto artifacts = helmvec1_field::export_scalar_mode(
+                case_name, dirs, mesh, sys, mixed_zcol, mode.eig_index, rec);
+            rec.field_data_kind = artifacts.field_data_kind;
+            rec.field_status = artifacts.field_status;
+            rec.fields_csv_file = artifacts.fields_csv_file;
+            rec.vtk_file = artifacts.vtk_file;
         }
 
         records.push_back(rec);
@@ -217,6 +236,8 @@ int main(int argc, char **argv)
                   << execution_log.error_message() << "\n";
     std::cout << "Output dir: \"" << dirs.root.string() << "\"\n";
     std::cout << "CSV dir: \"" << dirs.csv.string() << "\"\n";
+    std::cout << "VTK dir: \"" << dirs.vtk.string() << "\"\n";
+    std::cout << "LinOp dir: \"" << dirs.linop.string() << "\"\n";
 
     Mesh2D mesh = make_coax_mesh(r1, r2, nr, nt);
     std::cout << "Mixed coax: nodes=" << mesh.nodes.size()
@@ -241,6 +262,15 @@ int main(int argc, char **argv)
     auto res_e = generalized_eigs_sym_vec(sys_e.S, sys_e.T);
     perf_e.solve_ms = stage.elapsed_ms();
     perf.solve_ms += perf_e.solve_ms;
+    if (!spectral_csv::write_symmetric_problem_exports(dirs.linop, "mixed_coax_E", sys_e.S, sys_e.T, res_e) ||
+        !spectral_csv::write_dense_crs_csv(dirs.linop / "mixed_coax_E_St_crs.csv", sys_e.St) ||
+        !spectral_csv::write_dense_crs_csv(dirs.linop / "mixed_coax_E_Tt_crs.csv", sys_e.Tt) ||
+        !spectral_csv::write_dense_crs_csv(dirs.linop / "mixed_coax_E_Sz_crs.csv", sys_e.Sz) ||
+        !spectral_csv::write_dense_crs_csv(dirs.linop / "mixed_coax_E_Tz_crs.csv", sys_e.Tz))
+    {
+        std::cerr << "Erro ao escrever artefatos espectrais da formulacao E em " << dirs.linop << "\n";
+        return 4;
+    }
     stage.reset();
     std::vector<BlockEnergyMode> modes_te_edge_e;
     std::vector<BlockEnergyMode> modes_tm_scalar_e;
@@ -267,11 +297,11 @@ int main(int argc, char **argv)
     std::vector<CoaxMatchedRow> matched_tm_scalar_e;
     append_coax_mode_records(
         "E", "edge", "Et", "TE",
-        modes_te_edge_e, mesh, sys_e, res_e.Zcol, true, true, r1, r2,
+        modes_te_edge_e, "coax", dirs, mesh, sys_e, res_e.Zcol, true, true, r1, r2,
         mode_records, matched_te_edge_e);
     append_coax_mode_records(
         "E", "scalar", "Ez", "TM",
-        modes_tm_scalar_e, mesh, sys_e, res_e.Zcol, false, false, r1, r2,
+        modes_tm_scalar_e, "coax", dirs, mesh, sys_e, res_e.Zcol, false, false, r1, r2,
         mode_records, matched_tm_scalar_e);
     print_coax_matched_table("TE (edge block)", matched_te_edge_e, lambda_filter);
     print_coax_matched_table("TM (scalar block)", matched_tm_scalar_e, lambda_filter);
@@ -286,6 +316,15 @@ int main(int argc, char **argv)
     auto res_h = generalized_eigs_sym_vec(sys_h.S, sys_h.T);
     perf_h.solve_ms = stage.elapsed_ms();
     perf.solve_ms += perf_h.solve_ms;
+    if (!spectral_csv::write_symmetric_problem_exports(dirs.linop, "mixed_coax_H", sys_h.S, sys_h.T, res_h) ||
+        !spectral_csv::write_dense_crs_csv(dirs.linop / "mixed_coax_H_St_crs.csv", sys_h.St) ||
+        !spectral_csv::write_dense_crs_csv(dirs.linop / "mixed_coax_H_Tt_crs.csv", sys_h.Tt) ||
+        !spectral_csv::write_dense_crs_csv(dirs.linop / "mixed_coax_H_Sz_crs.csv", sys_h.Sz) ||
+        !spectral_csv::write_dense_crs_csv(dirs.linop / "mixed_coax_H_Tz_crs.csv", sys_h.Tz))
+    {
+        std::cerr << "Erro ao escrever artefatos espectrais da formulacao H em " << dirs.linop << "\n";
+        return 4;
+    }
     stage.reset();
     std::vector<BlockEnergyMode> modes_tm_edge_h;
     std::vector<BlockEnergyMode> modes_te_scalar_h;
@@ -312,11 +351,11 @@ int main(int argc, char **argv)
     std::vector<CoaxMatchedRow> matched_te_scalar_h;
     append_coax_mode_records(
         "H", "edge", "Ht", "TM",
-        modes_tm_edge_h, mesh, sys_h, res_h.Zcol, true, false, r1, r2,
+        modes_tm_edge_h, "coax", dirs, mesh, sys_h, res_h.Zcol, true, false, r1, r2,
         mode_records, matched_tm_edge_h);
     append_coax_mode_records(
         "H", "scalar", "Hz", "TE",
-        modes_te_scalar_h, mesh, sys_h, res_h.Zcol, false, true, r1, r2,
+        modes_te_scalar_h, "coax", dirs, mesh, sys_h, res_h.Zcol, false, true, r1, r2,
         mode_records, matched_te_scalar_h);
     print_coax_matched_table("TM (edge block)", matched_tm_edge_h, lambda_filter);
     print_coax_matched_table("TE (scalar block)", matched_te_scalar_h, lambda_filter);

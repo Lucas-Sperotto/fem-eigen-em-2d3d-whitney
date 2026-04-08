@@ -19,6 +19,7 @@
 /*****************************************************************************/
 
 #include "article/tp3485_systems.hpp"
+#include "core/error_metrics.hpp"
 #include "core/io_vtk_sv.hpp"
 #include "core/lapack_eig.hpp"
 #include "core/mesh2d_rect.hpp"
@@ -26,6 +27,7 @@
 #include "core/execution_log.hpp"
 #include "core/output_paths.hpp"
 #include "core/run_timing_csv.hpp"
+#include "core/spectral_csv.hpp"
 #include "core/timing_utils.hpp"
 #include "helm10/field_reconstruction.hpp"
 #include "helm10/scalar_cli_options.hpp"
@@ -415,6 +417,7 @@ int main(int argc, char **argv)
     const auto case_dir = output_paths::ensure_case_dir("helm10/rect");
     const auto vtk_dir = output_paths::ensure_case_dir("helm10/rect/vtk");
     const auto csv_dir = output_paths::ensure_case_dir("helm10/rect/csv");
+    const auto linop_dir = output_paths::ensure_case_dir("helm10/rect/linop");
     const std::string timing_csv_path = output_paths::file_in(case_dir, "run_timing.csv");
     execution_log::ExecutionLogScope execution_log(
         output_paths::file_in(case_dir, "run.log"));
@@ -427,6 +430,7 @@ int main(int argc, char **argv)
     std::cout << "Output dir: " << case_dir << "\n";
     std::cout << "VTK dir: " << vtk_dir << "\n";
     std::cout << "CSV dir: " << csv_dir << "\n";
+    std::cout << "LinOp dir: " << linop_dir << "\n";
     std::cout << "Backend escalar: " << element_assembly_backend_name(cli.backend) << "\n";
     if (run.used_legacy_cli)
     {
@@ -499,7 +503,7 @@ int main(int argc, char **argv)
             match_span,
             match_span);
         const double kc_ana = material_adjusted_kc(id.kc_ana, cli.eps_r, cli.mu_r);
-        const double err = 100.0 * std::abs(kc_fem - kc_ana) / kc_ana;
+        const double err = error_metrics::absolute_relative_error_percent(kc_ana, kc_fem);
         const double kc_ar_fem = kc_fem * a;
         std::cout << std::setw(1) << (shown + 1) << "  ("
                   << id.m << "," << id.n << ")  "
@@ -530,6 +534,31 @@ int main(int argc, char **argv)
     if (cli.debug_candidates)
         helm10_debug::print_positive_kc_candidates_debug(tm_res.w, 0.0);
     helm10_post::print_positive_kc(tm_res.w, 12, false);
+
+    if (!spectral_csv::write_symmetric_problem_exports(
+            linop_dir,
+            "helm10_rect_te",
+            sys_te.S,
+            sys_te.T,
+            te_res) ||
+        !spectral_csv::write_symmetric_problem_exports(
+            linop_dir,
+            "helm10_rect_tm",
+            sys_tm.S,
+            sys_tm.T,
+            tm_res))
+    {
+        std::cerr << "Erro ao escrever artefatos espectrais em " << linop_dir << "\n";
+        return 4;
+    }
+    std::cout << "Saved: " << (linop_dir / "helm10_rect_te_S_crs.csv") << "\n";
+    std::cout << "Saved: " << (linop_dir / "helm10_rect_te_T_crs.csv") << "\n";
+    std::cout << "Saved: " << (linop_dir / "helm10_rect_te_eigenvalues.csv") << "\n";
+    std::cout << "Saved: " << (linop_dir / "helm10_rect_te_eigenvectors.csv") << "\n";
+    std::cout << "Saved: " << (linop_dir / "helm10_rect_tm_S_crs.csv") << "\n";
+    std::cout << "Saved: " << (linop_dir / "helm10_rect_tm_T_crs.csv") << "\n";
+    std::cout << "Saved: " << (linop_dir / "helm10_rect_tm_eigenvalues.csv") << "\n";
+    std::cout << "Saved: " << (linop_dir / "helm10_rect_tm_eigenvectors.csv") << "\n";
 
     const double max_exported_kc_te =
         max_exported_kc_from_spectrum(te_res.w, export_modes, 1e-9);
@@ -574,7 +603,7 @@ int main(int argc, char **argv)
             match_span,
             match_span);
         const double kc_ana = material_adjusted_kc(id.kc_ana, cli.eps_r, cli.mu_r);
-        const double err = 100.0 * std::abs(kc_fem - kc_ana) / kc_ana;
+        const double err = error_metrics::absolute_relative_error_percent(kc_ana, kc_fem);
         const double kc_ar_fem = kc_fem * a;
         std::cout << std::setw(1) << (shown + 1) << "  ("
                   << id.m << "," << id.n << ")  "
@@ -670,7 +699,7 @@ int main(int argc, char **argv)
             rec.kc_ana = kc_ana;
             rec.kc_ar_fem = kc_fem * a;
             rec.kc_ar_ana = kc_ana * a;
-            rec.err_percent = 100.0 * std::abs(kc_fem - kc_ana) / kc_ana;
+            rec.err_percent = error_metrics::absolute_relative_error_percent(kc_ana, kc_fem);
             rec.rho_abs = id.rho;
 
             if (raw_field.below_cutoff)

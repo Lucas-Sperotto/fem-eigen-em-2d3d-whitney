@@ -18,12 +18,14 @@
 /*****************************************************************************/
 
 #include "article/tp3485_systems.hpp"
+#include "core/error_metrics.hpp"
 #include "core/execution_log.hpp"
 #include "core/io_vtk_sv.hpp"
 #include "core/lapack_eig.hpp"
 #include "core/mesh2d_circle.hpp"
 #include "core/output_paths.hpp"
 #include "core/run_timing_edge_csv.hpp"
+#include "core/spectral_csv.hpp"
 #include "core/timing_utils.hpp"
 #include "edge/edge_assembly.hpp"
 #include "edge/mode_match_circle_edge.hpp"
@@ -98,6 +100,18 @@ static timing::Breakdown run_case_circle(
     const auto res = generalized_eigs_sym_vec(sys.S, sys.T);
     perf.solve_ms += stage.elapsed_ms();
 
+    const std::string branch_prefix =
+        std::string("edge_circle_") + (is_te ? "te" : "tm");
+    if (!spectral_csv::write_symmetric_problem_exports(
+            dirs.linop,
+            branch_prefix,
+            sys.S,
+            sys.T,
+            res))
+    {
+        throw std::runtime_error("Erro ao escrever artefatos espectrais de " + branch_prefix);
+    }
+
     if (debug_candidates)
         helmvec_debug::print_positive_kc_candidates_debug(res.w, 1e-9, 20);
 
@@ -118,7 +132,7 @@ static timing::Breakdown run_case_circle(
                                       ? match_circle_edge_mode_by_mass_correlation_TE(mesh, r, sys.T, sys.ed, res.Zcol, i, 8, 8)
                                       : match_circle_edge_mode_by_mass_correlation_TM(mesh, r, sys.T, sys.ed, res.Zcol, i, 8, 8);
 
-        const double err = 100.0 * std::abs(kc_fem - id.kc_ana) / id.kc_ana;
+        const double err = error_metrics::absolute_relative_error_percent(id.kc_ana, kc_fem);
         std::cout << std::setw(1) << (shown + 1)
                   << "  (" << id.m << "," << id.p << ")  "
                   << std::setw(9) << std::fixed << std::setprecision(6) << id.kc_ana << "  "
@@ -204,7 +218,7 @@ static timing::Breakdown run_case_circle(
         rec.kc_ana = id.kc_ana;
         rec.kc_r_fem = rec.kc_fem * r;
         rec.kc_r_ana = rec.kc_ana * r;
-        rec.error_percent = 100.0 * std::abs(rec.kc_fem - rec.kc_ana) / rec.kc_ana;
+        rec.error_percent = error_metrics::absolute_relative_error_percent(rec.kc_ana, rec.kc_fem);
         rec.rho_abs = id.rho;
         rec.field_status = "cell_centroid_unit_peak_normalized";
         rec.fields_csv_file = fields_csv_filename;
@@ -268,6 +282,7 @@ int main(int argc, char **argv)
     std::cout << "Output dir: " << dirs.root << "\n";
     std::cout << "CSV dir: " << dirs.csv << "\n";
     std::cout << "VTK dir: " << dirs.vtk << "\n";
+    std::cout << "LinOp dir: " << dirs.linop << "\n";
     std::cout << "Backend de aresta: " << element_assembly_backend_name(cli.backend) << "\n";
 
     const auto mesh = make_circle_mesh(r, nr, nt);

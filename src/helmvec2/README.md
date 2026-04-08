@@ -260,15 +260,42 @@ O executavel agora grava em:
   - configuracao da rodada e tempos de montagem, solve e pos-processamento.
 - `out/helmvec2/rect/csv/helmvec2_rect_modes.csv`
   - tabela didatica final da Figura 11 / Tabela 8, com `k0L(FEM matched)`,
-    referencias e erros percentuais.
+    referencias, `ez_ratio`, `eig_index` casado e ponte para os artefatos
+    espaciais do modo.
 - `out/helmvec2/rect/csv/helmvec2_rect_candidates.csv`
   - lista dos candidatos espectrais positivos reais, com `eig_index`,
     `k0L`, `ez_ratio` e indicacao do filtro fisico.
+- `out/helmvec2/rect/csv/helmvec2_rect_modeXX_candYY_Et_fields.csv`
+  - campo transversal `Et` reconstruido por celula, com
+    `cell_id`, `xc_m`, `yc_m`, `Ex`, `Ey`, `Emag`.
+- `out/helmvec2/rect/csv/helmvec2_rect_modeXX_candYY_Ez_fields.csv`
+  - componente longitudinal `Ez` reconstruida por no, com
+    `node_id`, `x_m`, `y_m`, `Ez`.
+- `out/helmvec2/rect/vtk/`
+  - VTKs por modo casado:
+    - `*_Et.vtk` para o campo transversal vetorial;
+    - `*_Ez.vtk` para a componente longitudinal escalar.
+- `out/helmvec2/rect/img/`
+  - imagens geradas por `python3 scripts/helmvec2.py`
+  - o conjunto atual inclui:
+    - comparacao grafica da Figura 11 / Tabela 8
+    - erro por modo
+    - espectro de candidatos por rank
+    - mapas de magnitude de `Et` por modo casado
+    - diagramas `quiver` de `Et` por modo casado
+    - mapas escalares de `Ez` por modo casado
+- `out/helmvec2/rect/linop/`
+  - problema global `A/B` da Eq. `(119)` em CSV no formato CRS.
+  - blocos nomeados `A_tt`, `A_tz`, `A_zt`, `A_zz`, `B_tt`, `B_zz`.
+  - `helmvec2_rect_eigenvalues.csv` e `helmvec2_rect_eigenvectors.csv`
+    ordenados por autovalor.
 
 Observacao:
 
 - a tabela impressa no terminal continua estavel para o parser legado;
-- os CSVs novos apenas registram essa mesma trilha de forma estruturada.
+- os CSVs novos registram essa mesma trilha de forma estruturada;
+- como a Eq. `(119)` usa `x = [Et ; Ez]`, cada modo casado exporta os dois
+  componentes espaciais complementares: `Et` e `Ez`.
 
 ## 7) Integracao com scripts
 
@@ -286,9 +313,17 @@ Campos relacionados:
 - `case=Figure11_Table8`
 - erro relativo contra HELMVEC2 e Hayata.
 
+Para gerar as imagens locais do modulo:
+
+```bash
+python3 scripts/helmvec2.py
+```
+
 ## 7.1) Referencias de saida
 
 - `docs/HELMVEC2_CSV_Referencia.md`
+- `docs/HELMVEC2_Imagens_Referencia.md`
+- `docs/Artefatos_Espectrais_CSV_Referencia.md`
 - `docs/Tabela_Executaveis_Entradas_Saidas.md`
 
 ## 8) Relacao com a sequencia 2D

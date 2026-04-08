@@ -33,6 +33,7 @@ struct CaseDirs
     std::filesystem::path csv;
     std::filesystem::path vtk;
     std::filesystem::path img;
+    std::filesystem::path linop;
 };
 
 /******************************************************************************/
@@ -48,10 +49,12 @@ inline CaseDirs ensure_case_dirs(const std::string &case_name)
     dirs.csv = dirs.root / "csv";
     dirs.vtk = dirs.root / "vtk";
     dirs.img = dirs.root / "img";
+    dirs.linop = dirs.root / "linop";
     std::error_code ec;
     std::filesystem::create_directories(dirs.csv, ec);
     std::filesystem::create_directories(dirs.vtk, ec);
     std::filesystem::create_directories(dirs.img, ec);
+    std::filesystem::create_directories(dirs.linop, ec);
     return dirs;
 }
 

@@ -19,6 +19,7 @@
 /*****************************************************************************/
 
 #include "article/tp3485_systems.hpp"
+#include "core/error_metrics.hpp"
 #include "core/io_vtk_sv.hpp"
 #include "core/lapack_eig.hpp"
 #include "core/mesh2d_circle.hpp"
@@ -26,6 +27,7 @@
 #include "core/execution_log.hpp"
 #include "core/output_paths.hpp"
 #include "core/run_timing_csv.hpp"
+#include "core/spectral_csv.hpp"
 #include "core/timing_utils.hpp"
 #include "helm10/field_reconstruction.hpp"
 #include "helm10/scalar_cli_options.hpp"
@@ -228,6 +230,7 @@ int main(int argc, char **argv)
     const auto case_dir = output_paths::ensure_case_dir("helm10/circle");
     const auto vtk_dir = output_paths::ensure_case_dir("helm10/circle/vtk");
     const auto csv_dir = output_paths::ensure_case_dir("helm10/circle/csv");
+    const auto linop_dir = output_paths::ensure_case_dir("helm10/circle/linop");
     const std::string timing_csv_path = output_paths::file_in(case_dir, "run_timing.csv");
     execution_log::ExecutionLogScope execution_log(
         output_paths::file_in(case_dir, "run.log"));
@@ -240,6 +243,7 @@ int main(int argc, char **argv)
     std::cout << "Output dir: " << case_dir << "\n";
     std::cout << "VTK dir: " << vtk_dir << "\n";
     std::cout << "CSV dir: " << csv_dir << "\n";
+    std::cout << "LinOp dir: " << linop_dir << "\n";
     std::cout << "Backend escalar: " << element_assembly_backend_name(cli.backend) << "\n";
 
     const Mesh2D mesh = make_circle_mesh(r, nr, nt);
@@ -306,7 +310,7 @@ int main(int argc, char **argv)
             6,
             6);
         const double kc_ana = material_adjusted_kc(id.kc_ana, cli.eps_r, cli.mu_r);
-        const double err = 100.0 * std::abs(kc_fem - kc_ana) / kc_ana;
+        const double err = error_metrics::absolute_relative_error_percent(kc_ana, kc_fem);
 
         std::cout << (shown + 1) << "  (" << id.m << "," << id.p << ")  "
                   << std::setw(9) << std::fixed << std::setprecision(6) << kc_ana << "  "
@@ -335,6 +339,31 @@ int main(int argc, char **argv)
     if (cli.debug_candidates)
         helm10_debug::print_positive_kc_candidates_debug(tm.w, 0.0);
     helm10_post::print_positive_kc(tm.w, 10, false);
+
+    if (!spectral_csv::write_symmetric_problem_exports(
+            linop_dir,
+            "helm10_circle_te",
+            sys_te.S,
+            sys_te.T,
+            te) ||
+        !spectral_csv::write_symmetric_problem_exports(
+            linop_dir,
+            "helm10_circle_tm",
+            sys_tm.S,
+            sys_tm.T,
+            tm))
+    {
+        std::cerr << "Erro ao escrever artefatos espectrais em " << linop_dir << "\n";
+        return 4;
+    }
+    std::cout << "Saved: " << (linop_dir / "helm10_circle_te_S_crs.csv") << "\n";
+    std::cout << "Saved: " << (linop_dir / "helm10_circle_te_T_crs.csv") << "\n";
+    std::cout << "Saved: " << (linop_dir / "helm10_circle_te_eigenvalues.csv") << "\n";
+    std::cout << "Saved: " << (linop_dir / "helm10_circle_te_eigenvectors.csv") << "\n";
+    std::cout << "Saved: " << (linop_dir / "helm10_circle_tm_S_crs.csv") << "\n";
+    std::cout << "Saved: " << (linop_dir / "helm10_circle_tm_T_crs.csv") << "\n";
+    std::cout << "Saved: " << (linop_dir / "helm10_circle_tm_eigenvalues.csv") << "\n";
+    std::cout << "Saved: " << (linop_dir / "helm10_circle_tm_eigenvectors.csv") << "\n";
 
     const double max_exported_kc_te =
         max_exported_kc_from_spectrum(te.w, export_modes, 1e-9);
@@ -378,7 +407,7 @@ int main(int argc, char **argv)
             6,
             6);
         const double kc_ana = material_adjusted_kc(id.kc_ana, cli.eps_r, cli.mu_r);
-        const double err = 100.0 * std::abs(kc_fem - kc_ana) / kc_ana;
+        const double err = error_metrics::absolute_relative_error_percent(kc_ana, kc_fem);
 
         std::cout << (shown + 1) << "  (" << id.m << "," << id.p << ")  "
                   << std::setw(9) << std::fixed << std::setprecision(6) << kc_ana << "  "
@@ -455,7 +484,7 @@ int main(int argc, char **argv)
         }
         mode_fields_csv << std::setprecision(16);
         mode_fields_csv << "node_id,x_m,y_m,psi,dpsi_dx,dpsi_dy,Ex,Ey\n";
-        const double err = 100.0 * std::abs(kc_fem - kc_ana) / kc_ana;
+        const double err = error_metrics::absolute_relative_error_percent(kc_ana, kc_fem);
 
         if (field_result.below_cutoff)
         {
@@ -550,7 +579,7 @@ int main(int argc, char **argv)
         }
         mode_fields_csv << std::setprecision(16);
         mode_fields_csv << "node_id,x_m,y_m,psi,dpsi_dx,dpsi_dy,Ex,Ey\n";
-        const double err = 100.0 * std::abs(kc_fem - kc_ana) / kc_ana;
+        const double err = error_metrics::absolute_relative_error_percent(kc_ana, kc_fem);
 
         if (field_result.below_cutoff)
         {

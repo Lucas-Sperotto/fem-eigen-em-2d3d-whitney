@@ -26,20 +26,29 @@ struct CaseDirs
 {
     std::filesystem::path root;
     std::filesystem::path csv;
+    std::filesystem::path vtk;
     std::filesystem::path img;
+    std::filesystem::path linop;
 };
 
 struct ModeCsvRecord
 {
     int mode = 0;
     int matched_candidate_rank = 0;
+    int matched_eig_index = 0;
     double k0_fem_matched = 0.0;
     double k0l_fem_matched = 0.0;
+    double ez_ratio = 0.0;
     double ref_helmvec2 = 0.0;
     double ref_hayata = 0.0;
     double error_percent_helmvec2 = 0.0;
     double error_percent_hayata = 0.0;
     std::string match_status;
+    std::string field_status;
+    std::string et_fields_csv_file;
+    std::string ez_fields_csv_file;
+    std::string et_vtk_file;
+    std::string ez_vtk_file;
 };
 
 struct CandidateCsvRecord
@@ -57,10 +66,14 @@ inline CaseDirs ensure_case_dirs(const std::string &case_name)
     CaseDirs dirs;
     dirs.root = output_paths::ensure_case_dir("helmvec2/" + case_name);
     dirs.csv = dirs.root / "csv";
+    dirs.vtk = dirs.root / "vtk";
     dirs.img = dirs.root / "img";
+    dirs.linop = dirs.root / "linop";
     std::error_code ec;
     std::filesystem::create_directories(dirs.csv, ec);
+    std::filesystem::create_directories(dirs.vtk, ec);
     std::filesystem::create_directories(dirs.img, ec);
+    std::filesystem::create_directories(dirs.linop, ec);
     return dirs;
 }
 
@@ -74,8 +87,9 @@ inline bool write_modes_csv(
 
     out << std::setprecision(16);
     out << "mode,matched_candidate_rank,k0_fem_matched,k0l_fem_matched,"
-           "ref_helmvec2,ref_hayata,error_percent_helmvec2,error_percent_hayata,"
-           "match_status\n";
+           "matched_eig_index,ez_ratio,ref_helmvec2,ref_hayata,"
+           "error_percent_helmvec2,error_percent_hayata,match_status,"
+           "field_status,et_fields_csv_file,ez_fields_csv_file,et_vtk_file,ez_vtk_file\n";
 
     for (const ModeCsvRecord &rec : records)
     {
@@ -83,11 +97,18 @@ inline bool write_modes_csv(
             << rec.matched_candidate_rank << ","
             << rec.k0_fem_matched << ","
             << rec.k0l_fem_matched << ","
+            << rec.matched_eig_index << ","
+            << rec.ez_ratio << ","
             << rec.ref_helmvec2 << ","
             << rec.ref_hayata << ","
             << rec.error_percent_helmvec2 << ","
             << rec.error_percent_hayata << ","
-            << rec.match_status << "\n";
+            << rec.match_status << ","
+            << rec.field_status << ","
+            << rec.et_fields_csv_file << ","
+            << rec.ez_fields_csv_file << ","
+            << rec.et_vtk_file << ","
+            << rec.ez_vtk_file << "\n";
     }
 
     return static_cast<bool>(out);

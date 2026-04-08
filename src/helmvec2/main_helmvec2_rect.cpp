@@ -18,17 +18,20 @@
 /*****************************************************************************/
 
 #include "article/tp3485_systems.hpp"
+#include "core/error_metrics.hpp"
 #include "core/execution_log.hpp"
 #include "core/mesh2d.hpp"
 #include "core/mesh2d_rect.hpp"
 #include "core/lapack_eig.hpp"
 #include "core/run_timing_wavenumber_csv.hpp"
+#include "core/spectral_csv.hpp"
 #include "core/timing_utils.hpp"
 #include "explicit/tri2d_coupled_explicit.hpp"
 #include "helmvec23_shared.hpp"
 #include "coupled_cli_options.hpp"
 #include "helmvec2_case_output.hpp"
 #include "helmvec2_coupled_system.hpp"
+#include "helmvec2_field_output.hpp"
 #include <algorithm>
 #include <cmath>
 #include <cstdlib>
@@ -41,6 +44,14 @@ struct ModeCand
     int eig_index = -1;
     double k0 = 0.0;
     double ez_ratio = 0.0; // ||Ez||^2 / (||Et||^2 + ||Ez||^2)
+};
+
+struct PhysicalRepresentative
+{
+    int candidate_rank = 0;
+    int eig_index = -1;
+    double k0 = 0.0;
+    double ez_ratio = 0.0;
 };
 
 /******************************************************************************/
@@ -159,6 +170,50 @@ static std::vector<ModeCand> collect_mode_candidates(
 }
 
 /******************************************************************************/
+/* FUNCAO: unique_physical_representatives                                    */
+/* DESCRICAO: Condensa candidatos fisicos quase degenerados em uma lista      */
+/* unica por raiz de k0, preservando um representante real para exportacao    */
+/* espacial. Entre candidatos com mesmo k0, escolhe o de maior Ez-ratio.      */
+/* ENTRADA: all_modes: const std::vector<ModeCand> &; k0_min_phys: double;    */
+/* uniq_tol: double.                                                          */
+/* SAIDA: std::vector<PhysicalRepresentative>.                                */
+/******************************************************************************/
+static std::vector<PhysicalRepresentative> unique_physical_representatives(
+    const std::vector<ModeCand> &all_modes,
+    double k0_min_phys,
+    double uniq_tol = 1e-8)
+{
+    std::vector<PhysicalRepresentative> reps;
+    for (int candidate_rank = 0; candidate_rank < (int)all_modes.size(); ++candidate_rank)
+    {
+        const ModeCand &mode = all_modes[(size_t)candidate_rank];
+        if (mode.k0 <= k0_min_phys)
+            continue;
+
+        if (!reps.empty() && std::abs(mode.k0 - reps.back().k0) < uniq_tol)
+        {
+            if (mode.ez_ratio > reps.back().ez_ratio)
+            {
+                reps.back().candidate_rank = candidate_rank + 1;
+                reps.back().eig_index = mode.eig_index;
+                reps.back().k0 = mode.k0;
+                reps.back().ez_ratio = mode.ez_ratio;
+            }
+            continue;
+        }
+
+        reps.push_back(
+            {
+                candidate_rank + 1,
+                mode.eig_index,
+                mode.k0,
+                mode.ez_ratio,
+            });
+    }
+    return reps;
+}
+
+/******************************************************************************/
 /* FUNCAO: main                                                               */
 /* DESCRICAO: Ponto de entrada do executavel: interpreta argumentos, prepara o*/
 /* caso e executa o fluxo numerico principal.                                 */
@@ -220,7 +275,9 @@ int main(int argc, char **argv)
 
     std::cout << "[output] root_dir=" << out_dirs.root << "\n";
     std::cout << "[output] csv_dir=" << out_dirs.csv << "\n";
+    std::cout << "[output] vtk_dir=" << out_dirs.vtk << "\n";
     std::cout << "[output] img_dir=" << out_dirs.img << "\n";
+    std::cout << "[output] linop_dir=" << out_dirs.linop << "\n";
 
     if (cli.debug_local_blocks)
         print_first_triangle_closed_form_debug(mesh, beta, eps, mu);
@@ -231,6 +288,32 @@ int main(int argc, char **argv)
     stage.reset();
     auto eig = generalized_eigs_real_vec(sys.A, sys.B);
     perf.solve_ms += stage.elapsed_ms();
+    if (!spectral_csv::write_general_problem_exports(
+            out_dirs.linop,
+            "helmvec2_rect",
+            sys.A,
+            sys.B,
+            eig) ||
+        !spectral_csv::write_dense_crs_csv(out_dirs.linop / "helmvec2_rect_A_tt_crs.csv", sys.A_tt) ||
+        !spectral_csv::write_rect_like_crs_csv(
+            out_dirs.linop / "helmvec2_rect_A_tz_crs.csv",
+            sys.A_tz.nr,
+            sys.A_tz.nc,
+            [&](int i, int j)
+            { return sys.A_tz(i, j); }) ||
+        !spectral_csv::write_rect_like_crs_csv(
+            out_dirs.linop / "helmvec2_rect_A_zt_crs.csv",
+            sys.A_zt.nr,
+            sys.A_zt.nc,
+            [&](int i, int j)
+            { return sys.A_zt(i, j); }) ||
+        !spectral_csv::write_dense_crs_csv(out_dirs.linop / "helmvec2_rect_A_zz_crs.csv", sys.A_zz) ||
+        !spectral_csv::write_dense_crs_csv(out_dirs.linop / "helmvec2_rect_B_tt_crs.csv", sys.B_tt) ||
+        !spectral_csv::write_dense_crs_csv(out_dirs.linop / "helmvec2_rect_B_zz_crs.csv", sys.B_zz))
+    {
+        std::cerr << "Aviso: falha ao escrever artefatos espectrais em " << out_dirs.linop << "\n";
+        return 4;
+    }
     auto all_modes = collect_mode_candidates(eig, sys.nt, sys.nz);
 
     double eps_max = 1.0;
@@ -240,18 +323,14 @@ int main(int argc, char **argv)
     // Regiao propagante: beta < k0*sqrt(eps_r_max)  => k0 > beta/sqrt(eps_r_max).
     // Esse filtro remove raizes nao propagantes para o meio estratificado da Fig. 11.
 
-    // Mantem apenas raizes fisicamente propagantes para este beta.
-    std::vector<double> k0_phys;
+    // Mantem o espectro bruto para auditoria e, em seguida, cria uma lista
+    // unica de representantes fisicos para o matching da Tabela 8.
     std::vector<helmvec2_output::CandidateCsvRecord> candidate_records;
     candidate_records.reserve(all_modes.size());
     for (int candidate_rank = 0; candidate_rank < (int)all_modes.size(); ++candidate_rank)
     {
         const auto &m = all_modes[(size_t)candidate_rank];
         const bool passes = (m.k0 > k0_min_phys);
-        if (passes)
-        {
-            k0_phys.push_back(m.k0);
-        }
         candidate_records.push_back(
             {
                 candidate_rank + 1,
@@ -262,7 +341,12 @@ int main(int argc, char **argv)
                 passes ? 1 : 0,
             });
     }
-    k0_phys = helmvec23::unique_sorted(std::move(k0_phys));
+    const std::vector<PhysicalRepresentative> physical_modes =
+        unique_physical_representatives(all_modes, k0_min_phys);
+    std::vector<double> k0_phys;
+    k0_phys.reserve(physical_modes.size());
+    for (const auto &mode : physical_modes)
+        k0_phys.push_back(mode.k0);
 
     const std::vector<double> ref_helmvec2 = {8.8150, 9.4430, 10.3500, 11.1410, 11.2890, 11.4246, 12.1460, 12.5894, 12.8237, 12.9987};
     const std::vector<double> ref_hayata = {8.8093, 9.3896, 10.2752, 11.1030, 11.2677, 11.4501, 11.9882, 12.6686, 12.8092, 12.9575};
@@ -280,7 +364,7 @@ int main(int argc, char **argv)
     std::cout << "\n";
 
     std::cout << "mode  k0L(FEM matched)  HELMVEC2(ref)  Hayata(ref)\n";
-    std::vector<char> used(k0_phys.size(), 0);
+    std::vector<char> used(physical_modes.size(), 0);
     std::vector<helmvec2_output::ModeCsvRecord> mode_records;
     const int N = std::min<int>(10, ref_helmvec2.size());
     for (int i = 0; i < N; ++i)
@@ -295,23 +379,48 @@ int main(int argc, char **argv)
                   << "  " << ref_helmvec2[i]
                   << "  " << ref_hayata[i] << "\n";
         const double err_helmvec2 =
-            std::isfinite(k0L) ? 100.0 * (k0L - ref_helmvec2[i]) / ref_helmvec2[i]
+            std::isfinite(k0L) ? error_metrics::absolute_relative_error_percent(ref_helmvec2[i], k0L)
                                : std::numeric_limits<double>::quiet_NaN();
         const double err_hayata =
-            std::isfinite(k0L) ? 100.0 * (k0L - ref_hayata[i]) / ref_hayata[i]
+            std::isfinite(k0L) ? error_metrics::absolute_relative_error_percent(ref_hayata[i], k0L)
                                : std::numeric_limits<double>::quiet_NaN();
-        mode_records.push_back(
-            {
+        helmvec2_output::ModeCsvRecord rec;
+        rec.mode = i + 1;
+        rec.matched_candidate_rank =
+            (matched_index >= 0) ? physical_modes[(size_t)matched_index].candidate_rank : 0;
+        rec.matched_eig_index =
+            (matched_index >= 0) ? physical_modes[(size_t)matched_index].eig_index : 0;
+        rec.k0_fem_matched =
+            std::isfinite(k0L) ? k0L / L : std::numeric_limits<double>::quiet_NaN();
+        rec.k0l_fem_matched = k0L;
+        rec.ez_ratio =
+            (matched_index >= 0) ? physical_modes[(size_t)matched_index].ez_ratio
+                                 : std::numeric_limits<double>::quiet_NaN();
+        rec.ref_helmvec2 = ref_helmvec2[i];
+        rec.ref_hayata = ref_hayata[i];
+        rec.error_percent_helmvec2 = err_helmvec2;
+        rec.error_percent_hayata = err_hayata;
+        rec.match_status = (matched_index >= 0) ? "matched" : "missing_candidate";
+
+        if (matched_index >= 0)
+        {
+            const auto artifacts = helmvec2_field::export_mode(
+                out_dirs,
+                mesh,
+                sys,
+                eig.VRcol,
+                physical_modes[(size_t)matched_index].eig_index,
                 i + 1,
-                (matched_index >= 0) ? (matched_index + 1) : 0,
-                std::isfinite(k0L) ? k0L / L : std::numeric_limits<double>::quiet_NaN(),
-                k0L,
-                ref_helmvec2[i],
-                ref_hayata[i],
-                err_helmvec2,
-                err_hayata,
-                (matched_index >= 0) ? "matched" : "missing_candidate",
-            });
+                physical_modes[(size_t)matched_index].candidate_rank);
+            rec.field_status = artifacts.field_status;
+            rec.et_fields_csv_file = artifacts.et_fields_csv_file;
+            rec.ez_fields_csv_file = artifacts.ez_fields_csv_file;
+            rec.et_vtk_file = artifacts.et_vtk_file;
+            rec.ez_vtk_file = artifacts.ez_vtk_file;
+        }
+
+        mode_records.push_back(
+            rec);
     }
 
     if (cli.debug_candidates)

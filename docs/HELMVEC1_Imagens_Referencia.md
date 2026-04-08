@@ -1,29 +1,21 @@
-# HELMVEC1: Referencia das Imagens de Resumo
+# HELMVEC1: Referencia das Imagens
 
 Este arquivo documenta o script:
 
 - [scripts/helmvec1.py](/home/sperotto/tp3485-fem-eigen-em/scripts/helmvec1.py)
 
 Ele le os CSVs modais produzidos pelos executaveis da familia `HELMVEC1` e
-gera imagens-resumo do sistema misto da Eq. `(92)`.
+gera imagens do sistema misto da Eq. `(92)`.
 
 ## Ideia principal
 
-Ao contrario do `HELM10` e do `HELMVEC`, o `HELMVEC1` ainda nao exporta, por
-padrao, um campo espacial por modo. Isso e intencional nesta etapa:
+O `HELMVEC1` agora exporta dois tipos de imagem espacial, de acordo com o
+bloco dominante do modo:
 
-- o foco didatico do modulo esta na estrutura mista da Eq. `(92)`;
-- cada autovetor tem dois blocos naturais, `edge` e `scalar`;
-- portanto, a primeira leitura que interessa ao aluno nao e um mapa de campo,
-  mas a classificacao modal por formulacao, familia e energia de bloco.
+- `edge` dominante -> campo transversal vetorial
+- `scalar` dominante -> componente longitudinal escalar
 
-Por isso, o script `helmvec1.py` gera graficos-resumo a partir de:
-
-- `out/helmvec1/<caso>/csv/mixed_<caso>_modes.csv`
-
-e salva as imagens em:
-
-- `out/helmvec1/<caso>/img/`
+Isso preserva a leitura fisica correta da Eq. `(92)`.
 
 ## Como executar
 
@@ -78,6 +70,16 @@ dominant_energy_ratio =
   - resumo do erro percentual por modo.
   - como o matching analitico agora existe em `rect`, `circle` e `coax`,
     esse grafico fica disponivel nos tres casos.
+
+- `img/magnitude/*.png`
+  - para modos `edge`, mapa de magnitude do campo transversal por celula.
+
+- `img/quiver/*.png`
+  - para modos `edge`, diagrama de setas do campo transversal por centroide.
+
+- `img/scalar/*.png`
+  - para modos `scalar`, mapa escalar nodal com isolinhas da componente
+    longitudinal (`Ez` ou `Hz`).
 
 ## Organizacao dos subgraficos
 
@@ -166,23 +168,31 @@ Este grafico responde:
 - quao perto o `kc_fem` ficou da referencia analitica;
 - como o erro evolui ao longo da ordenacao modal em cada geometria.
 
+### 5) Magnitude e quiver dos modos `edge`
+
+Essas figuras aparecem quando `field_data_kind = edge_vector_cell`.
+
+Elas mostram:
+
+- a distribuicao espacial do campo transversal dominante;
+- a direcao do campo reconstruido por elemento;
+- se o modo identificado como `Et` ou `Ht` faz sentido fisico.
+
+### 6) Mapa escalar dos modos `scalar`
+
+Essas figuras aparecem quando `field_data_kind = scalar_nodal`.
+
+Elas mostram:
+
+- a componente longitudinal nodal (`Ez` ou `Hz`);
+- suas isolinhas sobre a secao transversal;
+- a forma espacial do bloco escalar que dominou o autovetor misto.
+
 ## Relacao com a documentacao teorica
 
 Este material deve ser lido junto com:
 
 - [HELMVEC1_CSV_Modos_Referencia.md](HELMVEC1_CSV_Modos_Referencia.md)
+- [HELMVEC1_CSV_Campos_Referencia.md](HELMVEC1_CSV_Campos_Referencia.md)
 - [src/helmvec1/README.md](/home/sperotto/tp3485-fem-eigen-em/src/helmvec1/README.md)
 - [2.2.2_Guias_de_Onda_Nao_Homogeneos_Tres_Componentes.md](traducao/2.2.2_Guias_de_Onda_Nao_Homogeneos_Tres_Componentes.md)
-
-## Observacao importante
-
-O `HELMVEC1` ainda nao gera:
-
-- `fields_<modo>.csv`
-- mapas espaciais de campo
-- diagramas `quiver`
-- isolinhas
-
-Isso nao e uma omissao acidental. E uma escolha didatica da etapa atual do
-repositorio: primeiro consolidar a leitura modal do sistema misto da Eq. `(92)`,
-depois decidir qual representacao espacial faz sentido para cada bloco.

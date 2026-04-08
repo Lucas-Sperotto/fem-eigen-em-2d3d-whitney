@@ -15,10 +15,12 @@ Sistema discreto:
 `S e = k0^2 T e`
 
 Diferenca principal:
+
 - `S` e `T` sao montadas no triangulo inferior esparso,
 - solve atual ainda converte para denso antes de `dsygv`.
 
 Arquivo principal:
+
 - `main_fem3d1_rect.cpp`
 
 ## 2) Pipeline numerico
@@ -90,6 +92,7 @@ A diferenca deste modulo esta apenas na estrutura de armazenamento global
 - `--all`
 
 Defaults do executavel:
+
 - sem flags: roda `--air` e `--half`.
 - com `--nx --ny --nz`: sobrescreve malha padrao do caso selecionado.
 - sem `--backend`: usa `closed-form` como fluxo publico padrao.
@@ -111,6 +114,7 @@ Defaults do executavel:
 ## 5) Saida tipica
 
 Para cada caso:
+
 - `nodes`, `tets`, `edges`, `dof`,
 - `nnz_lower(S)`, `nnz_lower(T)`,
 - tabela modal com:
@@ -118,6 +122,7 @@ Para cada caso:
   - `ref_paper`, `err_ref(%)`.
 
 Flags de depuracao:
+
 - `--debug-local-blocks`: imprime `Sel` e `Tel` do primeiro tetraedro
 - `--debug-candidates`: imprime as primeiras raizes positivas `k0`
 - `--debug` / `--debug-all`: ativa os dois

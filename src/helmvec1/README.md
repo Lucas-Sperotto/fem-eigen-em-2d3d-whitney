@@ -289,29 +289,44 @@ Cada caso agora grava:
     classificacao modal das formulacoes `E` e `H`.
 - `csv/mixed_<caso>_modes.csv`
   - uma linha por modo classificado, com formulacao, bloco dominante, familia,
-    `kc`, referencia analitica, `rho_abs`, `match_space`, `match_method` e
-    energias por bloco.
+    `kc`, referencia analitica, `rho_abs`, `match_space`, `match_method`,
+    energias por bloco e ponte para os artefatos espaciais por modo.
   - para manter a saida didatica e o tempo de pos-processamento sob controle,
     o export atual fica limitado aos primeiros `20` modos por subgrupo.
+- `csv/*_fields.csv`
+  - modos `edge`:
+    - campo transversal por celula, em coordenadas cartesianas (`Ex/Ey` ou
+      `Hx/Hy`).
+  - modos `scalar`:
+    - componente longitudinal por no (`Ez` ou `Hz`).
+- `vtk/*.vtk`
+  - modos `edge`:
+    - VTK vetorial por celula.
+  - modos `scalar`:
+    - VTK escalar nodal.
 - `img/`
   - imagens-resumo geradas por `python3 scripts/helmvec1.py`.
-  - nesta etapa, sao graficos modais do sistema misto, e nao mapas espaciais
-    por modo.
-  - o conjunto atual inclui cutoff normalizado, `rho`, energia dominante,
-    energias de bloco e erro quando houver referencia analitica.
+  - o conjunto atual inclui:
+    - cutoff normalizado, `rho`, energia dominante, energias de bloco e erro;
+    - magnitude + quiver para modos `edge`;
+    - mapa escalar com isolinhas para modos `scalar`.
+- `linop/`
+  - problemas globais `S/T` das formulacoes `E` e `H` em CSV no formato CRS.
+  - blocos nomeados `St`, `Tt`, `Sz`, `Tz` da Eq. `(92)` em CSV no formato CRS.
+  - `*_eigenvalues.csv` e `*_eigenvectors.csv` ordenados por autovalor.
 
 Cabecalho atual do `modes.csv`:
 
-- `formulation,dominant_block,component_label,family,mode_label,positive_rank,eig_index,m,n,p,ar_m,b_m,r_m,r1_m,r2_m,kc_fem,kc_ana,kc_ar_fem,kc_ar_ana,kc_r_fem,kc_r_ana,kc_r1_fem,kc_r1_ana,error_percent,rho_abs,edge_energy,scalar_energy,dominant_energy_ratio,match_space,match_method,mode_status`
+- `formulation,dominant_block,component_label,family,mode_label,positive_rank,eig_index,m,n,p,ar_m,b_m,r_m,r1_m,r2_m,kc_fem,kc_ana,kc_ar_fem,kc_ar_ana,kc_r_fem,kc_r_ana,kc_r1_fem,kc_r1_ana,error_percent,rho_abs,edge_energy,scalar_energy,dominant_energy_ratio,match_space,match_method,mode_status,field_data_kind,field_status,fields_csv_file,vtk_file`
 
 Observacao didatica importante:
 
-- o `HELMVEC1` ainda nao exporta, por padrao, um campo espacial por modo;
-- nesta fase, a saida principal da familia e a classificacao modal do sistema
-  misto da Eq. `(92)`;
-- por isso, a trilha didatica do modulo hoje passa principalmente por
-  `run.log`, `run_timing.csv`, `mixed_<caso>_modes.csv` e os graficos-resumo
-  em `img/`.
+- o `HELMVEC1` nao tenta representar todos os modos como se fossem do mesmo
+  tipo fisico;
+- modos `edge` sao exportados como campo vetorial transversal;
+- modos `scalar` sao exportados como componente longitudinal escalar.
+- isso e coerente com a leitura da Eq. `(92)` como justaposicao de blocos
+  `edge` e `scalar`.
 
 As strings de cabecalho das tabelas no terminal sao mantidas estaveis para
 parse dos scripts `scripts/validate_2d_22.py`, `scripts/run_full_mesh_sweep.py`
@@ -320,7 +335,9 @@ e `scripts/run_structured_campaign.py`.
 ## 8.1) Referencias de saida
 
 - `docs/HELMVEC1_CSV_Modos_Referencia.md`
+- `docs/HELMVEC1_CSV_Campos_Referencia.md`
 - `docs/HELMVEC1_Imagens_Referencia.md`
+- `docs/Artefatos_Espectrais_CSV_Referencia.md`
 - `docs/Tabela_Executaveis_Entradas_Saidas.md`
 
 ## 9) Relacao com o artigo

@@ -328,10 +328,12 @@ Guia dedicado:
 ## 8) Saidas tipicas
 
 Console:
+
 - primeiros `kc`,
 - tabela FEM x analitico (`kc_ana`, `kc_fem`, `kcAr_fem`, erro %, `rho`).
 
 Arquivos VTK gerados pelos `main`:
+
 - retangular: `out/helm10/rect/vtk/`
 - circular: `out/helm10/circle/vtk/`
 - coaxial: `out/helm10/coax/vtk/`

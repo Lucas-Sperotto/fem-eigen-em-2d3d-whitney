@@ -239,6 +239,99 @@ Saida textual em 3 blocos:
 - preview de ramo (Figura 13, um `d/a`),
 - validacao completa da Tabela 10.
 
+Saida estruturada em disco:
+
+```text
+out/helmvec3/rect/
+  run.log
+  run_timing.csv
+  csv/
+    helmvec3_rect_table9.csv
+    helmvec3_rect_preview.csv
+    helmvec3_rect_table10.csv
+    helmvec3_rect_figure12_br*_Et_fields.csv
+    helmvec3_rect_figure12_br*_Ez_fields.csv
+    helmvec3_rect_preview_da*_br*_Et_fields.csv
+    helmvec3_rect_preview_da*_br*_Ez_fields.csv
+    helmvec3_rect_table10_da*_br*_Et_fields.csv
+    helmvec3_rect_table10_da*_br*_Ez_fields.csv
+  vtk/
+    helmvec3_rect_figure12_br*_Et.vtk
+    helmvec3_rect_figure12_br*_Ez.vtk
+    helmvec3_rect_preview_da*_br*_Et.vtk
+    helmvec3_rect_preview_da*_br*_Ez.vtk
+    helmvec3_rect_table10_da*_br*_Et.vtk
+    helmvec3_rect_table10_da*_br*_Ez.vtk
+  linop/
+    helmvec3_rect_figure12_*.csv
+    helmvec3_rect_preview_da*_*.csv
+    helmvec3_rect_table10_da*_*.csv
+  img/
+    helmvec3_rect_table9_beta_over_k0.png
+    helmvec3_rect_table9_error_by_point.png
+    helmvec3_rect_preview_branch.png
+    helmvec3_rect_table10_fem_branches.png
+    helmvec3_rect_table10_error_by_branch.png
+    magnitude/
+    quiver/
+    scalar/
+```
+
+O `run.log` espelha tudo que o executavel imprime em tela. O `run_timing.csv`
+registra a configuracao da rodada, o tamanho da malha, a quantidade de pontos
+resolvidos nas Tabelas 9 e 10 e os tempos agregados de montagem, solve e
+pos-processamento.
+
+Os tres CSVs principais se dividem assim:
+
+- `helmvec3_rect_table9.csv`
+  - curva casada da Figura 12 / Tabela 9;
+  - cada linha agora registra tambem o candidato/autovetor escolhido e a
+    ponte para os artefatos espaciais `Et`/`Ez`.
+- `helmvec3_rect_preview.csv`
+  - ramo rastreado por continuidade para um `d/a` escolhido;
+  - cada linha agora registra o candidato acompanhado no ramo e a ponte para
+    os artefatos espaciais `Et`/`Ez`.
+- `helmvec3_rect_table10.csv`
+  - validacao completa por blocos da Figura 13 / Tabela 10;
+  - cada linha agora registra o candidato/autovetor escolhido e a ponte para
+    os artefatos espaciais `Et`/`Ez`.
+
+Como a Eq. `(136)` usa `x = [Et ; Ez]`, cada ponto exportado gera:
+
+- um CSV e um VTK de `Et` por celula;
+- um CSV e um VTK de `Ez` por no.
+
+Os artefatos em `linop/` seguem outra granularidade:
+
+- um pacote espectral por ponto resolvido da curva;
+- cada pacote guarda `P`, `Q`, os blocos nomeados da Eq. `(136)`,
+  `eigenvalues.csv` e `eigenvectors.csv`;
+- isso permite auditar posteriormente cada problema generalizado resolvido
+  ao longo da Figura 12, do preview e da Tabela 10.
+
+Para gerar as imagens a partir desses CSVs:
+
+```bash
+python3 scripts/helmvec3.py
+python3 scripts/helmvec3.py --case rect --dpi 120
+python3 scripts/helmvec3.py --case rect --dpi 120 --show-mesh
+```
+
+O script gera:
+
+- os graficos-resumo da Figura 12 / Tabela 9, do preview e da Tabela 10;
+- mapas de magnitude de `Et` em `img/magnitude/`;
+- diagramas `quiver` de `Et` em `img/quiver/`;
+- mapas escalares de `Ez` em `img/scalar/`.
+
+Nas tres arvores espaciais, os arquivos ficam organizados em subpastas por
+caso geometrico `d/a`, por exemplo:
+
+- `img/magnitude/figure12_da_0_225/`
+- `img/quiver/preview_da_0_2/`
+- `img/scalar/table10_da_0_5/`
+
 Quando `debug=1`, o driver tambem imprime os blocos locais do primeiro
 triangulo para inspecao didatica:
 
@@ -298,3 +391,10 @@ Na pratica:
   as equacoes do artigo;
 - `gauss` e util para manter continuidade com a montagem numerica tradicional
   como referencia auxiliar.
+
+## 10) Referencias didaticas desta familia
+
+- [docs/HELMVEC3_CSV_Referencia.md](/home/sperotto/tp3485-fem-eigen-em/docs/HELMVEC3_CSV_Referencia.md)
+- [docs/HELMVEC3_Imagens_Referencia.md](/home/sperotto/tp3485-fem-eigen-em/docs/HELMVEC3_Imagens_Referencia.md)
+- [docs/Artefatos_Espectrais_CSV_Referencia.md](/home/sperotto/tp3485-fem-eigen-em/docs/Artefatos_Espectrais_CSV_Referencia.md)
+- [docs/traducao/2.2.4_Caracteristicas_de_Dispersao_de_Guias_de_Onda.md](/home/sperotto/tp3485-fem-eigen-em/docs/traducao/2.2.4_Caracteristicas_de_Dispersao_de_Guias_de_Onda.md)

@@ -119,7 +119,7 @@ inline void print_rect_compare_table(
     {
         const double kc_a = ana[(size_t)i].kc;
         const double kc_c = calc[(size_t)i];
-        const double errp = 100.0 * (kc_c - kc_a) / kc_a;
+        const double errp = 100.0 * std::abs(kc_a - kc_c) / std::abs(kc_a);
 
         std::cout << " " << (i + 1)
                   << "   (" << ana[(size_t)i].m << "," << ana[(size_t)i].n << ")"
