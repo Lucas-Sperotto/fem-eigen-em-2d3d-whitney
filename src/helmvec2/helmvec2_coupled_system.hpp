@@ -113,6 +113,11 @@ enum class CoupledBetaDiagVariant
     DiagEq141BlendHalfQtt,
     DiagEq141EpsMassQtt,
     DiagEq142DocQzz,
+    DiagScalePzzDouble,
+    DiagScaleQzzHalf,
+    DiagScaleCouplingDouble,
+    DiagEq141EpsMassQttPlusPzzDouble,
+    DiagEq141EpsMassQttPlusQzzHalf,
 };
 
 inline const char *coupled_beta_diag_variant_name(CoupledBetaDiagVariant variant)
@@ -127,6 +132,16 @@ inline const char *coupled_beta_diag_variant_name(CoupledBetaDiagVariant variant
         return "diag_eq141_eps_mass_qtt";
     case CoupledBetaDiagVariant::DiagEq142DocQzz:
         return "diag_eq142_doc_qzz";
+    case CoupledBetaDiagVariant::DiagScalePzzDouble:
+        return "diag_scale_pzz_double";
+    case CoupledBetaDiagVariant::DiagScaleQzzHalf:
+        return "diag_scale_qzz_half";
+    case CoupledBetaDiagVariant::DiagScaleCouplingDouble:
+        return "diag_scale_coupling_double";
+    case CoupledBetaDiagVariant::DiagEq141EpsMassQttPlusPzzDouble:
+        return "diag_eq141_eps_mass_qtt_plus_pzz_double";
+    case CoupledBetaDiagVariant::DiagEq141EpsMassQttPlusQzzHalf:
+        return "diag_eq141_eps_mass_qtt_plus_qzz_half";
     }
     return "baseline";
 }

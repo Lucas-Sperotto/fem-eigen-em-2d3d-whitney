@@ -147,6 +147,16 @@ CoupledBetaDiagVariant env_beta_diag_variant()
         return CoupledBetaDiagVariant::DiagEq141EpsMassQtt;
     if (token == "diag_eq142_doc_qzz" || token == "eq142" || token == "eq142_qzz")
         return CoupledBetaDiagVariant::DiagEq142DocQzz;
+    if (token == "diag_scale_pzz_double" || token == "pzz_double")
+        return CoupledBetaDiagVariant::DiagScalePzzDouble;
+    if (token == "diag_scale_qzz_half" || token == "qzz_half")
+        return CoupledBetaDiagVariant::DiagScaleQzzHalf;
+    if (token == "diag_scale_coupling_double" || token == "coupling_double")
+        return CoupledBetaDiagVariant::DiagScaleCouplingDouble;
+    if (token == "diag_eq141_eps_mass_qtt_plus_pzz_double" || token == "eq141_qtt_plus_pzz_double")
+        return CoupledBetaDiagVariant::DiagEq141EpsMassQttPlusPzzDouble;
+    if (token == "diag_eq141_eps_mass_qtt_plus_qzz_half" || token == "eq141_qtt_plus_qzz_half")
+        return CoupledBetaDiagVariant::DiagEq141EpsMassQttPlusQzzHalf;
 
     throw std::runtime_error(
         "Valor invalido em TP3485_HELMVEC3_DIAG_BETA_VARIANT: " + std::string(raw));

@@ -617,6 +617,23 @@ void apply_beta_diag_variant(
     double k0,
     CoupledBetaDiagVariant diag_variant)
 {
+    const double k02 = k0 * k0;
+    const auto set_qtt_eps_mass = [&]()
+    {
+        out.Q_tt = DenseMat(out.nt);
+        add_block_scaled(out.Q_tt, 0, 0, out.edge.T, -1.0);
+    };
+    const auto set_pzz_double = [&]()
+    {
+        out.P_zz = DenseMat(out.nz);
+        add_block_scaled(out.P_zz, 0, 0, out.scal.T, +(2.0 * k02));
+    };
+    const auto set_qzz_half = [&]()
+    {
+        out.Q_zz = DenseMat(out.nz);
+        add_block_scaled(out.Q_zz, 0, 0, out.scal.S, +0.5);
+    };
+
     if (diag_variant == CoupledBetaDiagVariant::Baseline)
         return;
 
@@ -630,18 +647,51 @@ void apply_beta_diag_variant(
 
     if (diag_variant == CoupledBetaDiagVariant::DiagEq141EpsMassQtt)
     {
-        out.Q_tt = DenseMat(out.nt);
-        add_block_scaled(out.Q_tt, 0, 0, out.edge.T, -1.0);
+        set_qtt_eps_mass();
         return;
     }
 
     if (diag_variant == CoupledBetaDiagVariant::DiagEq142DocQzz)
     {
-        const double k02 = k0 * k0;
         out.P_zz = DenseMat(out.nz);
         out.Q_zz = DenseMat(out.nz);
         add_block_scaled(out.Q_zz, 0, 0, out.scal.S, -1.0);
         add_block_scaled(out.Q_zz, 0, 0, out.scal.T, +k02);
+        return;
+    }
+
+    if (diag_variant == CoupledBetaDiagVariant::DiagScalePzzDouble)
+    {
+        set_pzz_double();
+        return;
+    }
+
+    if (diag_variant == CoupledBetaDiagVariant::DiagScaleQzzHalf)
+    {
+        set_qzz_half();
+        return;
+    }
+
+    if (diag_variant == CoupledBetaDiagVariant::DiagScaleCouplingDouble)
+    {
+        for (double &value : out.Q_tz.a)
+            value *= 2.0;
+        for (double &value : out.Q_zt.a)
+            value *= 2.0;
+        return;
+    }
+
+    if (diag_variant == CoupledBetaDiagVariant::DiagEq141EpsMassQttPlusPzzDouble)
+    {
+        set_qtt_eps_mass();
+        set_pzz_double();
+        return;
+    }
+
+    if (diag_variant == CoupledBetaDiagVariant::DiagEq141EpsMassQttPlusQzzHalf)
+    {
+        set_qtt_eps_mass();
+        set_qzz_half();
         return;
     }
 
