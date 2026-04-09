@@ -45,7 +45,7 @@ Compile and run the full project pipeline:
 - run 2D executables (helm10, helmvec, helmvec1, helmvec2, helmvec3)
 - run 3D executables (fem3d0, fem3d1)
 - run validation scripts (2D + 3D)
-- generate all quiver images and mode summary CSV
+- generate post-processing images and mode summary CSV
 
 Options:
   --build-dir <dir>      Build directory (default: build)
@@ -61,8 +61,8 @@ Options:
   --skip-3d              Skip fem3d0/fem3d1 runs and 3D validation
   --skip-validate        Skip validate_2d_22.py and validate_3d_31.py
   --with-validate        Force validations even in --case mode
-  --skip-images          Skip plot_vtk_quiver.py --all-img
-  --with-images          Force image generation even in --case mode
+  --skip-images          Skip post-processing image generation (plot_vtk_quiver.py / plot_validation_2d_22.py)
+  --with-images          Force post-processing image generation even in --case mode
   --benchmark-backends   Run gauss vs closed-form benchmark after build
   --benchmark-suite <s>  Benchmark suite: core|all (default: core)
   --benchmark-repeats N  Benchmark repeats per backend (default: 3)

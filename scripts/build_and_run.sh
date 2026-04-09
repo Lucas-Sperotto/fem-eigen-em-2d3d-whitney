@@ -2,8 +2,17 @@
 
 set -euo pipefail
 
+# Helper legado/local para validacao e reproducao local das saidas do artigo.
+# Nao e o fluxo publico/canonico do repositorio.
+# Pipeline recomendado: scripts/build_and_run_all.sh
+
 # Ir para a raiz do projeto (script está em scripts/)
 cd "$(dirname "$0")/.."
+
+printf '%s\n' \
+    '[legacy-helper] scripts/build_and_run.sh e um helper legado/local para validacao do artigo.' \
+    '[legacy-helper] Ele nao e a interface canonica; use scripts/build_and_run_all.sh para o pipeline publico.' \
+    '[legacy-helper] Aviso: este script remove build/ e out/ antes de recompilar.' >&2
 
 echo "🧹 Limpando diretórios antigos..."
 
@@ -53,15 +62,15 @@ echo "📊 Gerando imagens do HELMVEC..."
 python3 scripts/helmvec.py
 
 echo "🚀 Executando HELMVEC1 com a discretização de referência do artigo..."
-./build/mixed_rect 10 20 10 --backend closed-form #400 elementos
-./build/mixed_circle 8 15 10 --backend closed-form #200 elementos
-./build/mixed_coax 10 17 10 --backend closed-form #340 elementos
+./build/mixed_rect --nx 10 --ny 20 --backend closed-form #400 elementos
+./build/mixed_circle --nr 8 --nt 15 --backend closed-form #200 elementos
+./build/mixed_coax --nr 10 --nt 17 --backend closed-form #340 elementos
 
 echo "📊 Gerando imagens do HELMVEC1..."
 python3 scripts/helmvec1.py
 
 echo "🚀 Executando HELMVEC2 com a discretização de referência do artigo..."
-./build/helmvec2_rect 10 20 20 10 --backend closed-form #seguindo o padrão do retangular
+./build/helmvec2_rect --beta 10 --nx 20 --ny 20 --backend closed-form #beta=10 com malha retangular 20x20
 
 echo "📊 Gerando imagens do HELMVEC2..."
 python3 scripts/helmvec2.py

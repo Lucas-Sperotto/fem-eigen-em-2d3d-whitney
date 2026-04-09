@@ -278,16 +278,19 @@ Em termos práticos:
 - `--debug-local-blocks` imprime o primeiro elemento local com rastreabilidade
   matematica;
 - `--debug-candidates` imprime as primeiras raizes/candidatos antes do matching.
+- nas familias 2D que exibem aliases nomeados no `--help`, a forma canonica
+  recomendada passa a ser a nomeada; os posicionais continuam aceitos por
+  compatibilidade, mas estao `deprecated`.
 
 Exemplos:
 
 ```bash
-./build/helm10_rect 1.0 14 14 8 --backend closed-form --debug-local-blocks
-./build/edge_rect 14 14 8 --debug-candidates
-./build/mixed_rect 12 6 --backend closed-form --debug-local-blocks --debug-candidates
-./build/helmvec2_rect 10 6 6 --backend closed-form --debug-local-blocks
-./build/helmvec3_fig12_rect 10 5 --backend closed-form --debug-candidates
-./build/helmvec3_fig13_rect 0.20 10 5 --backend closed-form --debug-candidates
+./build/helm10_rect --ar-m 1.0 --nx 14 --ny 14 --nmodos 8 --backend closed-form --debug-local-blocks
+./build/edge_rect --nx 14 --ny 14 --nmodos 8 --debug-candidates
+./build/mixed_rect --nx 12 --ny 6 --backend closed-form --debug-local-blocks --debug-candidates
+./build/helmvec2_rect --beta 10 --nx 6 --ny 6 --backend closed-form --debug-local-blocks
+./build/helmvec3_fig12_rect --nx 10 --ny 5 --backend closed-form --debug-candidates
+./build/helmvec3_fig13_rect --d-over-a-preview 0.20 --nx 10 --ny 5 --backend closed-form --debug-candidates
 ./build/fem3d0_air --backend closed-form --debug-local-blocks
 ```
 
@@ -296,25 +299,29 @@ Exemplos:
 ### 4.1) Secao 2.1 (`helm10`)
 
 ```bash
-./build/helm10_rect 1.0 14 14 8
-./build/helm10_circle 10 48 8
-./build/helm10_coax 10 48 8
+./build/helm10_rect --ar-m 1.0 --nx 14 --ny 14 --nmodos 8
+./build/helm10_circle --nr 10 --nt 48 --nmodos 8
+./build/helm10_coax --nr 10 --nt 48 --nmodos 8
 ```
 
 Saidas tipicas:
 
 - lista de `kc`
 - tabela de comparacao FEM x analitico com correlacao modal (`rho`)
+- `run.log` e `run_timing.csv` em `out/helm10/{rect,circle,coax}`
 - VTK em `out/helm10/{rect,circle,coax}/vtk`
 - CSVs didaticos em `out/helm10/{rect,circle,coax}/csv`, com `modes.csv` e
   `fields_<modo>.csv`
+- artefatos espectrais em `out/helm10/{rect,circle,coax}/linop`
+- PNGs em `out/helm10/{rect,circle,coax}/img` sao pos-processamento de
+  `python3 scripts/helm10.py`; nao fazem parte do executavel bruto
 
 ### 4.2) Secao 2.2.1 (`helmvec`)
 
 ```bash
-./build/edge_rect 14 14 8
-./build/edge_circle 10 48 8
-./build/edge_coax 10 48 8
+./build/edge_rect --nx 14 --ny 14 --nmodos 8
+./build/edge_circle --nr 10 --nt 48 --nmodos 8
+./build/edge_coax --nr 10 --nt 48 --nmodos 8
 ```
 
 Saidas tipicas:
@@ -325,15 +332,17 @@ Saidas tipicas:
 - CSVs didaticos em `out/helmvec/{rect,circle,coax}/csv`, com `modes.csv` e
   `fields_<modo>.csv`
 - VTK em `out/helmvec/{rect,circle,coax}/vtk`
+- artefatos espectrais em `out/helmvec/{rect,circle,coax}/linop`
 - imagens geradas por `python3 scripts/helmvec.py` em
-  `out/helmvec/{rect,circle,coax}/img`
+  `out/helmvec/{rect,circle,coax}/img`; essas PNGs nao fazem parte do
+  executavel bruto
 
 ### 4.3) Secao 2.2.2 (`helmvec1`)
 
 ```bash
-./build/mixed_rect 12 6
-./build/mixed_circle 10 48
-./build/mixed_coax 10 48
+./build/mixed_rect --nx 12 --ny 6
+./build/mixed_circle --nr 10 --nt 48
+./build/mixed_coax --nr 10 --nt 48
 ```
 
 Saidas tipicas:
@@ -344,15 +353,17 @@ Saidas tipicas:
 - CSVs didaticos em `out/helmvec1/{rect,circle,coax}/csv`, com
   `mixed_<caso>_modes.csv`, incluindo `rho_abs`, `match_space` e
   `match_method`
+- VTKs em `out/helmvec1/{rect,circle,coax}/vtk`
+- artefatos espectrais em `out/helmvec1/{rect,circle,coax}/linop`
 - imagens-resumo geradas por `python3 scripts/helmvec1.py` em
   `out/helmvec1/{rect,circle,coax}/img`, incluindo cutoff, `rho`, energia
-  dominante e energias de bloco
+  dominante e energias de bloco; essas PNGs nao fazem parte do executavel bruto
 
 ### 4.4) Secao 2.2.3 (`helmvec2`)
 
 ```bash
-./build/helmvec2_rect 10 6 6
-# args: beta nx ny [debug]
+./build/helmvec2_rect --beta 10 --nx 6 --ny 6
+# legado ainda aceito: beta nx ny [debug]
 ```
 
 Saidas tipicas:
@@ -363,9 +374,11 @@ Saidas tipicas:
   e `helmvec2_rect_candidates.csv`
 - CSVs espaciais por modo casado, com `Et` por celula e `Ez` por no
 - VTKs por modo casado em `out/helmvec2/rect/vtk`
+- artefatos espectrais em `out/helmvec2/rect/linop`
 - imagens geradas por `python3 scripts/helmvec2.py` em
   `out/helmvec2/rect/img`, incluindo resumo da Tabela 8, espectro de
-  candidatos, magnitude/quiver de `Et` e mapa escalar de `Ez`
+  candidatos, magnitude/quiver de `Et` e mapa escalar de `Ez`; essas PNGs nao
+  fazem parte do executavel bruto
 
 Observacao:
 
@@ -380,15 +393,13 @@ Observacao:
 ### 4.5) Secao 2.2.4 (`helmvec3`)
 
 ```bash
-./build/helmvec3_fig12_rect 10 5
-./build/helmvec3_fig12_rect 10 5 1
-./build/helmvec3_fig12_rect 10 5 --backend closed-form
-# args: nx ny [debug]
+./build/helmvec3_fig12_rect --nx 10 --ny 5
+./build/helmvec3_fig12_rect --nx 10 --ny 5 --backend closed-form
+# legado ainda aceito: nx ny [debug]
 
-./build/helmvec3_fig13_rect 0.20 10 5
-./build/helmvec3_fig13_rect 0.20 10 5 1
-./build/helmvec3_fig13_rect 0.20 10 5 --backend closed-form
-# args: d_over_a_preview nx ny [debug]
+./build/helmvec3_fig13_rect --d-over-a-preview 0.20 --nx 10 --ny 5
+./build/helmvec3_fig13_rect --d-over-a-preview 0.20 --nx 10 --ny 5 --backend closed-form
+# legado ainda aceito: d_over_a_preview nx ny [debug]
 ```
 
 Saidas tipicas:
@@ -400,6 +411,8 @@ Saidas tipicas:
   - `out/helmvec3/fig12_rect/csv/helmvec3_fig12_rect_table9.csv`
   - CSVs espaciais por ponto exportado da Figura 12, com `Et` por celula e `Ez` por no
   - VTKs por ponto exportado em `out/helmvec3/fig12_rect/vtk`
+  - artefatos espectrais em `out/helmvec3/fig12_rect/linop`
+  - PNGs em `out/helmvec3/fig12_rect/img` sao pos-processamento de `python3 scripts/helmvec3.py`
 - `helmvec3_fig13_rect`
   - preview de ramo para Figura 13
   - validacao da Tabela 10 (Figura 13)
@@ -409,6 +422,8 @@ Saidas tipicas:
   - `out/helmvec3/fig13_rect/csv/helmvec3_fig13_rect_table10.csv`
   - CSVs espaciais por ponto exportado, com `Et` por celula e `Ez` por no
   - VTKs por ponto exportado em `out/helmvec3/fig13_rect/vtk`
+  - artefatos espectrais em `out/helmvec3/fig13_rect/linop`
+  - PNGs em `out/helmvec3/fig13_rect/img` sao pos-processamento de `python3 scripts/helmvec3.py`
 
 ## 5) Executaveis 3D (Secao 3.1)
 
@@ -430,8 +445,10 @@ Saidas tipicas por caso (`air`, `half`, `cyl`, `sphere`):
 - `out/fem3d0/<caso>/csv/fem3d0_<caso>_modes.csv`
 - `out/fem3d0/<caso>/csv/fem3d0_<caso>_modeXX_<modo>_E_fields.csv`
 - `out/fem3d0/<caso>/vtk/fem3d0_<caso>_modeXX_<modo>_E.vtk`
-- `out/fem3d0/<caso>/img/` com resumos e projecoes `XY/XZ/YZ`
 - `out/fem3d0/<caso>/linop/` com `S`, `T`, autovalores e autovetores em CSV
+- `out/fem3d0/<caso>/img/` com resumos e projecoes `XY/XZ/YZ` e um
+  pos-processamento opcional de `python3 scripts/fem3d.py`, nao do executavel
+  bruto
 
 ### 5.2) FEM3D1 (montagem esparsa)
 
@@ -451,8 +468,10 @@ Saidas tipicas por caso (`air`, `half`, `cyl`, `sphere`):
 - `out/fem3d1/<caso>/csv/fem3d1_<caso>_modes.csv`
 - `out/fem3d1/<caso>/csv/fem3d1_<caso>_modeXX_<modo>_E_fields.csv`
 - `out/fem3d1/<caso>/vtk/fem3d1_<caso>_modeXX_<modo>_E.vtk`
-- `out/fem3d1/<caso>/img/` com resumos e projecoes `XY/XZ/YZ`
 - `out/fem3d1/<caso>/linop/` com `S`, `T`, autovalores e autovetores em CSV
+- `out/fem3d1/<caso>/img/` com resumos e projecoes `XY/XZ/YZ` e um
+  pos-processamento opcional de `python3 scripts/fem3d.py`, nao do executavel
+  bruto
 
 ## 6) Scripts de validacao
 
