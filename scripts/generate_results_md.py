@@ -358,6 +358,8 @@ def _write_report(
     lines.append("")
     lines.append(f"- Log principal: {_md_link(out_dir / 'run_all.log')}")
     lines.append(f"- CSV modos 2D (campos): {_md_link(out_dir / 'img_all' / 'mode_summary.csv')}")
+    lines.append(f"- CSV validacao 2D (2.1): {_md_link(out_dir / 'validation' / 'validation_2d_21.csv')}")
+    lines.append(f"- CSV validacao 2D (2.2.1): {_md_link(out_dir / 'validation' / 'validation_2d_221.csv')}")
     lines.append(f"- CSV validacao 2D (2.2.x): {_md_link(out_dir / 'validation' / 'validation_2d_22.csv')}")
     lines.append(f"- CSV validacao 3D (modes): {_md_link(out_dir / 'validation' / 'validation_3d_31_modes.csv')}")
     lines.append(f"- CSV validacao 3D (summary): {_md_link(out_dir / 'validation' / 'validation_3d_31_summary.csv')}")

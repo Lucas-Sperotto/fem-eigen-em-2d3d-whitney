@@ -59,7 +59,7 @@ Options:
   --log-file <path>      Write console log to file (default: <out-dir>/run_all.log)
   --no-log               Disable log file output
   --skip-3d              Skip fem3d0/fem3d1 runs and 3D validation
-  --skip-validate        Skip validate_2d_22.py and validate_3d_31.py
+  --skip-validate        Skip validation scripts (2D CSV aggregators, validate_2d_22.py and validate_3d_31.py)
   --with-validate        Force validations even in --case mode
   --skip-images          Skip post-processing image generation (plot_vtk_quiver.py / plot_validation_2d_22.py)
   --with-images          Force post-processing image generation even in --case mode
@@ -408,14 +408,26 @@ if [[ "$RUN_21" -eq 1 || "$RUN_221" -eq 1 || "$RUN_222" -eq 1 || "$RUN_223" -eq 
   (
     cd "$BUILD_DIR"
     if [[ "$RUN_21" -eq 1 ]]; then
-      run ./helm10_rect 14 14 "$MODE_EXPORT" --backend "$BACKEND" "${DEBUG_ARGS[@]}"
-      run ./helm10_circle 10 48 "$MODE_EXPORT" --backend "$BACKEND" "${DEBUG_ARGS[@]}"
-      run ./helm10_coax 10 48 "$MODE_EXPORT" --backend "$BACKEND" "${DEBUG_ARGS[@]}"
+      HELM10_RECT_MODES="$MODE_EXPORT"
+      HELM10_CIRCLE_MODES="$MODE_EXPORT"
+      HELM10_COAX_MODES="$MODE_EXPORT"
+      if [[ "$HELM10_RECT_MODES" -lt 10 ]]; then
+        HELM10_RECT_MODES=10
+      fi
+      if [[ "$HELM10_CIRCLE_MODES" -lt 14 ]]; then
+        HELM10_CIRCLE_MODES=14
+      fi
+      if [[ "$HELM10_COAX_MODES" -lt 8 ]]; then
+        HELM10_COAX_MODES=8
+      fi
+      run ./helm10_rect --ar-m 1.0 --nx 14 --ny 14 --nmodos "$HELM10_RECT_MODES" --backend "$BACKEND" "${DEBUG_ARGS[@]}"
+      run ./helm10_circle --nr 10 --nt 48 --nmodos "$HELM10_CIRCLE_MODES" --backend "$BACKEND" "${DEBUG_ARGS[@]}"
+      run ./helm10_coax --nr 10 --nt 48 --nmodos "$HELM10_COAX_MODES" --backend "$BACKEND" "${DEBUG_ARGS[@]}"
     fi
 
     if [[ "$RUN_221" -eq 1 ]]; then
-      run ./edge_rect 14 14 "$MODE_EXPORT" --backend "$BACKEND" "${DEBUG_ARGS[@]}"
-      run ./edge_circle 10 48 "$MODE_EXPORT" --backend "$BACKEND" "${DEBUG_ARGS[@]}"
+      run ./edge_rect --nx 14 --ny 14 --nmodos 20 --backend "$BACKEND" "${DEBUG_ARGS[@]}"
+      run ./edge_circle --nr 10 --nt 48 --nmodos 20 --backend "$BACKEND" "${DEBUG_ARGS[@]}"
       run ./edge_coax 10 48 "$MODE_EXPORT" --backend "$BACKEND" "${DEBUG_ARGS[@]}"
     fi
 
@@ -480,6 +492,26 @@ if [[ "$SKIP_VALIDATE" -eq 0 ]]; then
     --out-csv "$OUT_DIR/validation/validation_2d_22.csv" \
     "${VALIDATE_OUTPUT_ARGS[@]}" \
     "${DEBUG_ARGS[@]}"
+
+  if [[ "$RUN_21" -eq 1 ]]; then
+    log "Running 2.1 CSV-based validation..."
+    run python3 "$ROOT_DIR/scripts/validate_2d_21_csv.py" \
+      --out-root "$OUT_DIR" \
+      --backend "$BACKEND" \
+      --out-csv "$OUT_DIR/validation/validation_2d_21.csv"
+  else
+    log "Skipping 2.1 CSV-based validation (no scalar 2D case selected)."
+  fi
+
+  if [[ "$RUN_221" -eq 1 ]]; then
+    log "Running 2.2.1 CSV-based validation..."
+    run python3 "$ROOT_DIR/scripts/validate_2d_221_csv.py" \
+      --out-root "$OUT_DIR" \
+      --backend "$BACKEND" \
+      --out-csv "$OUT_DIR/validation/validation_2d_221.csv"
+  else
+    log "Skipping 2.2.1 CSV-based validation (no edge 2D case selected)."
+  fi
 
   if [[ "$SKIP_3D" -eq 0 ]]; then
     log "Running 3D validation..."
@@ -547,6 +579,12 @@ log "Pipeline completed."
 log "Main outputs:"
 if [[ "$SKIP_VALIDATE" -eq 0 ]]; then
   printf '  - %s\n' "$OUT_DIR/validation/validation_2d_22.csv"
+  if [[ -f "$OUT_DIR/validation/validation_2d_21.csv" ]]; then
+    printf '  - %s\n' "$OUT_DIR/validation/validation_2d_21.csv"
+  fi
+  if [[ -f "$OUT_DIR/validation/validation_2d_221.csv" ]]; then
+    printf '  - %s\n' "$OUT_DIR/validation/validation_2d_221.csv"
+  fi
   if [[ "$SKIP_3D" -eq 0 ]]; then
     printf '  - %s\n' "$OUT_DIR/validation/validation_3d_31_modes.csv"
     printf '  - %s\n' "$OUT_DIR/validation/validation_3d_31_summary.csv"
