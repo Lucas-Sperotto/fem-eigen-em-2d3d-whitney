@@ -108,6 +108,23 @@ inline int parse_nonnegative_cli_int(
 }
 
 /******************************************************************************/
+/* FUNCAO: scalar_cli_requests_help                                           */
+/* DESCRICAO: Detecta a opcao explicita --help antes do parse principal para  */
+/* permitir saida amigavel com codigo zero sem entrar no solver.              */
+/* ENTRADA: argc: int; argv: char **.                                         */
+/* SAIDA: bool.                                                               */
+/******************************************************************************/
+inline bool scalar_cli_requests_help(int argc, char **argv)
+{
+    for (int i = 1; i < argc; ++i)
+    {
+        if (std::string(argv[i]) == "--help")
+            return true;
+    }
+    return false;
+}
+
+/******************************************************************************/
 /* FUNCAO: parse_scalar_cli_options                                           */
 /* DESCRICAO: Separa argumentos posicionais legados de opcoes nomeadas e      */
 /* interpreta backend e flags de depuracao para os executaveis escalares da   */

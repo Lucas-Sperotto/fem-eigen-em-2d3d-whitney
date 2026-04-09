@@ -613,8 +613,21 @@ int run_helmvec3_fig12_rect(int argc, char **argv)
     const double b = 0.45;
     const double d12 = 0.5 * b;
     const double eps_fill = 2.45;
+    const auto print_usage = [](std::ostream &os)
+    {
+        os << "Uso: ./helmvec3_fig12_rect [nx [ny [debug]]]"
+           << " [--backend closed-form|gauss]"
+           << " [--debug-local-blocks] [--debug-candidates]\n";
+        os << "Aliases nomeados: [--nx NX] [--ny NY]"
+           << " (nao misture com os posicionais principais)\n";
+    };
 
     Fig12CliConfig cfg;
+    if (helmvec2::coupled_cli_requests_help(argc, argv))
+    {
+        print_usage(std::cout);
+        return 0;
+    }
     try
     {
         cfg = parse_fig12_cli(argc, argv);
@@ -622,11 +635,7 @@ int run_helmvec3_fig12_rect(int argc, char **argv)
     catch (const std::exception &e)
     {
         std::cerr << "Erro ao interpretar argumentos: " << e.what() << "\n";
-        std::cerr << "Uso: ./helmvec3_fig12_rect [nx [ny [debug]]]"
-                  << " [--backend closed-form|gauss]"
-                  << " [--debug-local-blocks] [--debug-candidates]\n";
-        std::cerr << "Aliases nomeados: [--nx NX] [--ny NY]"
-                  << " (nao misture com os posicionais principais)\n";
+        print_usage(std::cerr);
         return 2;
     }
 
@@ -754,8 +763,21 @@ int run_helmvec3_fig13_rect(int argc, char **argv)
     const double b = 0.45;
     const double d12 = 0.5 * b;
     const double eps_fill = 2.45;
+    const auto print_usage = [](std::ostream &os)
+    {
+        os << "Uso: ./helmvec3_fig13_rect [d_over_a_preview [nx [ny [debug]]]]"
+           << " [--backend closed-form|gauss]"
+           << " [--debug-local-blocks] [--debug-candidates]\n";
+        os << "Aliases nomeados: [--d-over-a-preview VAL] [--nx NX] [--ny NY]"
+           << " (nao misture com os posicionais principais)\n";
+    };
 
     Fig13CliConfig cfg;
+    if (helmvec2::coupled_cli_requests_help(argc, argv))
+    {
+        print_usage(std::cout);
+        return 0;
+    }
     try
     {
         cfg = parse_fig13_cli(argc, argv);
@@ -763,11 +785,7 @@ int run_helmvec3_fig13_rect(int argc, char **argv)
     catch (const std::exception &e)
     {
         std::cerr << "Erro ao interpretar argumentos: " << e.what() << "\n";
-        std::cerr << "Uso: ./helmvec3_fig13_rect [d_over_a_preview [nx [ny [debug]]]]"
-                  << " [--backend closed-form|gauss]"
-                  << " [--debug-local-blocks] [--debug-candidates]\n";
-        std::cerr << "Aliases nomeados: [--d-over-a-preview VAL] [--nx NX] [--ny NY]"
-                  << " (nao misture com os posicionais principais)\n";
+        print_usage(std::cerr);
         return 2;
     }
 

@@ -230,14 +230,19 @@ int main(int argc, char **argv)
     int nx = 6, ny = 6; // 72 triangles
     double beta = 10.0; // beta*L = 10
     helmvec2::CoupledCliOptions cli;
-    const auto print_usage = []()
+    const auto print_usage = [](std::ostream &os)
     {
-        std::cerr << "Uso: ./helmvec2_rect [beta [nx ny [debug]]]"
-                  << " [--backend closed-form|gauss]"
-                  << " [--debug-local-blocks] [--debug-candidates]\n";
-        std::cerr << "Aliases nomeados: [--beta BETA] [--nx NX] [--ny NY]"
-                  << " (nao misture com os posicionais principais)\n";
+        os << "Uso: ./helmvec2_rect [beta [nx ny [debug]]]"
+           << " [--backend closed-form|gauss]"
+           << " [--debug-local-blocks] [--debug-candidates]\n";
+        os << "Aliases nomeados: [--beta BETA] [--nx NX] [--ny NY]"
+           << " (nao misture com os posicionais principais)\n";
     };
+    if (helmvec2::coupled_cli_requests_help(argc, argv))
+    {
+        print_usage(std::cout);
+        return 0;
+    }
     try
     {
         cli = helmvec2::parse_coupled_cli_options(argc, argv);
@@ -245,7 +250,7 @@ int main(int argc, char **argv)
     catch (const std::exception &e)
     {
         std::cerr << "Erro ao interpretar argumentos: " << e.what() << "\n";
-        print_usage();
+        print_usage(std::cerr);
         return 2;
     }
 
@@ -257,14 +262,14 @@ int main(int argc, char **argv)
     if (cli.d_over_a_preview_was_provided)
     {
         std::cerr << "Erro: helmvec2_rect nao aceita --d-over-a-preview; use --beta.\n";
-        print_usage();
+        print_usage(std::cerr);
         return 2;
     }
 
     if (has_named_primary_args && !cli.positionals.empty())
     {
         std::cerr << "Erro: nao misture aliases nomeados principais com os argumentos posicionais de helmvec2_rect.\n";
-        print_usage();
+        print_usage(std::cerr);
         return 2;
     }
 

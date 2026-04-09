@@ -246,13 +246,18 @@ int main(int argc, char **argv)
     int nt = 48;
     int export_modes = 20;
     helmvec::EdgeCliOptions cli;
-    const auto print_usage = []()
+    const auto print_usage = [](std::ostream &os)
     {
-        std::cerr << "Uso: ./edge_circle [nr nt [nmodos]] [--backend closed-form|gauss]"
-                  << " [--debug-local-blocks] [--debug-candidates]\n";
-        std::cerr << "Aliases nomeados: [--nr NR] [--nt NT] [--nmodos M]"
-                  << " (nao misture com os posicionais principais)\n";
+        os << "Uso: ./edge_circle [nr nt [nmodos]] [--backend closed-form|gauss]"
+           << " [--debug-local-blocks] [--debug-candidates]\n";
+        os << "Aliases nomeados: [--nr NR] [--nt NT] [--nmodos M]"
+           << " (nao misture com os posicionais principais)\n";
     };
+    if (helmvec::edge_cli_requests_help(argc, argv))
+    {
+        print_usage(std::cout);
+        return 0;
+    }
 
     try
     {
@@ -261,7 +266,7 @@ int main(int argc, char **argv)
     catch (const std::exception &e)
     {
         std::cerr << "Erro ao interpretar argumentos: " << e.what() << "\n";
-        print_usage();
+        print_usage(std::cerr);
         return 2;
     }
 
@@ -273,14 +278,14 @@ int main(int argc, char **argv)
     if (cli.nx_was_provided || cli.ny_was_provided)
     {
         std::cerr << "Erro: edge_circle nao aceita --nx/--ny; use --nr/--nt.\n";
-        print_usage();
+        print_usage(std::cerr);
         return 2;
     }
 
     if (has_named_polar_args && !cli.positionals.empty())
     {
         std::cerr << "Erro: nao misture aliases nomeados principais com os argumentos posicionais de edge_circle.\n";
-        print_usage();
+        print_usage(std::cerr);
         return 2;
     }
 

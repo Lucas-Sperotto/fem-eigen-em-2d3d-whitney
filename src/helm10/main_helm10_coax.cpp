@@ -187,14 +187,19 @@ int main(int argc, char **argv)
     int nt = 48;
     int export_modes = 20;
     helm10::ScalarCliOptions cli;
-    const auto print_usage = []()
+    const auto print_usage = [](std::ostream &os)
     {
-        std::cerr << "Uso: ./helm10_coax [nr nt [nmodos]] [--backend closed-form|gauss]"
-                  << " [--freq-hz F] [--eps-r E] [--mu-r M]"
-                  << " [--debug-local-blocks] [--debug-candidates]\n";
-        std::cerr << "Aliases nomeados: [--nr NR] [--nt NT] [--nmodos M]"
-                  << " (nao misture com os posicionais principais)\n";
+        os << "Uso: ./helm10_coax [nr nt [nmodos]] [--backend closed-form|gauss]"
+           << " [--freq-hz F] [--eps-r E] [--mu-r M]"
+           << " [--debug-local-blocks] [--debug-candidates]\n";
+        os << "Aliases nomeados: [--nr NR] [--nt NT] [--nmodos M]"
+           << " (nao misture com os posicionais principais)\n";
     };
+    if (helm10::scalar_cli_requests_help(argc, argv))
+    {
+        print_usage(std::cout);
+        return 0;
+    }
     try
     {
         cli = helm10::parse_scalar_cli_options(argc, argv);
@@ -202,7 +207,7 @@ int main(int argc, char **argv)
     catch (const std::exception &e)
     {
         std::cerr << "Erro ao interpretar argumentos: " << e.what() << "\n";
-        print_usage();
+        print_usage(std::cerr);
         return 2;
     }
 
@@ -214,14 +219,14 @@ int main(int argc, char **argv)
     if (cli.ar_m_was_provided || cli.nx_was_provided || cli.ny_was_provided)
     {
         std::cerr << "Erro: helm10_coax nao aceita --ar-m/--nx/--ny; use --nr/--nt.\n";
-        print_usage();
+        print_usage(std::cerr);
         return 2;
     }
 
     if (has_named_polar_args && !cli.positionals.empty())
     {
         std::cerr << "Erro: nao misture aliases nomeados principais com os argumentos posicionais de helm10_coax.\n";
-        print_usage();
+        print_usage(std::cerr);
         return 2;
     }
 
@@ -231,7 +236,7 @@ int main(int argc, char **argv)
                   << " [--backend closed-form|gauss]"
                   << " [--freq-hz F] [--eps-r E] [--mu-r M]"
                   << " [--debug-local-blocks] [--debug-candidates]\n";
-        print_usage();
+        print_usage(std::cerr);
         return 2;
     }
 
@@ -263,7 +268,7 @@ int main(int argc, char **argv)
     {
         std::cerr << "Erro ao interpretar argumentos posicionais de helm10_coax: "
                   << e.what() << "\n";
-        print_usage();
+        print_usage(std::cerr);
         return 2;
     }
 

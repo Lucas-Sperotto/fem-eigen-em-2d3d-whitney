@@ -68,6 +68,16 @@ inline int parse_nonnegative_edge_cli_int(
     return value;
 }
 
+inline bool edge_cli_requests_help(int argc, char **argv)
+{
+    for (int i = 1; i < argc; ++i)
+    {
+        if (std::string(argv[i]) == "--help")
+            return true;
+    }
+    return false;
+}
+
 /******************************************************************************/
 /* FUNCAO: parse_edge_cli_options                                             */
 /* DESCRICAO: Separa argumentos posicionais e processa a chave --backend para */

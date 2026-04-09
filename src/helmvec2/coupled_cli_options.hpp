@@ -69,6 +69,16 @@ inline int parse_positive_coupled_cli_int(
     return value;
 }
 
+inline bool coupled_cli_requests_help(int argc, char **argv)
+{
+    for (int i = 1; i < argc; ++i)
+    {
+        if (std::string(argv[i]) == "--help")
+            return true;
+    }
+    return false;
+}
+
 /******************************************************************************/
 /* FUNCAO: parse_coupled_cli_options                                          */
 /* DESCRICAO: Separa argumentos posicionais legados de opcoes nomeadas e      */

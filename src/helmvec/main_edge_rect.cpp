@@ -248,13 +248,18 @@ int main(int argc, char **argv)
     int ny = 14;
     int export_modes = 20;
     helmvec::EdgeCliOptions cli;
-    const auto print_usage = []()
+    const auto print_usage = [](std::ostream &os)
     {
-        std::cerr << "Uso: ./edge_rect [nx ny [nmodos]] [--backend closed-form|gauss]"
-                  << " [--debug-local-blocks] [--debug-candidates]\n";
-        std::cerr << "Aliases nomeados: [--nx NX] [--ny NY] [--nmodos M]"
-                  << " (nao misture com os posicionais principais)\n";
+        os << "Uso: ./edge_rect [nx ny [nmodos]] [--backend closed-form|gauss]"
+           << " [--debug-local-blocks] [--debug-candidates]\n";
+        os << "Aliases nomeados: [--nx NX] [--ny NY] [--nmodos M]"
+           << " (nao misture com os posicionais principais)\n";
     };
+    if (helmvec::edge_cli_requests_help(argc, argv))
+    {
+        print_usage(std::cout);
+        return 0;
+    }
     try
     {
         cli = helmvec::parse_edge_cli_options(argc, argv);
@@ -262,7 +267,7 @@ int main(int argc, char **argv)
     catch (const std::exception &e)
     {
         std::cerr << "Erro ao interpretar argumentos: " << e.what() << "\n";
-        print_usage();
+        print_usage(std::cerr);
         return 2;
     }
 
@@ -274,14 +279,14 @@ int main(int argc, char **argv)
     if (cli.nr_was_provided || cli.nt_was_provided)
     {
         std::cerr << "Erro: edge_rect nao aceita --nr/--nt; use --nx/--ny.\n";
-        print_usage();
+        print_usage(std::cerr);
         return 2;
     }
 
     if (has_named_rect_args && !cli.positionals.empty())
     {
         std::cerr << "Erro: nao misture aliases nomeados principais com os argumentos posicionais de edge_rect.\n";
-        print_usage();
+        print_usage(std::cerr);
         return 2;
     }
 

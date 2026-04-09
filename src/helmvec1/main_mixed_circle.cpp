@@ -203,13 +203,18 @@ int main(int argc, char **argv)
     const double r = 1.0;
     int nr = 10, nt = 48;
     helmvec1::MixedCliOptions cli;
-    const auto print_usage = []()
+    const auto print_usage = [](std::ostream &os)
     {
-        std::cerr << "Uso: ./mixed_circle [nr nt] [--backend closed-form|gauss]"
-                  << " [--debug-local-blocks] [--debug-candidates]\n";
-        std::cerr << "Aliases nomeados: [--nr NR] [--nt NT]"
-                  << " (nao misture com os posicionais principais)\n";
+        os << "Uso: ./mixed_circle [nr nt] [--backend closed-form|gauss]"
+           << " [--debug-local-blocks] [--debug-candidates]\n";
+        os << "Aliases nomeados: [--nr NR] [--nt NT]"
+           << " (nao misture com os posicionais principais)\n";
     };
+    if (helmvec1::mixed_cli_requests_help(argc, argv))
+    {
+        print_usage(std::cout);
+        return 0;
+    }
     try
     {
         cli = helmvec1::parse_mixed_cli_options(argc, argv);
@@ -217,7 +222,7 @@ int main(int argc, char **argv)
     catch (const std::exception &e)
     {
         std::cerr << "Erro ao interpretar argumentos: " << e.what() << "\n";
-        print_usage();
+        print_usage(std::cerr);
         return 2;
     }
 
@@ -228,14 +233,14 @@ int main(int argc, char **argv)
     if (cli.nx_was_provided || cli.ny_was_provided)
     {
         std::cerr << "Erro: mixed_circle nao aceita --nx/--ny; use --nr/--nt.\n";
-        print_usage();
+        print_usage(std::cerr);
         return 2;
     }
 
     if (has_named_polar_args && !cli.positionals.empty())
     {
         std::cerr << "Erro: nao misture aliases nomeados principais com os argumentos posicionais de mixed_circle.\n";
-        print_usage();
+        print_usage(std::cerr);
         return 2;
     }
 
