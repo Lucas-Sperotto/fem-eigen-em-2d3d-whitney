@@ -63,6 +63,23 @@ def _count_by_case_dir(base: Path, suffix: str) -> Dict[str, int]:
     return out
 
 
+def _count_2d_vtks(out_dir: Path) -> Dict[str, int]:
+    legacy_root = out_dir / "2d"
+    if legacy_root.exists():
+        return _count_by_case_dir(legacy_root, ".vtk")
+
+    out: Dict[str, int] = {}
+    for family_name, case_name in (("helm10", "2.1_scalar"), ("helmvec", "2.2.1_edge")):
+        family_root = out_dir / family_name
+        if not family_root.exists():
+            continue
+        for vtk_path in sorted(family_root.glob("*/vtk/*.vtk")):
+            geometry = vtk_path.parent.parent.name
+            key = f"{case_name}/{geometry}"
+            out[key] = out.get(key, 0) + 1
+    return out
+
+
 def _analyze_log(path: Path) -> Dict[str, object]:
     info: Dict[str, object] = {
         "exists": path.exists(),
@@ -128,15 +145,23 @@ def _mode_paths(out_dir: Path, row: Dict[str, str]) -> Tuple[Optional[Path], Opt
     if formulation == "scalar":
         case = "2.1_scalar"
         fname = f"{pol}_{geometry}_m{m}_{idx2_name}{idx2}_rank{rank:02d}_sv"
+        vtk_candidates = [
+            out_dir / "helm10" / geometry / "vtk" / f"{fname}.vtk",
+            out_dir / "2d" / case / geometry / f"{fname}.vtk",
+        ]
     elif formulation == "edge":
         case = "2.2.1_edge"
         fname = f"edge_{geometry}_{pol}_m{m}_{idx2_name}{idx2}_rank{rank:02d}_{field}"
+        vtk_candidates = [
+            out_dir / "helmvec" / geometry / "vtk" / f"{fname}.vtk",
+            out_dir / "2d" / case / geometry / f"{fname}.vtk",
+        ]
     else:
         return None, None
 
-    vtk = out_dir / "2d" / case / geometry / f"{fname}.vtk"
+    vtk = next((path for path in vtk_candidates if path.exists()), None)
     png = out_dir / "img_all" / case / geometry / f"{fname}.png"
-    return (vtk if vtk.exists() else None, png if png.exists() else None)
+    return vtk, (png if png.exists() else None)
 
 
 def _top_mode_errors(mode_rows: List[Dict[str, str]], top_n: int = 12) -> List[Dict[str, object]]:
@@ -312,7 +337,7 @@ def _write_report(
 ) -> None:
     now = dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    vtk_counts = _count_by_case_dir(out_dir / "2d", ".vtk")
+    vtk_counts = _count_2d_vtks(out_dir)
     png_counts = _count_by_case_dir(out_dir / "img_all", ".png")
 
     mode_cov = Counter((r["geometry"], r["formulation"], r["polarization"]) for r in mode_rows)

@@ -318,6 +318,44 @@ def _infer_out_root_from_vtk_root(vtk_root: Path) -> Path:
     return vtk_root.parent
 
 
+def _append_family_vtks(vtk_files: List[Tuple[Path, Path]], family_root: Path, out_prefix: Path) -> None:
+    if not family_root.is_dir():
+        return
+    for geometry_dir in sorted(p for p in family_root.iterdir() if p.is_dir()):
+        vtk_dir = geometry_dir / "vtk"
+        if not vtk_dir.is_dir():
+            continue
+        for vtk_path in sorted(vtk_dir.glob("*.vtk")):
+            vtk_files.append((vtk_path, out_prefix / geometry_dir.name / f"{vtk_path.stem}.png"))
+
+
+def _collect_batch_vtk_files(vtk_root: Path) -> List[Tuple[Path, Path]]:
+    if not vtk_root.exists():
+        raise SystemExit(f"VTK root directory not found: {vtk_root}")
+
+    vtk_files: List[Tuple[Path, Path]] = []
+
+    legacy_root = vtk_root if vtk_root.name == "2d" else vtk_root / "2d"
+    if legacy_root.is_dir():
+        for vtk_path in sorted(legacy_root.rglob("*.vtk")):
+            vtk_files.append((vtk_path, vtk_path.relative_to(legacy_root).with_suffix(".png")))
+        if vtk_files:
+            return vtk_files
+
+    if vtk_root.name == "helm10":
+        _append_family_vtks(vtk_files, vtk_root, Path("2.1_scalar"))
+    elif vtk_root.name == "helmvec":
+        _append_family_vtks(vtk_files, vtk_root, Path("2.2.1_edge"))
+    else:
+        _append_family_vtks(vtk_files, vtk_root / "helm10", Path("2.1_scalar"))
+        _append_family_vtks(vtk_files, vtk_root / "helmvec", Path("2.2.1_edge"))
+
+    if vtk_files:
+        return vtk_files
+
+    raise SystemExit(f"No supported 2D VTK directories found under: {vtk_root}")
+
+
 def _parse_mode_table(
     text: str,
     geometry: str,
@@ -482,14 +520,8 @@ def _plot_all_images(
     first = _first_mode_lookup(rows)
     by_rank = _rank_mode_lookup(rows)
 
-    if not vtk_root.exists():
-        raise SystemExit(f"VTK root directory not found: {vtk_root}")
-
-    vtk_files = sorted(vtk_root.rglob("*.vtk"))
-    if not vtk_files:
-        raise SystemExit(f"No VTK files found under: {vtk_root}")
-
-    for vtk_path in vtk_files:
+    vtk_files = _collect_batch_vtk_files(vtk_root)
+    for vtk_path, rel in vtk_files:
         name = vtk_path.name
         geometry, formulation, pol = _metadata_from_filename(name)
 
@@ -503,7 +535,6 @@ def _plot_all_images(
         else:
             mode_row = first.get((geometry, formulation, pol))
 
-        rel = vtk_path.relative_to(vtk_root)
         img_path = out_dir / rel.with_suffix(".png")
         plot_quiver(
             vtk_path=vtk_path,

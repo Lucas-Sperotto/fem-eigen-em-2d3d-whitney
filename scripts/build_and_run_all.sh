@@ -500,15 +500,19 @@ else
 fi
 
 if [[ "$SKIP_IMAGES" -eq 0 ]]; then
-  log "Generating all images and mode summary CSV..."
-  run python3 "$ROOT_DIR/scripts/plot_vtk_quiver.py" \
-    --all-img \
-    --build-dir "$BUILD_DIR" \
-    --vtk-root "$OUT_DIR/2d" \
-    --out-dir "$OUT_DIR/img_all" \
-    --csv "$OUT_DIR/img_all/mode_summary.csv" \
-    --mode-export "$MODE_EXPORT" \
-    --max-rank "$MODE_EXPORT"
+  if [[ "$RUN_21" -eq 1 || "$RUN_221" -eq 1 ]]; then
+    log "Generating all images and mode summary CSV..."
+    run python3 "$ROOT_DIR/scripts/plot_vtk_quiver.py" \
+      --all-img \
+      --build-dir "$BUILD_DIR" \
+      --vtk-root "$OUT_DIR" \
+      --out-dir "$OUT_DIR/img_all" \
+      --csv "$OUT_DIR/img_all/mode_summary.csv" \
+      --mode-export "$MODE_EXPORT" \
+      --max-rank "$MODE_EXPORT"
+  else
+    log "Skipping 2.1/2.2.1 field images (no scalar/edge 2D case selected)."
+  fi
 
   if [[ -f "$OUT_DIR/validation/validation_2d_22.csv" ]]; then
     log "Generating 2.2.2/2.2.3/2.2.4 validation figures..."
