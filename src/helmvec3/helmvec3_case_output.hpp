@@ -87,6 +87,29 @@ struct Table10CsvRecord
     std::string ez_vtk_file;
 };
 
+struct RawSpectrumCsvRecord
+{
+    std::string section;
+    std::string case_label;
+    std::string priority_point;
+    double d_over_a = 0.0;
+    double br_over_lambda0 = 0.0;
+    double match_target_beta_over_k0 = 0.0;
+    int ordered_rank = 0;
+    int solver_index = -1;
+    double lambda_real = 0.0;
+    double lambda_imag = 0.0;
+    double beta_ratio_if_real_positive = 0.0;
+    std::string filter_reason;
+    int kept_after_physical_filter = 0;
+    int kept_after_dedup = 0;
+    int candidate_rank_after_dedup = 0;
+    int selected_after_matching = 0;
+    double et_energy = 0.0;
+    double ez_energy = 0.0;
+    double ez_ratio = 0.0;
+};
+
 inline std::string format_float(double value)
 {
     std::ostringstream oss;
@@ -213,6 +236,48 @@ inline bool write_table10_csv(
             << rec.ez_fields_csv_file << ","
             << rec.et_vtk_file << ","
             << rec.ez_vtk_file << "\n";
+    }
+
+    return static_cast<bool>(out);
+}
+
+inline bool write_raw_spectrum_csv(
+    const std::filesystem::path &path,
+    const std::vector<RawSpectrumCsvRecord> &records)
+{
+    std::ofstream out(path);
+    if (!out)
+        return false;
+
+    out << std::setprecision(16);
+    out << "section,case,priority_point,d_over_a,br_over_lambda0,"
+           "match_target_beta_over_k0,ordered_rank,solver_index,lambda_real,"
+           "lambda_imag,beta_ratio_if_real_positive,filter_reason,"
+           "kept_after_physical_filter,kept_after_dedup,"
+           "candidate_rank_after_dedup,selected_after_matching,et_energy,"
+           "ez_energy,ez_ratio\n";
+
+    for (const RawSpectrumCsvRecord &rec : records)
+    {
+        out << rec.section << ","
+            << rec.case_label << ","
+            << rec.priority_point << ","
+            << rec.d_over_a << ","
+            << rec.br_over_lambda0 << ","
+            << rec.match_target_beta_over_k0 << ","
+            << rec.ordered_rank << ","
+            << rec.solver_index << ","
+            << rec.lambda_real << ","
+            << rec.lambda_imag << ","
+            << rec.beta_ratio_if_real_positive << ","
+            << rec.filter_reason << ","
+            << rec.kept_after_physical_filter << ","
+            << rec.kept_after_dedup << ","
+            << rec.candidate_rank_after_dedup << ","
+            << rec.selected_after_matching << ","
+            << rec.et_energy << ","
+            << rec.ez_energy << ","
+            << rec.ez_ratio << "\n";
     }
 
     return static_cast<bool>(out);

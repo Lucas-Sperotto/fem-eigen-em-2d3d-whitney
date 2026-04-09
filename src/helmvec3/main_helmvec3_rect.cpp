@@ -34,6 +34,7 @@
 #include "helmvec3_case_output.hpp"
 #include "helmvec3_field_output.hpp"
 #include <algorithm>
+#include <cctype>
 #include <cmath>
 #include <cstdlib>
 #include <filesystem>
@@ -56,6 +57,7 @@ struct RatioCandidate
 {
     int candidate_rank = 0;
     int eig_index = -1;
+    int raw_row_index = -1;
     double beta_ratio = std::numeric_limits<double>::quiet_NaN();
     double ez_ratio = 0.0;
 };
@@ -75,7 +77,63 @@ struct BetaPointSolve
     CoupledBetaSystem sys;
     GenEigGeneralResult eig;
     std::vector<RatioCandidate> candidates;
+    std::vector<helmvec3_output::RawSpectrumCsvRecord> raw_spectrum;
 };
+
+bool env_flag_enabled(const char *name)
+{
+    const char *raw = std::getenv(name);
+    if (raw == nullptr)
+        return false;
+
+    std::string value(raw);
+    std::transform(
+        value.begin(),
+        value.end(),
+        value.begin(),
+        [](unsigned char ch)
+        { return static_cast<char>(std::tolower(ch)); });
+    return !(value.empty() || value == "0" || value == "false" || value == "off" || value == "no");
+}
+
+bool nearly_equal(double lhs, double rhs, double tol = 1.0e-12)
+{
+    return std::abs(lhs - rhs) <= tol;
+}
+
+std::string figure13_priority_point_key(double d_over_a, double br_over_lambda0)
+{
+    if (nearly_equal(d_over_a, 0.167) && nearly_equal(br_over_lambda0, 0.5))
+        return "P1";
+    if (nearly_equal(d_over_a, 0.286) && nearly_equal(br_over_lambda0, 0.5))
+        return "P2";
+    if (nearly_equal(d_over_a, 0.5) && nearly_equal(br_over_lambda0, 0.4))
+        return "P3";
+    return "";
+}
+
+bool should_export_raw_spectrum_diag(double d_over_a, double br_over_lambda0)
+{
+    return !figure13_priority_point_key(d_over_a, br_over_lambda0).empty();
+}
+
+double real_positive_beta_ratio(double lambda_real, double k0)
+{
+    if (!std::isfinite(lambda_real) || lambda_real <= 0.0 || !std::isfinite(k0) || k0 == 0.0)
+        return std::numeric_limits<double>::quiet_NaN();
+    return std::sqrt(lambda_real) / k0;
+}
+
+void mark_selected_raw_spectrum(
+    std::vector<helmvec3_output::RawSpectrumCsvRecord> &rows,
+    int selected_eig_index)
+{
+    for (auto &row : rows)
+    {
+        if (row.solver_index == selected_eig_index)
+            row.selected_after_matching = 1;
+    }
+}
 
 /******************************************************************************/
 /* FUNCAO: print_block_3x3                                                    */
@@ -180,7 +238,8 @@ BetaPointSolve solve_beta_point(
     ElementAssemblyBackend backend,
     timing::Breakdown *perf = nullptr,
     const std::filesystem::path *linop_dir = nullptr,
-    const std::string *artifact_prefix = nullptr)
+    const std::string *artifact_prefix = nullptr,
+    bool collect_raw_spectrum_diag = false)
 {
     timing::Stopwatch stage;
     BetaPointSolve result;
@@ -224,41 +283,126 @@ BetaPointSolve solve_beta_point(
     struct RawRatioCandidate
     {
         int eig_index = -1;
+        int raw_row_index = -1;
         double beta_ratio = 0.0;
         double ez_ratio = 0.0;
     };
 
-    std::vector<RawRatioCandidate> raw;
     const int n = result.eig.n;
+    std::vector<int> solver_to_row_index((size_t)n, -1);
+    if (collect_raw_spectrum_diag)
+    {
+        const auto bindings = spectral_csv::general_eigen_bindings(result.eig);
+        result.raw_spectrum.reserve(bindings.size());
+        for (size_t rank = 0; rank < bindings.size(); ++rank)
+        {
+            const auto &binding = bindings[rank];
+            double et = 0.0;
+            double ez = 0.0;
+            for (int dof = 0; dof < result.sys.nt; ++dof)
+            {
+                const double real_part = result.eig.VRcol[(size_t)binding.real_column * (size_t)n + (size_t)dof];
+                double imag_part = 0.0;
+                if (binding.imag_column >= 0 && binding.imag_sign != 0)
+                    imag_part = binding.imag_sign * result.eig.VRcol[(size_t)binding.imag_column * (size_t)n + (size_t)dof];
+                et += real_part * real_part + imag_part * imag_part;
+            }
+            for (int dof = 0; dof < result.sys.nz; ++dof)
+            {
+                const int col_offset = result.sys.nt + dof;
+                const double real_part = result.eig.VRcol[(size_t)binding.real_column * (size_t)n + (size_t)col_offset];
+                double imag_part = 0.0;
+                if (binding.imag_column >= 0 && binding.imag_sign != 0)
+                    imag_part = binding.imag_sign * result.eig.VRcol[(size_t)binding.imag_column * (size_t)n + (size_t)col_offset];
+                ez += real_part * real_part + imag_part * imag_part;
+            }
+            const double den = et + ez;
+            const double ratio_ez = (den > 0.0) ? (ez / den) : 0.0;
+            helmvec3_output::RawSpectrumCsvRecord row;
+            row.section = "2.2.4";
+            row.case_label = "Figure13_Table10";
+            row.ordered_rank = static_cast<int>(rank) + 1;
+            row.solver_index = binding.original_index;
+            row.lambda_real = binding.lambda_real;
+            row.lambda_imag = binding.lambda_imag;
+            row.beta_ratio_if_real_positive = real_positive_beta_ratio(binding.lambda_real, k0);
+            row.filter_reason = "pending_filter";
+            row.et_energy = et;
+            row.ez_energy = ez;
+            row.ez_ratio = ratio_ez;
+            result.raw_spectrum.push_back(row);
+            if (binding.original_index >= 0 && binding.original_index < n)
+                solver_to_row_index[(size_t)binding.original_index] = static_cast<int>(result.raw_spectrum.size()) - 1;
+        }
+    }
+
+    std::vector<RawRatioCandidate> raw;
     for (int i = 0; i < n; ++i)
     {
+        const int row_index =
+            (i >= 0 && i < (int)solver_to_row_index.size()) ? solver_to_row_index[(size_t)i] : -1;
+        auto *row = (row_index >= 0) ? &result.raw_spectrum[(size_t)row_index] : nullptr;
         if (!std::isfinite(result.eig.lambda_re[i]))
+        {
+            if (row != nullptr)
+                row->filter_reason = "discard_lambda_real_non_finite";
             continue;
+        }
         if (std::abs(result.eig.lambda_im[i]) > 1e-7)
+        {
+            if (row != nullptr)
+                row->filter_reason = "discard_lambda_imag_above_tol";
             continue;
+        }
         if (result.eig.lambda_re[i] <= 1e-10)
+        {
+            if (row != nullptr)
+                row->filter_reason = "discard_lambda_real_non_positive";
             continue;
+        }
 
         const double beta = std::sqrt(result.eig.lambda_re[i]);
         const double ratio = beta / k0;
-        if (ratio <= 1e-6 || ratio > ratio_max)
+        if (ratio <= 1e-6)
+        {
+            if (row != nullptr)
+                row->filter_reason = "discard_beta_ratio_too_small";
             continue;
-
-        double et = 0.0;
-        double ez = 0.0;
-        for (int r = 0; r < result.sys.nt; ++r)
-        {
-            const double v = result.eig.VRcol[(size_t)i * (size_t)n + (size_t)r];
-            et += v * v;
         }
-        for (int r = 0; r < result.sys.nz; ++r)
+        if (ratio > ratio_max)
         {
-            const double v = result.eig.VRcol[(size_t)i * (size_t)n + (size_t)(result.sys.nt + r)];
-            ez += v * v;
+            if (row != nullptr)
+                row->filter_reason = "discard_beta_ratio_above_physical_max";
+            continue;
         }
-        const double den = et + ez;
-        const double ratio_ez = (den > 0.0) ? (ez / den) : 0.0;
-        raw.push_back({i, ratio, ratio_ez});
+        if (row != nullptr)
+        {
+            row->filter_reason = "kept_physical_pre_dedup";
+            row->kept_after_physical_filter = 1;
+        }
+        double ratio_ez = 0.0;
+        if (row != nullptr)
+        {
+            ratio_ez = row->ez_ratio;
+        }
+        else
+        {
+            double et = 0.0;
+            double ez = 0.0;
+            for (int r = 0; r < result.sys.nt; ++r)
+            {
+                const double v = result.eig.VRcol[(size_t)i * (size_t)n + (size_t)r];
+                et += v * v;
+            }
+            for (int r = 0; r < result.sys.nz; ++r)
+            {
+                const double v = result.eig.VRcol[(size_t)i * (size_t)n + (size_t)(result.sys.nt + r)];
+                ez += v * v;
+            }
+            const double den = et + ez;
+            ratio_ez = (den > 0.0) ? (ez / den) : 0.0;
+        }
+        raw.push_back({i, row_index, ratio, ratio_ez});
     }
     std::sort(raw.begin(), raw.end(), [](const RawRatioCandidate &a, const RawRatioCandidate &b)
               { return a.beta_ratio < b.beta_ratio; });
@@ -268,10 +412,28 @@ BetaPointSolve solve_beta_point(
         if (!result.candidates.empty() &&
             std::abs(cand.beta_ratio - result.candidates.back().beta_ratio) < 1e-8)
         {
+            if (cand.raw_row_index >= 0)
+                result.raw_spectrum[(size_t)cand.raw_row_index].filter_reason = "discard_dedup_nonrepresentative";
             if (cand.ez_ratio > result.candidates.back().ez_ratio)
             {
+                const int prev_row_index = result.candidates.back().raw_row_index;
+                if (prev_row_index >= 0)
+                {
+                    auto &prev = result.raw_spectrum[(size_t)prev_row_index];
+                    prev.kept_after_dedup = 0;
+                    prev.candidate_rank_after_dedup = 0;
+                    prev.filter_reason = "discard_dedup_replaced_by_higher_ez";
+                }
                 result.candidates.back().eig_index = cand.eig_index;
+                result.candidates.back().raw_row_index = cand.raw_row_index;
                 result.candidates.back().ez_ratio = cand.ez_ratio;
+                if (cand.raw_row_index >= 0)
+                {
+                    auto &kept = result.raw_spectrum[(size_t)cand.raw_row_index];
+                    kept.kept_after_dedup = 1;
+                    kept.candidate_rank_after_dedup = result.candidates.back().candidate_rank;
+                    kept.filter_reason = "kept_physical_dedup_representative";
+                }
             }
             continue;
         }
@@ -279,9 +441,17 @@ BetaPointSolve solve_beta_point(
         RatioCandidate rep;
         rep.candidate_rank = static_cast<int>(result.candidates.size()) + 1;
         rep.eig_index = cand.eig_index;
+        rep.raw_row_index = cand.raw_row_index;
         rep.beta_ratio = cand.beta_ratio;
         rep.ez_ratio = cand.ez_ratio;
         result.candidates.push_back(rep);
+        if (cand.raw_row_index >= 0)
+        {
+            auto &kept = result.raw_spectrum[(size_t)cand.raw_row_index];
+            kept.kept_after_dedup = 1;
+            kept.candidate_rank_after_dedup = rep.candidate_rank;
+            kept.filter_reason = "kept_physical_unique";
+        }
     }
 
     return result;
@@ -309,7 +479,9 @@ std::vector<SelectedRatioPoint> match_ratio_to_reference(
     timing::Breakdown *perf = nullptr,
     const std::filesystem::path *linop_dir = nullptr,
     const std::string &prefix_base = "",
-    const helmvec3_output::CaseDirs *out_dirs = nullptr)
+    const helmvec3_output::CaseDirs *out_dirs = nullptr,
+    bool export_raw_spectrum_diag = false,
+    double raw_spectrum_d_over_a = std::numeric_limits<double>::quiet_NaN())
 {
     std::vector<SelectedRatioPoint> out;
     out.reserve(br_over_lambda.size());
@@ -326,6 +498,12 @@ std::vector<SelectedRatioPoint> match_ratio_to_reference(
         const double k0 = 2.0 * M_PI * s / b;
         const std::string point_prefix =
             prefix_base.empty() ? std::string() : (prefix_base + "_br" + label_number(s));
+        const bool should_export_diag =
+            export_raw_spectrum_diag &&
+            out_dirs != nullptr &&
+            !point_prefix.empty() &&
+            std::isfinite(raw_spectrum_d_over_a) &&
+            should_export_raw_spectrum_diag(raw_spectrum_d_over_a, s);
         auto solve = solve_beta_point(
             mesh,
             eps,
@@ -334,9 +512,26 @@ std::vector<SelectedRatioPoint> match_ratio_to_reference(
             backend,
             perf,
             linop_dir,
-            prefix_base.empty() ? nullptr : &point_prefix);
+            prefix_base.empty() ? nullptr : &point_prefix,
+            should_export_diag);
+        const std::string priority_point =
+            should_export_diag ? figure13_priority_point_key(raw_spectrum_d_over_a, s) : std::string();
         if (solve.candidates.empty())
         {
+            if (should_export_diag)
+            {
+                std::vector<helmvec3_output::RawSpectrumCsvRecord> rows = solve.raw_spectrum;
+                for (auto &row : rows)
+                {
+                    row.priority_point = priority_point;
+                    row.d_over_a = raw_spectrum_d_over_a;
+                    row.br_over_lambda0 = s;
+                    row.match_target_beta_over_k0 = ref_ratio[i];
+                }
+                const auto raw_csv_path = out_dirs->csv / (point_prefix + "_raw_spectrum.csv");
+                if (!helmvec3_output::write_raw_spectrum_csv(raw_csv_path, rows))
+                    throw std::runtime_error("Falha ao escrever CSV de espectro bruto em " + raw_csv_path.string());
+            }
             out.push_back(SelectedRatioPoint{});
             continue;
         }
@@ -359,6 +554,21 @@ std::vector<SelectedRatioPoint> match_ratio_to_reference(
         selected.selected_eig_index = solve.candidates[best].eig_index;
         selected.ez_ratio = solve.candidates[best].ez_ratio;
         selected.match_status = "matched";
+        if (should_export_diag)
+        {
+            mark_selected_raw_spectrum(solve.raw_spectrum, selected.selected_eig_index);
+            std::vector<helmvec3_output::RawSpectrumCsvRecord> rows = solve.raw_spectrum;
+            for (auto &row : rows)
+            {
+                row.priority_point = priority_point;
+                row.d_over_a = raw_spectrum_d_over_a;
+                row.br_over_lambda0 = s;
+                row.match_target_beta_over_k0 = ref_ratio[i];
+            }
+            const auto raw_csv_path = out_dirs->csv / (point_prefix + "_raw_spectrum.csv");
+            if (!helmvec3_output::write_raw_spectrum_csv(raw_csv_path, rows))
+                throw std::runtime_error("Falha ao escrever CSV de espectro bruto em " + raw_csv_path.string());
+        }
         if (out_dirs != nullptr && !point_prefix.empty())
         {
             selected.spatial = helmvec3_field::export_mode(
@@ -842,6 +1052,7 @@ int run_helmvec3_fig13_rect(int argc, char **argv)
     }
 
     const auto out_dirs = helmvec3_output::ensure_case_dirs("fig13_rect");
+    const bool export_raw_spectrum_diag = env_flag_enabled("TP3485_HELMVEC3_DIAG_RAW_SPECTRUM");
     execution_log::ExecutionLogScope log_scope((out_dirs.root / "run.log").string());
     if (!log_scope.active())
     {
@@ -936,7 +1147,9 @@ int run_helmvec3_fig13_rect(int argc, char **argv)
             &perf,
             &out_dirs.linop,
             std::string("helmvec3_fig13_rect_table10_da") + label_number(blk.d_over_a),
-            &out_dirs);
+            &out_dirs,
+            export_raw_spectrum_diag,
+            blk.d_over_a);
 
         for (int i = 0; i < (int)br_over_lambda_10.size(); ++i)
         {
