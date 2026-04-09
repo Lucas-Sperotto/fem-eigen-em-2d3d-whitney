@@ -522,20 +522,34 @@ Fig12CliConfig parse_fig12_cli(int argc, char **argv)
     }
     else
     {
-        cfg.used_legacy_positionals = !cfg.cli.positionals.empty();
-        if (!cfg.cli.positionals.empty())
-            cfg.nx = std::atoi(cfg.cli.positionals[0].c_str());
-        if (cfg.cli.positionals.size() >= 2)
-            cfg.ny = std::atoi(cfg.cli.positionals[1].c_str());
-        if (cfg.cli.positionals.size() >= 3)
+        if (cfg.cli.positionals.size() > 3)
         {
-            cfg.used_legacy_debug = true;
-            const bool legacy_debug = (std::atoi(cfg.cli.positionals[2].c_str()) != 0);
-            if (legacy_debug)
+            throw std::runtime_error(
+                "argumentos posicionais em excesso em helmvec3_fig12_rect; use no maximo [nx [ny [debug]]]");
+        }
+        cfg.used_legacy_positionals = !cfg.cli.positionals.empty();
+        try
+        {
+            if (!cfg.cli.positionals.empty())
+                cfg.nx = helmvec2::parse_positive_coupled_cli_int(cfg.cli.positionals[0], "nx");
+            if (cfg.cli.positionals.size() >= 2)
+                cfg.ny = helmvec2::parse_positive_coupled_cli_int(cfg.cli.positionals[1], "ny");
+            if (cfg.cli.positionals.size() >= 3)
             {
-                cfg.cli.debug_local_blocks = true;
-                cfg.cli.debug_candidates = true;
+                cfg.used_legacy_debug = true;
+                const bool legacy_debug =
+                    (helmvec2::parse_coupled_cli_int(cfg.cli.positionals[2], "debug") != 0);
+                if (legacy_debug)
+                {
+                    cfg.cli.debug_local_blocks = true;
+                    cfg.cli.debug_candidates = true;
+                }
             }
+        }
+        catch (const std::exception &e)
+        {
+            throw std::runtime_error(
+                std::string("erro nos argumentos posicionais de helmvec3_fig12_rect: ") + e.what());
         }
     }
 
@@ -575,22 +589,36 @@ Fig13CliConfig parse_fig13_cli(int argc, char **argv)
     }
     else
     {
-        cfg.used_legacy_positionals = !cfg.cli.positionals.empty();
-        if (!cfg.cli.positionals.empty())
-            cfg.d13_over_a = std::atof(cfg.cli.positionals[0].c_str());
-        if (cfg.cli.positionals.size() >= 2)
-            cfg.nx = std::atoi(cfg.cli.positionals[1].c_str());
-        if (cfg.cli.positionals.size() >= 3)
-            cfg.ny = std::atoi(cfg.cli.positionals[2].c_str());
-        if (cfg.cli.positionals.size() >= 4)
+        if (cfg.cli.positionals.size() > 4)
         {
-            cfg.used_legacy_debug = true;
-            const bool legacy_debug = (std::atoi(cfg.cli.positionals[3].c_str()) != 0);
-            if (legacy_debug)
+            throw std::runtime_error(
+                "argumentos posicionais em excesso em helmvec3_fig13_rect; use no maximo [d_over_a_preview [nx [ny [debug]]]]");
+        }
+        cfg.used_legacy_positionals = !cfg.cli.positionals.empty();
+        try
+        {
+            if (!cfg.cli.positionals.empty())
+                cfg.d13_over_a = helmvec2::parse_cli_real(cfg.cli.positionals[0], "d_over_a_preview");
+            if (cfg.cli.positionals.size() >= 2)
+                cfg.nx = helmvec2::parse_positive_coupled_cli_int(cfg.cli.positionals[1], "nx");
+            if (cfg.cli.positionals.size() >= 3)
+                cfg.ny = helmvec2::parse_positive_coupled_cli_int(cfg.cli.positionals[2], "ny");
+            if (cfg.cli.positionals.size() >= 4)
             {
-                cfg.cli.debug_local_blocks = true;
-                cfg.cli.debug_candidates = true;
+                cfg.used_legacy_debug = true;
+                const bool legacy_debug =
+                    (helmvec2::parse_coupled_cli_int(cfg.cli.positionals[3], "debug") != 0);
+                if (legacy_debug)
+                {
+                    cfg.cli.debug_local_blocks = true;
+                    cfg.cli.debug_candidates = true;
+                }
             }
+        }
+        catch (const std::exception &e)
+        {
+            throw std::runtime_error(
+                std::string("erro nos argumentos posicionais de helmvec3_fig13_rect: ") + e.what());
         }
     }
 

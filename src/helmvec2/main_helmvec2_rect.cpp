@@ -292,21 +292,44 @@ int main(int argc, char **argv)
     }
     else
     {
-        if (!cli.positionals.empty())
-            beta = std::atof(cli.positionals[0].c_str());
-        if (cli.positionals.size() >= 3)
+        if (cli.positionals.size() == 2)
         {
-            nx = std::atoi(cli.positionals[1].c_str());
-            ny = std::atoi(cli.positionals[2].c_str());
+            std::cerr << "Erro: helmvec2_rect exige ambos nx e ny quando usa argumentos posicionais apos beta; use [beta [nx ny [debug]]].\n";
+            print_usage(std::cerr);
+            return 2;
         }
-        if (cli.positionals.size() >= 4)
+        if (cli.positionals.size() > 4)
         {
-            const bool legacy_debug = (std::atoi(cli.positionals[3].c_str()) != 0);
-            if (legacy_debug)
+            std::cerr << "Erro: argumentos posicionais em excesso em helmvec2_rect; use no maximo [beta [nx ny [debug]]].\n";
+            print_usage(std::cerr);
+            return 2;
+        }
+        try
+        {
+            if (!cli.positionals.empty())
+                beta = helmvec2::parse_cli_real(cli.positionals[0], "beta");
+            if (cli.positionals.size() >= 3)
             {
-                cli.debug_local_blocks = true;
-                cli.debug_candidates = true;
+                nx = helmvec2::parse_positive_coupled_cli_int(cli.positionals[1], "nx");
+                ny = helmvec2::parse_positive_coupled_cli_int(cli.positionals[2], "ny");
             }
+            if (cli.positionals.size() >= 4)
+            {
+                const bool legacy_debug =
+                    (helmvec2::parse_coupled_cli_int(cli.positionals[3], "debug") != 0);
+                if (legacy_debug)
+                {
+                    cli.debug_local_blocks = true;
+                    cli.debug_candidates = true;
+                }
+            }
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Erro ao interpretar argumentos posicionais de helmvec2_rect: "
+                      << e.what() << "\n";
+            print_usage(std::cerr);
+            return 2;
         }
     }
 

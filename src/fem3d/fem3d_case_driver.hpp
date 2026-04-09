@@ -71,6 +71,45 @@ struct PreparedCase
   std::vector<RefRow> rows;
 };
 
+inline void print_usage(const char *bin_name);
+inline void print_single_case_usage(const char *bin_name);
+
+inline int parse_positive_cli_int_strict(const char *text, const char *name)
+{
+  try
+  {
+    std::string s(text);
+    size_t idx = 0;
+    const int value = std::stoi(s, &idx);
+    if (idx != s.size())
+      throw std::runtime_error(std::string(name) + " invalido: " + text);
+    if (value <= 0)
+      throw std::runtime_error(std::string(name) + " deve ser > 0");
+    return value;
+  }
+  catch (const std::runtime_error &)
+  {
+    throw;
+  }
+  catch (const std::exception &)
+  {
+    throw std::runtime_error(std::string(name) + " invalido: " + text);
+  }
+}
+
+[[noreturn]] inline void print_cli_error_and_exit(
+    const std::string &message,
+    const char *bin_name,
+    bool single_case)
+{
+  std::cerr << "Erro: " << message << "\n";
+  if (single_case)
+    print_single_case_usage(bin_name);
+  else
+    print_usage(bin_name);
+  std::exit(2);
+}
+
 /******************************************************************************/
 /* FUNCAO: case_defaults                                                     */
 /* DESCRICAO: Retorna a configuracao padrao de selecao para um unico caso 3D.*/
@@ -185,24 +224,60 @@ inline std::optional<CliOptions> parse_cli(
       opt.run_cyl = true;
       opt.run_sphere = true;
     }
-    else if (a == "--nx" && i + 1 < argc)
+    else if (a == "--nx")
     {
-      opt.nx = std::atoi(argv[++i]);
+      if (i + 1 >= argc)
+        print_cli_error_and_exit("faltou valor apos --nx", bin_name, false);
+      try
+      {
+        opt.nx = parse_positive_cli_int_strict(argv[++i], "nx");
+      }
+      catch (const std::exception &e)
+      {
+        print_cli_error_and_exit(e.what(), bin_name, false);
+      }
       opt.custom_mesh = true;
     }
-    else if (a == "--ny" && i + 1 < argc)
+    else if (a == "--ny")
     {
-      opt.ny = std::atoi(argv[++i]);
+      if (i + 1 >= argc)
+        print_cli_error_and_exit("faltou valor apos --ny", bin_name, false);
+      try
+      {
+        opt.ny = parse_positive_cli_int_strict(argv[++i], "ny");
+      }
+      catch (const std::exception &e)
+      {
+        print_cli_error_and_exit(e.what(), bin_name, false);
+      }
       opt.custom_mesh = true;
     }
-    else if (a == "--nz" && i + 1 < argc)
+    else if (a == "--nz")
     {
-      opt.nz = std::atoi(argv[++i]);
+      if (i + 1 >= argc)
+        print_cli_error_and_exit("faltou valor apos --nz", bin_name, false);
+      try
+      {
+        opt.nz = parse_positive_cli_int_strict(argv[++i], "nz");
+      }
+      catch (const std::exception &e)
+      {
+        print_cli_error_and_exit(e.what(), bin_name, false);
+      }
       opt.custom_mesh = true;
     }
-    else if (a == "--backend" && i + 1 < argc)
+    else if (a == "--backend")
     {
-      opt.backend = parse_element_assembly_backend(argv[++i]);
+      if (i + 1 >= argc)
+        print_cli_error_and_exit("faltou valor apos --backend", bin_name, false);
+      try
+      {
+        opt.backend = parse_element_assembly_backend(argv[++i]);
+      }
+      catch (const std::exception &e)
+      {
+        print_cli_error_and_exit(e.what(), bin_name, false);
+      }
     }
     else if (a == "--debug" || a == "--debug-all")
     {
@@ -219,12 +294,27 @@ inline std::optional<CliOptions> parse_cli(
     }
     else if (a.rfind("--backend=", 0) == 0)
     {
-      opt.backend = parse_element_assembly_backend(a.substr(std::string("--backend=").size()));
+      try
+      {
+        opt.backend = parse_element_assembly_backend(a.substr(std::string("--backend=").size()));
+      }
+      catch (const std::exception &e)
+      {
+        print_cli_error_and_exit(e.what(), bin_name, false);
+      }
     }
     else if (a == "--help")
     {
       print_usage(bin_name);
       return std::nullopt;
+    }
+    else if (!a.empty() && a[0] == '-')
+    {
+      print_cli_error_and_exit("opcao desconhecida: " + a, bin_name, false);
+    }
+    else
+    {
+      print_cli_error_and_exit("argumento posicional inesperado: " + a, bin_name, false);
     }
   }
   return opt;
@@ -254,29 +344,66 @@ inline std::optional<CliOptions> parse_single_case_cli(
     const std::string a = argv[i];
     if (a == "--air" || a == "--half" || a == "--cyl" || a == "--sphere" || a == "--all")
     {
-      std::cerr << "Erro: " << bin_name
-                << " ja representa um caso 3D especifico; nao use flags de selecao de caso.\n";
-      print_single_case_usage(bin_name);
-      return std::nullopt;
+      print_cli_error_and_exit(
+          std::string(bin_name) +
+              " ja representa um caso 3D especifico; nao use flags de selecao de caso.",
+          bin_name,
+          true);
     }
-    else if (a == "--nx" && i + 1 < argc)
+    else if (a == "--nx")
     {
-      opt.nx = std::atoi(argv[++i]);
+      if (i + 1 >= argc)
+        print_cli_error_and_exit("faltou valor apos --nx", bin_name, true);
+      try
+      {
+        opt.nx = parse_positive_cli_int_strict(argv[++i], "nx");
+      }
+      catch (const std::exception &e)
+      {
+        print_cli_error_and_exit(e.what(), bin_name, true);
+      }
       opt.custom_mesh = true;
     }
-    else if (a == "--ny" && i + 1 < argc)
+    else if (a == "--ny")
     {
-      opt.ny = std::atoi(argv[++i]);
+      if (i + 1 >= argc)
+        print_cli_error_and_exit("faltou valor apos --ny", bin_name, true);
+      try
+      {
+        opt.ny = parse_positive_cli_int_strict(argv[++i], "ny");
+      }
+      catch (const std::exception &e)
+      {
+        print_cli_error_and_exit(e.what(), bin_name, true);
+      }
       opt.custom_mesh = true;
     }
-    else if (a == "--nz" && i + 1 < argc)
+    else if (a == "--nz")
     {
-      opt.nz = std::atoi(argv[++i]);
+      if (i + 1 >= argc)
+        print_cli_error_and_exit("faltou valor apos --nz", bin_name, true);
+      try
+      {
+        opt.nz = parse_positive_cli_int_strict(argv[++i], "nz");
+      }
+      catch (const std::exception &e)
+      {
+        print_cli_error_and_exit(e.what(), bin_name, true);
+      }
       opt.custom_mesh = true;
     }
-    else if (a == "--backend" && i + 1 < argc)
+    else if (a == "--backend")
     {
-      opt.backend = parse_element_assembly_backend(argv[++i]);
+      if (i + 1 >= argc)
+        print_cli_error_and_exit("faltou valor apos --backend", bin_name, true);
+      try
+      {
+        opt.backend = parse_element_assembly_backend(argv[++i]);
+      }
+      catch (const std::exception &e)
+      {
+        print_cli_error_and_exit(e.what(), bin_name, true);
+      }
     }
     else if (a == "--debug" || a == "--debug-all")
     {
@@ -293,12 +420,27 @@ inline std::optional<CliOptions> parse_single_case_cli(
     }
     else if (a.rfind("--backend=", 0) == 0)
     {
-      opt.backend = parse_element_assembly_backend(a.substr(std::string("--backend=").size()));
+      try
+      {
+        opt.backend = parse_element_assembly_backend(a.substr(std::string("--backend=").size()));
+      }
+      catch (const std::exception &e)
+      {
+        print_cli_error_and_exit(e.what(), bin_name, true);
+      }
     }
     else if (a == "--help")
     {
       print_single_case_usage(bin_name);
       return std::nullopt;
+    }
+    else if (!a.empty() && a[0] == '-')
+    {
+      print_cli_error_and_exit("opcao desconhecida: " + a, bin_name, true);
+    }
+    else
+    {
+      print_cli_error_and_exit("argumento posicional inesperado: " + a, bin_name, true);
     }
   }
   return opt;

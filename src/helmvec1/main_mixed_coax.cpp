@@ -257,10 +257,29 @@ int main(int argc, char **argv)
         if (cli.nt_was_provided)
             nt = cli.nt;
     }
-    else if (cli.positionals.size() >= 2)
+    else
     {
-        nr = std::atoi(cli.positionals[0].c_str());
-        nt = std::atoi(cli.positionals[1].c_str());
+        if (!cli.positionals.empty() && cli.positionals.size() != 2)
+        {
+            std::cerr << "Erro: mixed_coax exige exatamente [nr nt] quando usa argumentos posicionais.\n";
+            print_usage(std::cerr);
+            return 2;
+        }
+        try
+        {
+            if (cli.positionals.size() == 2)
+            {
+                nr = helmvec1::parse_positive_mixed_cli_int(cli.positionals[0], "nr");
+                nt = helmvec1::parse_positive_mixed_cli_int(cli.positionals[1], "nt");
+            }
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Erro ao interpretar argumentos posicionais de mixed_coax: "
+                      << e.what() << "\n";
+            print_usage(std::cerr);
+            return 2;
+        }
     }
 
     const auto dirs = helmvec1_output::ensure_case_dirs("coax");

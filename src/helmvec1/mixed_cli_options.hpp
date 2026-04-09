@@ -41,12 +41,26 @@ inline int parse_positive_mixed_cli_int(
     const std::string &text,
     const std::string &name)
 {
-    const int value = std::stoi(text);
-    if (value <= 0)
+    try
     {
-        throw std::runtime_error(name + " deve ser > 0");
+        size_t idx = 0;
+        const int value = std::stoi(text, &idx);
+        if (idx != text.size())
+            throw std::runtime_error(name + " invalido: " + text);
+        if (value <= 0)
+        {
+            throw std::runtime_error(name + " deve ser > 0");
+        }
+        return value;
     }
-    return value;
+    catch (const std::runtime_error &)
+    {
+        throw;
+    }
+    catch (const std::exception &)
+    {
+        throw std::runtime_error(name + " invalido: " + text);
+    }
 }
 
 inline bool mixed_cli_requests_help(int argc, char **argv)

@@ -260,10 +260,29 @@ int main(int argc, char **argv)
         if (cli.ny_was_provided)
             ny = cli.ny;
     }
-    else if (cli.positionals.size() >= 2)
+    else
     {
-        nx = std::atoi(cli.positionals[0].c_str());
-        ny = std::atoi(cli.positionals[1].c_str());
+        if (!cli.positionals.empty() && cli.positionals.size() != 2)
+        {
+            std::cerr << "Erro: mixed_rect exige exatamente [nx ny] quando usa argumentos posicionais.\n";
+            print_usage(std::cerr);
+            return 2;
+        }
+        try
+        {
+            if (cli.positionals.size() == 2)
+            {
+                nx = helmvec1::parse_positive_mixed_cli_int(cli.positionals[0], "nx");
+                ny = helmvec1::parse_positive_mixed_cli_int(cli.positionals[1], "ny");
+            }
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Erro ao interpretar argumentos posicionais de mixed_rect: "
+                      << e.what() << "\n";
+            print_usage(std::cerr);
+            return 2;
+        }
     }
 
     const double a = 1.0;

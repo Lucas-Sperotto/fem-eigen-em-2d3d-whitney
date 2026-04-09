@@ -302,14 +302,36 @@ int main(int argc, char **argv)
     }
     else
     {
-        if (cli.positionals.size() >= 2)
+        if (!cli.positionals.empty() && cli.positionals.size() < 2)
         {
-            nr = std::atoi(cli.positionals[0].c_str());
-            nt = std::atoi(cli.positionals[1].c_str());
+            std::cerr << "Erro: edge_circle exige ambos nr e nt quando usa argumentos posicionais; use [nr nt [nmodos]].\n";
+            print_usage(std::cerr);
+            return 2;
         }
-        if (cli.positionals.size() >= 3)
+        if (cli.positionals.size() > 3)
         {
-            export_modes = std::max(0, std::atoi(cli.positionals[2].c_str()));
+            std::cerr << "Erro: argumentos posicionais em excesso em edge_circle; use no maximo [nr nt [nmodos]].\n";
+            print_usage(std::cerr);
+            return 2;
+        }
+        try
+        {
+            if (cli.positionals.size() >= 2)
+            {
+                nr = helmvec::parse_positive_edge_cli_int(cli.positionals[0], "nr");
+                nt = helmvec::parse_positive_edge_cli_int(cli.positionals[1], "nt");
+            }
+            if (cli.positionals.size() >= 3)
+            {
+                export_modes = helmvec::parse_nonnegative_edge_cli_int(cli.positionals[2], "nmodos");
+            }
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Erro ao interpretar argumentos posicionais de edge_circle: "
+                      << e.what() << "\n";
+            print_usage(std::cerr);
+            return 2;
         }
     }
 
