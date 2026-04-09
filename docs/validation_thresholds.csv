@@ -1,0 +1,15 @@
+policy_name,dimension,section,article_ref,required_status,required_solvers,primary_pass_max_pct,primary_warn_max_pct,secondary_pass_max_pct,secondary_warn_max_pct,notes
+scientific_gate_v1,2D,2.1,Tabela 1,present,,3,8,,,Tabela escalar retangular; erro primario em kc_fem vs kc_ana.
+scientific_gate_v1,2D,2.1,Tabela 2,present,,3,8,,,Tabela escalar circular; erro primario em kc_fem vs kc_ana.
+scientific_gate_v1,2D,2.1,Tabela 3,present,,3,8,,,Tabela escalar coaxial; erro primario em kc_fem vs kc_ana.
+scientific_gate_v1,2D,2.2.1,Tabela 4,present,,3,8,,,Tabela vetorial retangular; erro primario em kc_fem vs kc_ana.
+scientific_gate_v1,2D,2.2.1,Tabela 5,present,,3,8,,,Tabela vetorial circular; erro primario em kc_fem vs kc_ana.
+scientific_gate_v1,2D,2.2.2,Tabela 6,present,,5,15,,,Tabela mista retangular; gate mais permissivo por incluir formulacoes E/H e bloco escalar TM.
+scientific_gate_v1,2D,2.2.2,Tabela 7,present,,3,8,,,Tabela mista circular; erro primario em kc_fem vs kc_ana.
+scientific_gate_v1,2D,2.2.3,Figura 11 / Tabela 8,present,,5,15,5,15,Compara metrica primaria com HELMVEC2 e secundaria com Hayata.
+scientific_gate_v1,2D,2.2.4,Figura 12 / Tabela 9,present,,5,15,5,15,Compara beta_over_k0 contra referencia analitica e contra HELMVEC3.
+scientific_gate_v1,2D,2.2.4,Figura 13 / Tabela 10,present,,5,15,5,15,Compara beta_over_k0 contra referencia analitica e contra HELMVEC3.
+scientific_gate_v1,3D,3.1,Figura 15 / Tabela 12,present,fem3d0|fem3d1,5,15,5,15,Exige ambos os solvers 3D e compara contra analitico e paper.
+scientific_gate_v1,3D,3.1,Figura 16 / Tabela 13,present,fem3d0|fem3d1,5,15,5,15,Exige ambos os solvers 3D e compara contra analitico e paper.
+scientific_gate_v1,3D,3.1,Figura 17 / Tabela 14,present,fem3d0|fem3d1,5,15,5,15,Exige ambos os solvers 3D e compara contra analitico e paper.
+scientific_gate_v1,3D,3.1,Tabela 15,present,fem3d0|fem3d1,5,15,5,15,Exige ambos os solvers 3D e compara contra analitico e paper.

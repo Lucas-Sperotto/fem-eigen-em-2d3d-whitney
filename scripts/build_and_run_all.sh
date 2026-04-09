@@ -562,6 +562,13 @@ if [[ "$SKIP_VALIDATE" -eq 0 ]]; then
     --validation-dir "$OUT_DIR/validation" \
     --out-csv "$OUT_DIR/validation/validation_master_index.csv" \
     --out-md "$OUT_DIR/validation/VALIDATION_MASTER_INDEX.md"
+
+  log "Generating scientific validation verdict..."
+  run python3 "$ROOT_DIR/scripts/generate_validation_verdict.py" \
+    --master-index "$OUT_DIR/validation/validation_master_index.csv" \
+    --policy-csv "$ROOT_DIR/docs/validation_thresholds.csv" \
+    --out-csv "$OUT_DIR/validation/validation_verdict.csv" \
+    --out-md "$OUT_DIR/validation/VALIDATION_VERDICT.md"
 else
   log "Skipping validations (--skip-validate)."
 fi
@@ -643,6 +650,12 @@ if [[ "$SKIP_VALIDATE" -eq 0 ]]; then
   fi
   if [[ -f "$OUT_DIR/validation/VALIDATION_MASTER_INDEX.md" ]]; then
     printf '  - %s\n' "$OUT_DIR/validation/VALIDATION_MASTER_INDEX.md"
+  fi
+  if [[ -f "$OUT_DIR/validation/validation_verdict.csv" ]]; then
+    printf '  - %s\n' "$OUT_DIR/validation/validation_verdict.csv"
+  fi
+  if [[ -f "$OUT_DIR/validation/VALIDATION_VERDICT.md" ]]; then
+    printf '  - %s\n' "$OUT_DIR/validation/VALIDATION_VERDICT.md"
   fi
   if [[ "$SKIP_3D" -eq 0 ]]; then
     printf '  - %s\n' "$OUT_DIR/validation/validation_3d_31_modes.csv"
