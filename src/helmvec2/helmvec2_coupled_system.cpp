@@ -620,6 +620,14 @@ void apply_beta_diag_variant(
     if (diag_variant == CoupledBetaDiagVariant::Baseline)
         return;
 
+    if (diag_variant == CoupledBetaDiagVariant::DiagEq141BlendHalfQtt)
+    {
+        out.Q_tt = DenseMat(out.nt);
+        add_block_scaled(out.Q_tt, 0, 0, ctx.mt_muinv, -0.5);
+        add_block_scaled(out.Q_tt, 0, 0, out.edge.T, -0.5);
+        return;
+    }
+
     if (diag_variant == CoupledBetaDiagVariant::DiagEq141EpsMassQtt)
     {
         out.Q_tt = DenseMat(out.nt);

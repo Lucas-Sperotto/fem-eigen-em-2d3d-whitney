@@ -110,6 +110,7 @@ struct CoupledBetaSystem
 enum class CoupledBetaDiagVariant
 {
     Baseline,
+    DiagEq141BlendHalfQtt,
     DiagEq141EpsMassQtt,
     DiagEq142DocQzz,
 };
@@ -120,6 +121,8 @@ inline const char *coupled_beta_diag_variant_name(CoupledBetaDiagVariant variant
     {
     case CoupledBetaDiagVariant::Baseline:
         return "baseline";
+    case CoupledBetaDiagVariant::DiagEq141BlendHalfQtt:
+        return "diag_eq141_blend_half_qtt";
     case CoupledBetaDiagVariant::DiagEq141EpsMassQtt:
         return "diag_eq141_eps_mass_qtt";
     case CoupledBetaDiagVariant::DiagEq142DocQzz:

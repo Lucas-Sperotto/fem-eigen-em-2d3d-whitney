@@ -141,6 +141,8 @@ CoupledBetaDiagVariant env_beta_diag_variant()
     const std::string token = normalize_token(std::string(raw));
     if (token == "baseline")
         return CoupledBetaDiagVariant::Baseline;
+    if (token == "diag_eq141_blend_half_qtt" || token == "eq141_blend_half" || token == "eq141_half")
+        return CoupledBetaDiagVariant::DiagEq141BlendHalfQtt;
     if (token == "diag_eq141_eps_mass_qtt" || token == "eq141" || token == "eq141_qtt")
         return CoupledBetaDiagVariant::DiagEq141EpsMassQtt;
     if (token == "diag_eq142_doc_qzz" || token == "eq142" || token == "eq142_qzz")
