@@ -209,6 +209,8 @@ int main(int argc, char **argv)
            << " [--debug-local-blocks] [--debug-candidates]\n";
         os << "Aliases nomeados: [--nr NR] [--nt NT]"
            << " (nao misture com os posicionais principais)\n";
+        os << "Compatibilidade: os posicionais principais continuam aceitos, mas estao deprecated;"
+           << " prefira os aliases nomeados acima.\n";
     };
     if (helmvec1::mixed_cli_requests_help(argc, argv))
     {
@@ -239,7 +241,7 @@ int main(int argc, char **argv)
 
     if (has_named_polar_args && !cli.positionals.empty())
     {
-        std::cerr << "Erro: nao misture aliases nomeados principais com os argumentos posicionais de mixed_circle.\n";
+        std::cerr << "Erro: nao misture aliases nomeados principais com argumentos posicionais principais em mixed_circle; escolha apenas um estilo de chamada.\n";
         print_usage(std::cerr);
         return 2;
     }
@@ -270,6 +272,10 @@ int main(int argc, char **argv)
     std::cout << "CSV dir: \"" << dirs.csv.string() << "\"\n";
     std::cout << "VTK dir: \"" << dirs.vtk.string() << "\"\n";
     std::cout << "LinOp dir: \"" << dirs.linop.string() << "\"\n";
+    if (!has_named_polar_args && !cli.positionals.empty())
+    {
+        std::cerr << "Aviso: os argumentos posicionais principais de mixed_circle continuam aceitos por compatibilidade, mas estao deprecated; prefira --nr/--nt.\n";
+    }
 
     Mesh2D mesh = make_circle_mesh(r, nr, nt);
     std::cout << "Mixed circle: nodes=" << mesh.nodes.size()

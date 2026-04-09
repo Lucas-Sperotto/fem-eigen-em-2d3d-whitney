@@ -237,6 +237,10 @@ int main(int argc, char **argv)
            << " [--debug-local-blocks] [--debug-candidates]\n";
         os << "Aliases nomeados: [--beta BETA] [--nx NX] [--ny NY]"
            << " (nao misture com os posicionais principais)\n";
+        os << "Compatibilidade: os posicionais principais continuam aceitos, mas estao deprecated;"
+           << " prefira os aliases nomeados acima.\n";
+        os << "Compatibilidade: o debug posicional legado [debug] continua aceito, mas esta deprecated;"
+           << " prefira --debug-local-blocks e/ou --debug-candidates.\n";
     };
     if (helmvec2::coupled_cli_requests_help(argc, argv))
     {
@@ -258,6 +262,10 @@ int main(int argc, char **argv)
         cli.beta_was_provided ||
         cli.nx_was_provided ||
         cli.ny_was_provided;
+    const bool used_legacy_positionals =
+        !has_named_primary_args && !cli.positionals.empty();
+    const bool used_legacy_debug =
+        !has_named_primary_args && cli.positionals.size() >= 4;
 
     if (cli.d_over_a_preview_was_provided)
     {
@@ -268,7 +276,7 @@ int main(int argc, char **argv)
 
     if (has_named_primary_args && !cli.positionals.empty())
     {
-        std::cerr << "Erro: nao misture aliases nomeados principais com os argumentos posicionais de helmvec2_rect.\n";
+        std::cerr << "Erro: nao misture aliases nomeados principais com argumentos posicionais principais em helmvec2_rect; escolha apenas um estilo de chamada.\n";
         print_usage(std::cerr);
         return 2;
     }
@@ -309,6 +317,14 @@ int main(int argc, char **argv)
         std::cerr << "Aviso: nao foi possivel abrir run.log em "
                   << (out_dirs.root / "run.log")
                   << " (" << log_scope.error_message() << ")\n";
+    }
+    if (used_legacy_positionals)
+    {
+        std::cerr << "Aviso: os argumentos posicionais principais de helmvec2_rect continuam aceitos por compatibilidade, mas estao deprecated; prefira --beta/--nx/--ny.\n";
+    }
+    if (used_legacy_debug)
+    {
+        std::cerr << "Aviso: o debug posicional legado de helmvec2_rect continua aceito por compatibilidade, mas esta deprecated; prefira --debug-local-blocks e/ou --debug-candidates.\n";
     }
 
     auto mesh = make_rect_mesh(L, L, nx, ny);

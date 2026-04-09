@@ -256,6 +256,8 @@ int main(int argc, char **argv)
            << " [--debug-local-blocks] [--debug-candidates]\n";
         os << "Aliases nomeados: [--nr NR] [--nt NT] [--nmodos M]"
            << " (nao misture com os posicionais principais)\n";
+        os << "Compatibilidade: os posicionais principais continuam aceitos, mas estao deprecated;"
+           << " prefira os aliases nomeados acima.\n";
     };
     if (helmvec::edge_cli_requests_help(argc, argv))
     {
@@ -288,7 +290,7 @@ int main(int argc, char **argv)
 
     if (has_named_polar_args && !cli.positionals.empty())
     {
-        std::cerr << "Erro: nao misture aliases nomeados principais com os argumentos posicionais de edge_coax.\n";
+        std::cerr << "Erro: nao misture aliases nomeados principais com argumentos posicionais principais em edge_coax; escolha apenas um estilo de chamada.\n";
         print_usage(std::cerr);
         return 2;
     }
@@ -330,6 +332,10 @@ int main(int argc, char **argv)
     std::cout << "VTK dir: " << dirs.vtk << "\n";
     std::cout << "LinOp dir: " << dirs.linop << "\n";
     std::cout << "Backend de aresta: " << element_assembly_backend_name(cli.backend) << "\n";
+    if (!has_named_polar_args && !cli.positionals.empty())
+    {
+        std::cerr << "Aviso: os argumentos posicionais principais de edge_coax continuam aceitos por compatibilidade, mas estao deprecated; prefira --nr/--nt/--nmodos.\n";
+    }
 
     const auto mesh = make_coax_mesh(r1, r2, nr, nt);
     std::cout << "Edge coax: nodes=" << mesh.nodes.size()

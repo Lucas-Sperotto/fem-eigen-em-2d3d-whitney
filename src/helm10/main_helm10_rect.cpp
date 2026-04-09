@@ -54,6 +54,7 @@ struct RectRunConfig
     int nx = 14;
     int ny = 14;
     int mode_limit = 20;
+    bool used_positional_cli = false;
     bool used_legacy_cli = false;
 };
 
@@ -162,6 +163,8 @@ RectRunConfig parse_rect_run_config(const helm10::ScalarCliOptions &cli)
 
     if (p.empty())
         return cfg;
+
+    cfg.used_positional_cli = true;
 
     if (p.size() > 4)
     {
@@ -382,6 +385,8 @@ int main(int argc, char **argv)
            << " [--debug-local-blocks] [--debug-candidates]\n";
         os << "Aliases nomeados: [--ar-m AR] [--nx NX] [--ny NY] [--nmodos M]"
            << " (nao misture com os posicionais principais)\n";
+        os << "Compatibilidade: os posicionais principais continuam aceitos, mas estao deprecated;"
+           << " prefira os aliases nomeados acima.\n";
     };
     if (helm10::scalar_cli_requests_help(argc, argv))
     {
@@ -415,7 +420,7 @@ int main(int argc, char **argv)
 
     if (has_named_rect_args && !cli.positionals.empty())
     {
-        std::cerr << "Erro: nao misture aliases nomeados principais com os argumentos posicionais de helm10_rect.\n";
+        std::cerr << "Erro: nao misture aliases nomeados principais com argumentos posicionais principais em helm10_rect; escolha apenas um estilo de chamada.\n";
         print_usage(std::cerr);
         return 2;
     }
@@ -472,7 +477,11 @@ int main(int argc, char **argv)
     std::cout << "Backend escalar: " << element_assembly_backend_name(cli.backend) << "\n";
     if (run.used_legacy_cli)
     {
-        std::cout << "CLI legado detectado: usando ar=1.0 m e assinatura [nx ny [nmodos]].\n";
+        std::cerr << "Aviso: a assinatura posicional legada [nx ny [nmodos]] de helm10_rect continua aceita por compatibilidade, mas esta deprecated; prefira --ar-m/--nx/--ny/--nmodos.\n";
+    }
+    else if (run.used_positional_cli)
+    {
+        std::cerr << "Aviso: os argumentos posicionais principais de helm10_rect continuam aceitos por compatibilidade, mas estao deprecated; prefira --ar-m/--nx/--ny/--nmodos.\n";
     }
 
     const Mesh2D mesh = make_rect_mesh(a, b, nx, ny);

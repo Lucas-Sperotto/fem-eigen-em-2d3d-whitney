@@ -193,6 +193,8 @@ int main(int argc, char **argv)
            << " [--debug-local-blocks] [--debug-candidates]\n";
         os << "Aliases nomeados: [--nr NR] [--nt NT] [--nmodos M]"
            << " (nao misture com os posicionais principais)\n";
+        os << "Compatibilidade: os posicionais principais continuam aceitos, mas estao deprecated;"
+           << " prefira os aliases nomeados acima.\n";
     };
     if (helm10::scalar_cli_requests_help(argc, argv))
     {
@@ -224,7 +226,7 @@ int main(int argc, char **argv)
 
     if (has_named_polar_args && !cli.positionals.empty())
     {
-        std::cerr << "Erro: nao misture aliases nomeados principais com os argumentos posicionais de helm10_circle.\n";
+        std::cerr << "Erro: nao misture aliases nomeados principais com argumentos posicionais principais em helm10_circle; escolha apenas um estilo de chamada.\n";
         print_usage(std::cerr);
         return 2;
     }
@@ -289,6 +291,10 @@ int main(int argc, char **argv)
     std::cout << "CSV dir: " << csv_dir << "\n";
     std::cout << "LinOp dir: " << linop_dir << "\n";
     std::cout << "Backend escalar: " << element_assembly_backend_name(cli.backend) << "\n";
+    if (!has_named_polar_args && !cli.positionals.empty())
+    {
+        std::cerr << "Aviso: os argumentos posicionais principais de helm10_circle continuam aceitos por compatibilidade, mas estao deprecated; prefira --nr/--nt/--nmodos.\n";
+    }
 
     const Mesh2D mesh = make_circle_mesh(r, nr, nt);
     const std::vector<double> eps_r_tri(mesh.tris.size(), cli.eps_r);

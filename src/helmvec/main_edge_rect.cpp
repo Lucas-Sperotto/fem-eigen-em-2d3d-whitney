@@ -254,6 +254,8 @@ int main(int argc, char **argv)
            << " [--debug-local-blocks] [--debug-candidates]\n";
         os << "Aliases nomeados: [--nx NX] [--ny NY] [--nmodos M]"
            << " (nao misture com os posicionais principais)\n";
+        os << "Compatibilidade: os posicionais principais continuam aceitos, mas estao deprecated;"
+           << " prefira os aliases nomeados acima.\n";
     };
     if (helmvec::edge_cli_requests_help(argc, argv))
     {
@@ -285,7 +287,7 @@ int main(int argc, char **argv)
 
     if (has_named_rect_args && !cli.positionals.empty())
     {
-        std::cerr << "Erro: nao misture aliases nomeados principais com os argumentos posicionais de edge_rect.\n";
+        std::cerr << "Erro: nao misture aliases nomeados principais com argumentos posicionais principais em edge_rect; escolha apenas um estilo de chamada.\n";
         print_usage(std::cerr);
         return 2;
     }
@@ -327,6 +329,10 @@ int main(int argc, char **argv)
     std::cout << "VTK dir: " << dirs.vtk << "\n";
     std::cout << "LinOp dir: " << dirs.linop << "\n";
     std::cout << "Backend de aresta: " << element_assembly_backend_name(cli.backend) << "\n";
+    if (!has_named_rect_args && !cli.positionals.empty())
+    {
+        std::cerr << "Aviso: os argumentos posicionais principais de edge_rect continuam aceitos por compatibilidade, mas estao deprecated; prefira --nx/--ny/--nmodos.\n";
+    }
 
     const Mesh2D mesh = make_rect_mesh(a, b, nx, ny);
     std::cout << "Edge rect: nodes=" << mesh.nodes.size()

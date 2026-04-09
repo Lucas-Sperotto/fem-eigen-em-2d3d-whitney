@@ -469,6 +469,8 @@ struct Fig12CliConfig
     helmvec2::CoupledCliOptions cli;
     int nx = 10;
     int ny = 5;
+    bool used_legacy_positionals = false;
+    bool used_legacy_debug = false;
 };
 
 struct Fig13CliConfig
@@ -477,6 +479,8 @@ struct Fig13CliConfig
     double d13_over_a = 0.20;
     int nx = 10;
     int ny = 5;
+    bool used_legacy_positionals = false;
+    bool used_legacy_debug = false;
 };
 
 void print_output_dirs(const helmvec3_output::CaseDirs &out_dirs)
@@ -506,7 +510,7 @@ Fig12CliConfig parse_fig12_cli(int argc, char **argv)
     if (has_named_primary_args && !cfg.cli.positionals.empty())
     {
         throw std::runtime_error(
-            "nao misture aliases nomeados principais com os argumentos posicionais de helmvec3_fig12_rect");
+            "nao misture aliases nomeados principais com argumentos posicionais principais em helmvec3_fig12_rect; escolha apenas um estilo de chamada");
     }
 
     if (has_named_primary_args)
@@ -518,12 +522,14 @@ Fig12CliConfig parse_fig12_cli(int argc, char **argv)
     }
     else
     {
+        cfg.used_legacy_positionals = !cfg.cli.positionals.empty();
         if (!cfg.cli.positionals.empty())
             cfg.nx = std::atoi(cfg.cli.positionals[0].c_str());
         if (cfg.cli.positionals.size() >= 2)
             cfg.ny = std::atoi(cfg.cli.positionals[1].c_str());
         if (cfg.cli.positionals.size() >= 3)
         {
+            cfg.used_legacy_debug = true;
             const bool legacy_debug = (std::atoi(cfg.cli.positionals[2].c_str()) != 0);
             if (legacy_debug)
             {
@@ -555,7 +561,7 @@ Fig13CliConfig parse_fig13_cli(int argc, char **argv)
     if (has_named_primary_args && !cfg.cli.positionals.empty())
     {
         throw std::runtime_error(
-            "nao misture aliases nomeados principais com os argumentos posicionais de helmvec3_fig13_rect");
+            "nao misture aliases nomeados principais com argumentos posicionais principais em helmvec3_fig13_rect; escolha apenas um estilo de chamada");
     }
 
     if (has_named_primary_args)
@@ -569,6 +575,7 @@ Fig13CliConfig parse_fig13_cli(int argc, char **argv)
     }
     else
     {
+        cfg.used_legacy_positionals = !cfg.cli.positionals.empty();
         if (!cfg.cli.positionals.empty())
             cfg.d13_over_a = std::atof(cfg.cli.positionals[0].c_str());
         if (cfg.cli.positionals.size() >= 2)
@@ -577,6 +584,7 @@ Fig13CliConfig parse_fig13_cli(int argc, char **argv)
             cfg.ny = std::atoi(cfg.cli.positionals[2].c_str());
         if (cfg.cli.positionals.size() >= 4)
         {
+            cfg.used_legacy_debug = true;
             const bool legacy_debug = (std::atoi(cfg.cli.positionals[3].c_str()) != 0);
             if (legacy_debug)
             {
@@ -620,6 +628,10 @@ int run_helmvec3_fig12_rect(int argc, char **argv)
            << " [--debug-local-blocks] [--debug-candidates]\n";
         os << "Aliases nomeados: [--nx NX] [--ny NY]"
            << " (nao misture com os posicionais principais)\n";
+        os << "Compatibilidade: os posicionais principais continuam aceitos, mas estao deprecated;"
+           << " prefira os aliases nomeados acima.\n";
+        os << "Compatibilidade: o debug posicional legado [debug] continua aceito, mas esta deprecated;"
+           << " prefira --debug-local-blocks e/ou --debug-candidates.\n";
     };
 
     Fig12CliConfig cfg;
@@ -646,6 +658,14 @@ int run_helmvec3_fig12_rect(int argc, char **argv)
         std::cerr << "Aviso: nao foi possivel abrir run.log em "
                   << (out_dirs.root / "run.log")
                   << " (" << log_scope.error_message() << ")\n";
+    }
+    if (cfg.used_legacy_positionals)
+    {
+        std::cerr << "Aviso: os argumentos posicionais principais de helmvec3_fig12_rect continuam aceitos por compatibilidade, mas estao deprecated; prefira --nx/--ny.\n";
+    }
+    if (cfg.used_legacy_debug)
+    {
+        std::cerr << "Aviso: o debug posicional legado de helmvec3_fig12_rect continua aceito por compatibilidade, mas esta deprecated; prefira --debug-local-blocks e/ou --debug-candidates.\n";
     }
 
     Mesh2D mesh = make_rect_mesh(a, b, cfg.nx, cfg.ny);
@@ -770,6 +790,10 @@ int run_helmvec3_fig13_rect(int argc, char **argv)
            << " [--debug-local-blocks] [--debug-candidates]\n";
         os << "Aliases nomeados: [--d-over-a-preview VAL] [--nx NX] [--ny NY]"
            << " (nao misture com os posicionais principais)\n";
+        os << "Compatibilidade: os posicionais principais continuam aceitos, mas estao deprecated;"
+           << " prefira os aliases nomeados acima.\n";
+        os << "Compatibilidade: o debug posicional legado [debug] continua aceito, mas esta deprecated;"
+           << " prefira --debug-local-blocks e/ou --debug-candidates.\n";
     };
 
     Fig13CliConfig cfg;
@@ -796,6 +820,14 @@ int run_helmvec3_fig13_rect(int argc, char **argv)
         std::cerr << "Aviso: nao foi possivel abrir run.log em "
                   << (out_dirs.root / "run.log")
                   << " (" << log_scope.error_message() << ")\n";
+    }
+    if (cfg.used_legacy_positionals)
+    {
+        std::cerr << "Aviso: os argumentos posicionais principais de helmvec3_fig13_rect continuam aceitos por compatibilidade, mas estao deprecated; prefira --d-over-a-preview/--nx/--ny.\n";
+    }
+    if (cfg.used_legacy_debug)
+    {
+        std::cerr << "Aviso: o debug posicional legado de helmvec3_fig13_rect continua aceito por compatibilidade, mas esta deprecated; prefira --debug-local-blocks e/ou --debug-candidates.\n";
     }
 
     Mesh2D mesh = make_rect_mesh(a, b, cfg.nx, cfg.ny);
