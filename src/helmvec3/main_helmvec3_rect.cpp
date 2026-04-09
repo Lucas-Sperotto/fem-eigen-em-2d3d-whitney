@@ -121,6 +121,35 @@ bool env_flag_enabled(const char *name)
     return !(value.empty() || value == "0" || value == "false" || value == "off" || value == "no");
 }
 
+std::string normalize_token(std::string token)
+{
+    std::transform(
+        token.begin(),
+        token.end(),
+        token.begin(),
+        [](unsigned char ch)
+        { return static_cast<char>(std::tolower(ch)); });
+    return token;
+}
+
+CoupledBetaDiagVariant env_beta_diag_variant()
+{
+    const char *raw = std::getenv("TP3485_HELMVEC3_DIAG_BETA_VARIANT");
+    if (raw == nullptr || std::string(raw).empty())
+        return CoupledBetaDiagVariant::Baseline;
+
+    const std::string token = normalize_token(std::string(raw));
+    if (token == "baseline")
+        return CoupledBetaDiagVariant::Baseline;
+    if (token == "diag_eq141_eps_mass_qtt" || token == "eq141" || token == "eq141_qtt")
+        return CoupledBetaDiagVariant::DiagEq141EpsMassQtt;
+    if (token == "diag_eq142_doc_qzz" || token == "eq142" || token == "eq142_qzz")
+        return CoupledBetaDiagVariant::DiagEq142DocQzz;
+
+    throw std::runtime_error(
+        "Valor invalido em TP3485_HELMVEC3_DIAG_BETA_VARIANT: " + std::string(raw));
+}
+
 bool nearly_equal(double lhs, double rhs, double tol = 1.0e-12)
 {
     return std::abs(lhs - rhs) <= tol;
@@ -434,6 +463,7 @@ BetaPointSolve solve_beta_point(
     const std::vector<double> &mu,
     double k0,
     ElementAssemblyBackend backend,
+    CoupledBetaDiagVariant diag_variant,
     timing::Breakdown *perf = nullptr,
     const std::filesystem::path *linop_dir = nullptr,
     const std::string *artifact_prefix = nullptr,
@@ -442,7 +472,7 @@ BetaPointSolve solve_beta_point(
 {
     timing::Stopwatch stage;
     BetaPointSolve result;
-    result.sys = tp3485::build_eq136_helmvec3_system_E(mesh, k0, eps, mu, backend);
+    result.sys = tp3485::build_eq136_helmvec3_system_E(mesh, k0, eps, mu, backend, diag_variant);
     if (perf != nullptr)
         perf->assembly_ms += stage.elapsed_ms();
     stage.reset();
@@ -785,6 +815,7 @@ std::vector<SelectedRatioPoint> match_ratio_to_reference(
     const std::vector<double> &ref_ratio,
     bool debug_candidates,
     ElementAssemblyBackend backend,
+    CoupledBetaDiagVariant diag_variant,
     timing::Breakdown *perf = nullptr,
     const std::filesystem::path *linop_dir = nullptr,
     const std::string &prefix_base = "",
@@ -820,6 +851,7 @@ std::vector<SelectedRatioPoint> match_ratio_to_reference(
             mu,
             k0,
             backend,
+            diag_variant,
             perf,
             linop_dir,
             prefix_base.empty() ? nullptr : &point_prefix,
@@ -951,6 +983,7 @@ std::vector<SelectedRatioPoint> trace_ratio_branch(
     double b,
     double seed_ratio,
     ElementAssemblyBackend backend,
+    CoupledBetaDiagVariant diag_variant,
     timing::Breakdown *perf = nullptr,
     const std::filesystem::path *linop_dir = nullptr,
     const std::string &prefix_base = "",
@@ -971,6 +1004,7 @@ std::vector<SelectedRatioPoint> trace_ratio_branch(
             mu,
             k0,
             backend,
+            diag_variant,
             perf,
             linop_dir,
             prefix_base.empty() ? nullptr : &point_prefix);
@@ -1270,6 +1304,7 @@ int run_helmvec3_fig12_rect(int argc, char **argv)
         ref_ana_9,
         cfg.cli.debug_candidates,
         cfg.cli.backend,
+        CoupledBetaDiagVariant::Baseline,
         &perf,
         &out_dirs.linop,
         "helmvec3_fig12_rect_figure12",
@@ -1394,6 +1429,7 @@ int run_helmvec3_fig13_rect(int argc, char **argv)
     const auto out_dirs = helmvec3_output::ensure_case_dirs("fig13_rect");
     const bool export_raw_spectrum_diag = env_flag_enabled("TP3485_HELMVEC3_DIAG_RAW_SPECTRUM");
     const bool export_matrix_audit_diag = env_flag_enabled("TP3485_HELMVEC3_DIAG_MATRIX_AUDIT");
+    const CoupledBetaDiagVariant diag_variant = env_beta_diag_variant();
     execution_log::ExecutionLogScope log_scope((out_dirs.root / "run.log").string());
     if (!log_scope.active())
     {
@@ -1433,6 +1469,7 @@ int run_helmvec3_fig13_rect(int argc, char **argv)
         b,
         0.5,
         cfg.cli.backend,
+        diag_variant,
         &perf,
         &out_dirs.linop,
         std::string("helmvec3_fig13_rect_preview_da") + label_number(cfg.d13_over_a),
@@ -1485,6 +1522,7 @@ int run_helmvec3_fig13_rect(int argc, char **argv)
             blk.analytic_beta_over_k0,
             cfg.cli.debug_candidates,
             cfg.cli.backend,
+            diag_variant,
             &perf,
             &out_dirs.linop,
             std::string("helmvec3_fig13_rect_table10_da") + label_number(blk.d_over_a),

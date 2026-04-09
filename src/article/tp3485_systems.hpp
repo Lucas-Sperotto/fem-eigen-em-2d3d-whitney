@@ -166,9 +166,10 @@ inline CoupledBetaSystem build_eq136_helmvec3_system_E(
     double k0,
     const std::vector<double> &eps_r_tri,
     const std::vector<double> &mu_r_tri,
-    ElementAssemblyBackend backend = ElementAssemblyBackend::ClosedForm)
+    ElementAssemblyBackend backend = ElementAssemblyBackend::ClosedForm,
+    CoupledBetaDiagVariant diag_variant = CoupledBetaDiagVariant::Baseline)
 {
-    return build_coupled_beta_system_E(mesh, k0, eps_r_tri, mu_r_tri, backend);
+    return build_coupled_beta_system_E(mesh, k0, eps_r_tri, mu_r_tri, backend, diag_variant);
 }
 
 /******************************************************************************/

@@ -107,6 +107,27 @@ struct CoupledBetaSystem
     ScalarSystem scal;
 };
 
+enum class CoupledBetaDiagVariant
+{
+    Baseline,
+    DiagEq141EpsMassQtt,
+    DiagEq142DocQzz,
+};
+
+inline const char *coupled_beta_diag_variant_name(CoupledBetaDiagVariant variant)
+{
+    switch (variant)
+    {
+    case CoupledBetaDiagVariant::Baseline:
+        return "baseline";
+    case CoupledBetaDiagVariant::DiagEq141EpsMassQtt:
+        return "diag_eq141_eps_mass_qtt";
+    case CoupledBetaDiagVariant::DiagEq142DocQzz:
+        return "diag_eq142_doc_qzz";
+    }
+    return "baseline";
+}
+
 // Formulacao em E (Et, Ez), usada nas secoes 2.2.3 e 2.2.4:
 //   - BC de aresta: Et tangencial = 0 em PEC
 //   - BC escalar: Ez = 0 em PEC
@@ -146,4 +167,5 @@ CoupledBetaSystem build_coupled_beta_system_E(
     double k0,
     const std::vector<double> &eps_r_tri,
     const std::vector<double> &mu_r_tri,
-    ElementAssemblyBackend backend = ElementAssemblyBackend::ClosedForm);
+    ElementAssemblyBackend backend = ElementAssemblyBackend::ClosedForm,
+    CoupledBetaDiagVariant diag_variant = CoupledBetaDiagVariant::Baseline);

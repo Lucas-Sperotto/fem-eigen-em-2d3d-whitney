@@ -610,6 +610,35 @@ void assemble_beta_system_closed_form(
         }
     }
 }
+
+void apply_beta_diag_variant(
+    CoupledBetaSystem &out,
+    const CoupledContextE &ctx,
+    double k0,
+    CoupledBetaDiagVariant diag_variant)
+{
+    if (diag_variant == CoupledBetaDiagVariant::Baseline)
+        return;
+
+    if (diag_variant == CoupledBetaDiagVariant::DiagEq141EpsMassQtt)
+    {
+        out.Q_tt = DenseMat(out.nt);
+        add_block_scaled(out.Q_tt, 0, 0, out.edge.T, -1.0);
+        return;
+    }
+
+    if (diag_variant == CoupledBetaDiagVariant::DiagEq142DocQzz)
+    {
+        const double k02 = k0 * k0;
+        out.P_zz = DenseMat(out.nz);
+        out.Q_zz = DenseMat(out.nz);
+        add_block_scaled(out.Q_zz, 0, 0, out.scal.S, -1.0);
+        add_block_scaled(out.Q_zz, 0, 0, out.scal.T, +k02);
+        return;
+    }
+
+    throw std::runtime_error("Variante diagnostica beta desconhecida.");
+}
 } // namespace
 
 /******************************************************************************/
@@ -704,7 +733,8 @@ CoupledBetaSystem build_coupled_beta_system_E(
     double k0,
     const std::vector<double> &eps_r_tri,
     const std::vector<double> &mu_r_tri,
-    ElementAssemblyBackend backend)
+    ElementAssemblyBackend backend,
+    CoupledBetaDiagVariant diag_variant)
 {
     if (!std::isfinite(k0))
         throw std::runtime_error("k0 deve ser finito.");
@@ -730,6 +760,7 @@ CoupledBetaSystem build_coupled_beta_system_E(
         // Caminho explicitamente rastreavel pela Eq. (136) e pelos blocos
         // locais Eq. (137)-(142), no rearranjo validado do repositorio.
         assemble_beta_system_closed_form(out, mesh, k0, eps_r_tri, mu_r_tri);
+        apply_beta_diag_variant(out, ctx, k0, diag_variant);
         assemble_eq136_global_from_named_blocks(out);
         return out;
     }
@@ -783,6 +814,7 @@ CoupledBetaSystem build_coupled_beta_system_E(
         mu_r_tri,
         backend);
 
+    apply_beta_diag_variant(out, ctx, k0, diag_variant);
     assemble_eq136_global_from_named_blocks(out);
     return out;
 }
