@@ -513,6 +513,16 @@ if [[ "$SKIP_VALIDATE" -eq 0 ]]; then
     log "Skipping 2.2.1 CSV-based validation (no edge 2D case selected)."
   fi
 
+  if [[ "$RUN_222" -eq 1 ]]; then
+    log "Running 2.2.2 Table 7 CSV-based validation..."
+    run python3 "$ROOT_DIR/scripts/validate_2d_222_table7_csv.py" \
+      --out-root "$OUT_DIR" \
+      --backend "$BACKEND" \
+      --out-csv "$OUT_DIR/validation/validation_2d_222_table7.csv"
+  else
+    log "Skipping 2.2.2 Table 7 CSV-based validation (no mixed 2D case selected)."
+  fi
+
   if [[ "$SKIP_3D" -eq 0 ]]; then
     log "Running 3D validation..."
     run python3 "$ROOT_DIR/scripts/validate_3d_31.py" \
@@ -584,6 +594,9 @@ if [[ "$SKIP_VALIDATE" -eq 0 ]]; then
   fi
   if [[ -f "$OUT_DIR/validation/validation_2d_221.csv" ]]; then
     printf '  - %s\n' "$OUT_DIR/validation/validation_2d_221.csv"
+  fi
+  if [[ -f "$OUT_DIR/validation/validation_2d_222_table7.csv" ]]; then
+    printf '  - %s\n' "$OUT_DIR/validation/validation_2d_222_table7.csv"
   fi
   if [[ "$SKIP_3D" -eq 0 ]]; then
     printf '  - %s\n' "$OUT_DIR/validation/validation_3d_31_modes.csv"
