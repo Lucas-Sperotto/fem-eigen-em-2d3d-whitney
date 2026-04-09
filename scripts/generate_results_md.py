@@ -367,6 +367,8 @@ def _write_report(
     lines.append(f"- Markdown indice consolidado 2D: {_md_link(out_dir / 'validation' / 'VALIDATION_2D_INDEX.md')}")
     lines.append(f"- CSV validacao 3D (modes): {_md_link(out_dir / 'validation' / 'validation_3d_31_modes.csv')}")
     lines.append(f"- CSV validacao 3D (summary): {_md_link(out_dir / 'validation' / 'validation_3d_31_summary.csv')}")
+    lines.append(f"- CSV indice consolidado 3D: {_md_link(out_dir / 'validation' / 'validation_3d_index.csv')}")
+    lines.append(f"- Markdown indice consolidado 3D: {_md_link(out_dir / 'validation' / 'VALIDATION_3D_INDEX.md')}")
     lines.append(f"- Imagens de campos 2D: {_md_link(out_dir / 'img_all')}")
     lines.append(f"- Imagens de validacao 2.2.x: {_md_link(v22_img)}")
     bench_detail = out_dir / "benchmark" / "backend_benchmark_detail.csv"
