@@ -93,7 +93,3 @@ echo "🚀 Executando FEM3D0/FEM3D1 com as discretizações de referência do ar
 ./build/fem3d1_sphere --backend closed-form #473 elementos
 
 echo "✅ Tudo finalizado!"
-# air-filled: 343 elementos
-# half-filled: 615 elementos
-# circular cylindrical cavity: 633 elementos
-# spherical cavity: 473 elementos
