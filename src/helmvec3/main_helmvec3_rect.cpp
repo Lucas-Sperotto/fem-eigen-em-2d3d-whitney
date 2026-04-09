@@ -78,6 +78,31 @@ struct BetaPointSolve
     GenEigGeneralResult eig;
     std::vector<RatioCandidate> candidates;
     std::vector<helmvec3_output::RawSpectrumCsvRecord> raw_spectrum;
+    std::vector<helmvec3_output::MatrixAuditCsvRecord> matrix_audit;
+};
+
+struct MatrixBlockAuditMetrics
+{
+    double P_fro = 0.0;
+    double Q_fro = 0.0;
+    double P_tt_fro = 0.0;
+    double P_zz_fro = 0.0;
+    double Q_tt_fro = 0.0;
+    double Q_tz_fro = 0.0;
+    double Q_zt_fro = 0.0;
+    double Q_zz_fro = 0.0;
+    double P_tt_asym_rel = 0.0;
+    double P_zz_asym_rel = 0.0;
+    double Q_tt_asym_rel = 0.0;
+    double Q_zz_asym_rel = 0.0;
+    double Q_tz_Q_zt_transpose_mismatch_rel = 0.0;
+    double block_norm_max = 0.0;
+    double P_tt_scale_rel = 0.0;
+    double P_zz_scale_rel = 0.0;
+    double Q_tt_scale_rel = 0.0;
+    double Q_tz_scale_rel = 0.0;
+    double Q_zt_scale_rel = 0.0;
+    double Q_zz_scale_rel = 0.0;
 };
 
 bool env_flag_enabled(const char *name)
@@ -133,6 +158,179 @@ void mark_selected_raw_spectrum(
         if (row.solver_index == selected_eig_index)
             row.selected_after_matching = 1;
     }
+}
+
+void mark_selected_matrix_audit(
+    std::vector<helmvec3_output::MatrixAuditCsvRecord> &rows,
+    int selected_eig_index)
+{
+    for (auto &row : rows)
+    {
+        if (row.solver_index == selected_eig_index)
+            row.selected_after_matching = 1;
+    }
+}
+
+double vector_l2_norm(const std::vector<double> &x)
+{
+    double acc = 0.0;
+    for (double value : x)
+        acc += value * value;
+    return std::sqrt(acc);
+}
+
+double dense_frobenius_norm(const DenseMat &mat)
+{
+    double acc = 0.0;
+    for (double value : mat.a)
+        acc += value * value;
+    return std::sqrt(acc);
+}
+
+double rect_frobenius_norm(const DenseRectMat &mat)
+{
+    double acc = 0.0;
+    for (double value : mat.a)
+        acc += value * value;
+    return std::sqrt(acc);
+}
+
+double dense_relative_asymmetry(const DenseMat &mat)
+{
+    double diff_acc = 0.0;
+    for (int i = 0; i < mat.n; ++i)
+    {
+        for (int j = 0; j < mat.n; ++j)
+        {
+            const double diff = mat(i, j) - mat(j, i);
+            diff_acc += diff * diff;
+        }
+    }
+    const double den = std::max(dense_frobenius_norm(mat), 1.0e-30);
+    return std::sqrt(diff_acc) / den;
+}
+
+double rect_transpose_mismatch_rel(const DenseRectMat &lhs, const DenseRectMat &rhs)
+{
+    if (lhs.nr != rhs.nc || lhs.nc != rhs.nr)
+        return std::numeric_limits<double>::infinity();
+
+    double diff_acc = 0.0;
+    for (int i = 0; i < lhs.nr; ++i)
+    {
+        for (int j = 0; j < lhs.nc; ++j)
+        {
+            const double diff = lhs(i, j) - rhs(j, i);
+            diff_acc += diff * diff;
+        }
+    }
+    const double den = std::max(std::max(rect_frobenius_norm(lhs), rect_frobenius_norm(rhs)), 1.0e-30);
+    return std::sqrt(diff_acc) / den;
+}
+
+void dense_matvec(const DenseMat &mat, const std::vector<double> &x, std::vector<double> &y)
+{
+    y.assign((size_t)mat.n, 0.0);
+    for (int i = 0; i < mat.n; ++i)
+    {
+        double acc = 0.0;
+        for (int j = 0; j < mat.n; ++j)
+            acc += mat(i, j) * x[(size_t)j];
+        y[(size_t)i] = acc;
+    }
+}
+
+void binding_vector_parts(
+    const GenEigGeneralResult &eig,
+    const spectral_csv::GeneralEigenColumnBinding &binding,
+    std::vector<double> &real_part,
+    std::vector<double> &imag_part)
+{
+    real_part.assign((size_t)eig.n, 0.0);
+    imag_part.assign((size_t)eig.n, 0.0);
+    for (int dof = 0; dof < eig.n; ++dof)
+    {
+        real_part[(size_t)dof] = eig.VRcol[(size_t)binding.real_column * (size_t)eig.n + (size_t)dof];
+        if (binding.imag_column >= 0 && binding.imag_sign != 0)
+            imag_part[(size_t)dof] =
+                binding.imag_sign * eig.VRcol[(size_t)binding.imag_column * (size_t)eig.n + (size_t)dof];
+    }
+}
+
+struct GeneralizedResidualAudit
+{
+    double abs_norm = 0.0;
+    double rel_norm = 0.0;
+};
+
+GeneralizedResidualAudit compute_generalized_residual(
+    const DenseMat &P,
+    const DenseMat &Q,
+    const GenEigGeneralResult &eig,
+    const spectral_csv::GeneralEigenColumnBinding &binding,
+    double P_fro,
+    double Q_fro)
+{
+    std::vector<double> xr;
+    std::vector<double> xi;
+    binding_vector_parts(eig, binding, xr, xi);
+
+    std::vector<double> Pxr;
+    std::vector<double> Pxi;
+    std::vector<double> Qxr;
+    std::vector<double> Qxi;
+    dense_matvec(P, xr, Pxr);
+    dense_matvec(P, xi, Pxi);
+    dense_matvec(Q, xr, Qxr);
+    dense_matvec(Q, xi, Qxi);
+
+    double abs_acc = 0.0;
+    for (int i = 0; i < eig.n; ++i)
+    {
+        const double rr =
+            Pxr[(size_t)i] - binding.lambda_real * Qxr[(size_t)i] + binding.lambda_imag * Qxi[(size_t)i];
+        const double ri =
+            Pxi[(size_t)i] - binding.lambda_real * Qxi[(size_t)i] - binding.lambda_imag * Qxr[(size_t)i];
+        abs_acc += rr * rr + ri * ri;
+    }
+
+    const double abs_norm = std::sqrt(abs_acc);
+    const double x_norm = std::hypot(vector_l2_norm(xr), vector_l2_norm(xi));
+    const double den =
+        (P_fro + std::hypot(binding.lambda_real, binding.lambda_imag) * Q_fro) * std::max(x_norm, 1.0e-30);
+
+    GeneralizedResidualAudit out;
+    out.abs_norm = abs_norm;
+    out.rel_norm = (den > 0.0) ? (abs_norm / den) : abs_norm;
+    return out;
+}
+
+MatrixBlockAuditMetrics compute_matrix_block_audit_metrics(const CoupledBetaSystem &sys)
+{
+    MatrixBlockAuditMetrics out;
+    out.P_fro = dense_frobenius_norm(sys.P);
+    out.Q_fro = dense_frobenius_norm(sys.Q);
+    out.P_tt_fro = dense_frobenius_norm(sys.P_tt);
+    out.P_zz_fro = dense_frobenius_norm(sys.P_zz);
+    out.Q_tt_fro = dense_frobenius_norm(sys.Q_tt);
+    out.Q_tz_fro = rect_frobenius_norm(sys.Q_tz);
+    out.Q_zt_fro = rect_frobenius_norm(sys.Q_zt);
+    out.Q_zz_fro = dense_frobenius_norm(sys.Q_zz);
+    out.P_tt_asym_rel = dense_relative_asymmetry(sys.P_tt);
+    out.P_zz_asym_rel = dense_relative_asymmetry(sys.P_zz);
+    out.Q_tt_asym_rel = dense_relative_asymmetry(sys.Q_tt);
+    out.Q_zz_asym_rel = dense_relative_asymmetry(sys.Q_zz);
+    out.Q_tz_Q_zt_transpose_mismatch_rel = rect_transpose_mismatch_rel(sys.Q_tz, sys.Q_zt);
+    out.block_norm_max = std::max(
+        std::max(std::max(out.P_tt_fro, out.P_zz_fro), std::max(out.Q_tt_fro, out.Q_tz_fro)),
+        std::max(std::max(out.Q_zt_fro, out.Q_zz_fro), 1.0e-30));
+    out.P_tt_scale_rel = out.P_tt_fro / out.block_norm_max;
+    out.P_zz_scale_rel = out.P_zz_fro / out.block_norm_max;
+    out.Q_tt_scale_rel = out.Q_tt_fro / out.block_norm_max;
+    out.Q_tz_scale_rel = out.Q_tz_fro / out.block_norm_max;
+    out.Q_zt_scale_rel = out.Q_zt_fro / out.block_norm_max;
+    out.Q_zz_scale_rel = out.Q_zz_fro / out.block_norm_max;
+    return out;
 }
 
 /******************************************************************************/
@@ -239,7 +437,8 @@ BetaPointSolve solve_beta_point(
     timing::Breakdown *perf = nullptr,
     const std::filesystem::path *linop_dir = nullptr,
     const std::string *artifact_prefix = nullptr,
-    bool collect_raw_spectrum_diag = false)
+    bool collect_raw_spectrum_diag = false,
+    bool collect_matrix_audit_diag = false)
 {
     timing::Stopwatch stage;
     BetaPointSolve result;
@@ -289,75 +488,140 @@ BetaPointSolve solve_beta_point(
     };
 
     const int n = result.eig.n;
-    std::vector<int> solver_to_row_index((size_t)n, -1);
-    if (collect_raw_spectrum_diag)
+    std::vector<int> solver_to_raw_row_index((size_t)n, -1);
+    std::vector<int> solver_to_matrix_row_index((size_t)n, -1);
+    const bool collect_any_diag = collect_raw_spectrum_diag || collect_matrix_audit_diag;
+    const MatrixBlockAuditMetrics block_metrics =
+        collect_matrix_audit_diag ? compute_matrix_block_audit_metrics(result.sys) : MatrixBlockAuditMetrics{};
+    if (collect_any_diag)
     {
         const auto bindings = spectral_csv::general_eigen_bindings(result.eig);
-        result.raw_spectrum.reserve(bindings.size());
+        if (collect_raw_spectrum_diag)
+            result.raw_spectrum.reserve(bindings.size());
+        if (collect_matrix_audit_diag)
+            result.matrix_audit.reserve(bindings.size());
         for (size_t rank = 0; rank < bindings.size(); ++rank)
         {
             const auto &binding = bindings[rank];
+            std::vector<double> xr;
+            std::vector<double> xi;
+            binding_vector_parts(result.eig, binding, xr, xi);
+
             double et = 0.0;
             double ez = 0.0;
             for (int dof = 0; dof < result.sys.nt; ++dof)
             {
-                const double real_part = result.eig.VRcol[(size_t)binding.real_column * (size_t)n + (size_t)dof];
-                double imag_part = 0.0;
-                if (binding.imag_column >= 0 && binding.imag_sign != 0)
-                    imag_part = binding.imag_sign * result.eig.VRcol[(size_t)binding.imag_column * (size_t)n + (size_t)dof];
+                const double real_part = xr[(size_t)dof];
+                const double imag_part = xi[(size_t)dof];
                 et += real_part * real_part + imag_part * imag_part;
             }
             for (int dof = 0; dof < result.sys.nz; ++dof)
             {
                 const int col_offset = result.sys.nt + dof;
-                const double real_part = result.eig.VRcol[(size_t)binding.real_column * (size_t)n + (size_t)col_offset];
-                double imag_part = 0.0;
-                if (binding.imag_column >= 0 && binding.imag_sign != 0)
-                    imag_part = binding.imag_sign * result.eig.VRcol[(size_t)binding.imag_column * (size_t)n + (size_t)col_offset];
+                const double real_part = xr[(size_t)col_offset];
+                const double imag_part = xi[(size_t)col_offset];
                 ez += real_part * real_part + imag_part * imag_part;
             }
             const double den = et + ez;
             const double ratio_ez = (den > 0.0) ? (ez / den) : 0.0;
-            helmvec3_output::RawSpectrumCsvRecord row;
-            row.section = "2.2.4";
-            row.case_label = "Figure13_Table10";
-            row.ordered_rank = static_cast<int>(rank) + 1;
-            row.solver_index = binding.original_index;
-            row.lambda_real = binding.lambda_real;
-            row.lambda_imag = binding.lambda_imag;
-            row.beta_ratio_if_real_positive = real_positive_beta_ratio(binding.lambda_real, k0);
-            row.filter_reason = "pending_filter";
-            row.et_energy = et;
-            row.ez_energy = ez;
-            row.ez_ratio = ratio_ez;
-            result.raw_spectrum.push_back(row);
-            if (binding.original_index >= 0 && binding.original_index < n)
-                solver_to_row_index[(size_t)binding.original_index] = static_cast<int>(result.raw_spectrum.size()) - 1;
+            if (collect_raw_spectrum_diag)
+            {
+                helmvec3_output::RawSpectrumCsvRecord row;
+                row.section = "2.2.4";
+                row.case_label = "Figure13_Table10";
+                row.ordered_rank = static_cast<int>(rank) + 1;
+                row.solver_index = binding.original_index;
+                row.lambda_real = binding.lambda_real;
+                row.lambda_imag = binding.lambda_imag;
+                row.beta_ratio_if_real_positive = real_positive_beta_ratio(binding.lambda_real, k0);
+                row.filter_reason = "pending_filter";
+                row.et_energy = et;
+                row.ez_energy = ez;
+                row.ez_ratio = ratio_ez;
+                result.raw_spectrum.push_back(row);
+                if (binding.original_index >= 0 && binding.original_index < n)
+                    solver_to_raw_row_index[(size_t)binding.original_index] =
+                        static_cast<int>(result.raw_spectrum.size()) - 1;
+            }
+            if (collect_matrix_audit_diag)
+            {
+                const GeneralizedResidualAudit residual =
+                    compute_generalized_residual(result.sys.P, result.sys.Q, result.eig, binding, block_metrics.P_fro, block_metrics.Q_fro);
+                helmvec3_output::MatrixAuditCsvRecord row;
+                row.section = "2.2.4";
+                row.case_label = "Figure13_Table10";
+                row.backend = element_assembly_backend_name(backend);
+                row.ordered_rank = static_cast<int>(rank) + 1;
+                row.solver_index = binding.original_index;
+                row.lambda_real = binding.lambda_real;
+                row.lambda_imag = binding.lambda_imag;
+                row.beta_ratio_if_real_positive = real_positive_beta_ratio(binding.lambda_real, k0);
+                row.filter_reason = "pending_filter";
+                row.et_energy = et;
+                row.ez_energy = ez;
+                row.ez_ratio = ratio_ez;
+                row.residual_abs = residual.abs_norm;
+                row.residual_rel = residual.rel_norm;
+                row.P_fro = block_metrics.P_fro;
+                row.Q_fro = block_metrics.Q_fro;
+                row.P_tt_fro = block_metrics.P_tt_fro;
+                row.P_zz_fro = block_metrics.P_zz_fro;
+                row.Q_tt_fro = block_metrics.Q_tt_fro;
+                row.Q_tz_fro = block_metrics.Q_tz_fro;
+                row.Q_zt_fro = block_metrics.Q_zt_fro;
+                row.Q_zz_fro = block_metrics.Q_zz_fro;
+                row.P_tt_asym_rel = block_metrics.P_tt_asym_rel;
+                row.P_zz_asym_rel = block_metrics.P_zz_asym_rel;
+                row.Q_tt_asym_rel = block_metrics.Q_tt_asym_rel;
+                row.Q_zz_asym_rel = block_metrics.Q_zz_asym_rel;
+                row.Q_tz_Q_zt_transpose_mismatch_rel = block_metrics.Q_tz_Q_zt_transpose_mismatch_rel;
+                row.block_norm_max = block_metrics.block_norm_max;
+                row.P_tt_scale_rel = block_metrics.P_tt_scale_rel;
+                row.P_zz_scale_rel = block_metrics.P_zz_scale_rel;
+                row.Q_tt_scale_rel = block_metrics.Q_tt_scale_rel;
+                row.Q_tz_scale_rel = block_metrics.Q_tz_scale_rel;
+                row.Q_zt_scale_rel = block_metrics.Q_zt_scale_rel;
+                row.Q_zz_scale_rel = block_metrics.Q_zz_scale_rel;
+                result.matrix_audit.push_back(row);
+                if (binding.original_index >= 0 && binding.original_index < n)
+                    solver_to_matrix_row_index[(size_t)binding.original_index] =
+                        static_cast<int>(result.matrix_audit.size()) - 1;
+            }
         }
     }
 
     std::vector<RawRatioCandidate> raw;
     for (int i = 0; i < n; ++i)
     {
-        const int row_index =
-            (i >= 0 && i < (int)solver_to_row_index.size()) ? solver_to_row_index[(size_t)i] : -1;
-        auto *row = (row_index >= 0) ? &result.raw_spectrum[(size_t)row_index] : nullptr;
+        const int raw_row_index =
+            (i >= 0 && i < (int)solver_to_raw_row_index.size()) ? solver_to_raw_row_index[(size_t)i] : -1;
+        auto *raw_row = (raw_row_index >= 0) ? &result.raw_spectrum[(size_t)raw_row_index] : nullptr;
+        const int matrix_row_index =
+            (i >= 0 && i < (int)solver_to_matrix_row_index.size()) ? solver_to_matrix_row_index[(size_t)i] : -1;
+        auto *matrix_row =
+            (matrix_row_index >= 0) ? &result.matrix_audit[(size_t)matrix_row_index] : nullptr;
         if (!std::isfinite(result.eig.lambda_re[i]))
         {
-            if (row != nullptr)
-                row->filter_reason = "discard_lambda_real_non_finite";
+            if (raw_row != nullptr)
+                raw_row->filter_reason = "discard_lambda_real_non_finite";
+            if (matrix_row != nullptr)
+                matrix_row->filter_reason = "discard_lambda_real_non_finite";
             continue;
         }
         if (std::abs(result.eig.lambda_im[i]) > 1e-7)
         {
-            if (row != nullptr)
-                row->filter_reason = "discard_lambda_imag_above_tol";
+            if (raw_row != nullptr)
+                raw_row->filter_reason = "discard_lambda_imag_above_tol";
+            if (matrix_row != nullptr)
+                matrix_row->filter_reason = "discard_lambda_imag_above_tol";
             continue;
         }
         if (result.eig.lambda_re[i] <= 1e-10)
         {
-            if (row != nullptr)
-                row->filter_reason = "discard_lambda_real_non_positive";
+            if (raw_row != nullptr)
+                raw_row->filter_reason = "discard_lambda_real_non_positive";
+            if (matrix_row != nullptr)
+                matrix_row->filter_reason = "discard_lambda_real_non_positive";
             continue;
         }
 
@@ -365,25 +629,38 @@ BetaPointSolve solve_beta_point(
         const double ratio = beta / k0;
         if (ratio <= 1e-6)
         {
-            if (row != nullptr)
-                row->filter_reason = "discard_beta_ratio_too_small";
+            if (raw_row != nullptr)
+                raw_row->filter_reason = "discard_beta_ratio_too_small";
+            if (matrix_row != nullptr)
+                matrix_row->filter_reason = "discard_beta_ratio_too_small";
             continue;
         }
         if (ratio > ratio_max)
         {
-            if (row != nullptr)
-                row->filter_reason = "discard_beta_ratio_above_physical_max";
+            if (raw_row != nullptr)
+                raw_row->filter_reason = "discard_beta_ratio_above_physical_max";
+            if (matrix_row != nullptr)
+                matrix_row->filter_reason = "discard_beta_ratio_above_physical_max";
             continue;
         }
-        if (row != nullptr)
+        if (raw_row != nullptr)
         {
-            row->filter_reason = "kept_physical_pre_dedup";
-            row->kept_after_physical_filter = 1;
+            raw_row->filter_reason = "kept_physical_pre_dedup";
+            raw_row->kept_after_physical_filter = 1;
+        }
+        if (matrix_row != nullptr)
+        {
+            matrix_row->filter_reason = "kept_physical_pre_dedup";
+            matrix_row->kept_after_physical_filter = 1;
         }
         double ratio_ez = 0.0;
-        if (row != nullptr)
+        if (raw_row != nullptr)
         {
-            ratio_ez = row->ez_ratio;
+            ratio_ez = raw_row->ez_ratio;
+        }
+        else if (matrix_row != nullptr)
+        {
+            ratio_ez = matrix_row->ez_ratio;
         }
         else
         {
@@ -402,7 +679,7 @@ BetaPointSolve solve_beta_point(
             const double den = et + ez;
             ratio_ez = (den > 0.0) ? (ez / den) : 0.0;
         }
-        raw.push_back({i, row_index, ratio, ratio_ez});
+        raw.push_back({i, raw_row_index >= 0 ? raw_row_index : matrix_row_index, ratio, ratio_ez});
     }
     std::sort(raw.begin(), raw.end(), [](const RawRatioCandidate &a, const RawRatioCandidate &b)
               { return a.beta_ratio < b.beta_ratio; });
@@ -414,25 +691,47 @@ BetaPointSolve solve_beta_point(
         {
             if (cand.raw_row_index >= 0)
                 result.raw_spectrum[(size_t)cand.raw_row_index].filter_reason = "discard_dedup_nonrepresentative";
+            if (cand.raw_row_index >= 0 && cand.raw_row_index < (int)result.matrix_audit.size())
+                result.matrix_audit[(size_t)cand.raw_row_index].filter_reason = "discard_dedup_nonrepresentative";
             if (cand.ez_ratio > result.candidates.back().ez_ratio)
             {
                 const int prev_row_index = result.candidates.back().raw_row_index;
                 if (prev_row_index >= 0)
                 {
-                    auto &prev = result.raw_spectrum[(size_t)prev_row_index];
-                    prev.kept_after_dedup = 0;
-                    prev.candidate_rank_after_dedup = 0;
-                    prev.filter_reason = "discard_dedup_replaced_by_higher_ez";
+                    if (prev_row_index < (int)result.raw_spectrum.size())
+                    {
+                        auto &prev = result.raw_spectrum[(size_t)prev_row_index];
+                        prev.kept_after_dedup = 0;
+                        prev.candidate_rank_after_dedup = 0;
+                        prev.filter_reason = "discard_dedup_replaced_by_higher_ez";
+                    }
+                    if (prev_row_index < (int)result.matrix_audit.size())
+                    {
+                        auto &prev = result.matrix_audit[(size_t)prev_row_index];
+                        prev.kept_after_dedup = 0;
+                        prev.candidate_rank_after_dedup = 0;
+                        prev.filter_reason = "discard_dedup_replaced_by_higher_ez";
+                    }
                 }
                 result.candidates.back().eig_index = cand.eig_index;
                 result.candidates.back().raw_row_index = cand.raw_row_index;
                 result.candidates.back().ez_ratio = cand.ez_ratio;
                 if (cand.raw_row_index >= 0)
                 {
-                    auto &kept = result.raw_spectrum[(size_t)cand.raw_row_index];
-                    kept.kept_after_dedup = 1;
-                    kept.candidate_rank_after_dedup = result.candidates.back().candidate_rank;
-                    kept.filter_reason = "kept_physical_dedup_representative";
+                    if (cand.raw_row_index < (int)result.raw_spectrum.size())
+                    {
+                        auto &kept = result.raw_spectrum[(size_t)cand.raw_row_index];
+                        kept.kept_after_dedup = 1;
+                        kept.candidate_rank_after_dedup = result.candidates.back().candidate_rank;
+                        kept.filter_reason = "kept_physical_dedup_representative";
+                    }
+                    if (cand.raw_row_index < (int)result.matrix_audit.size())
+                    {
+                        auto &kept = result.matrix_audit[(size_t)cand.raw_row_index];
+                        kept.kept_after_dedup = 1;
+                        kept.candidate_rank_after_dedup = result.candidates.back().candidate_rank;
+                        kept.filter_reason = "kept_physical_dedup_representative";
+                    }
                 }
             }
             continue;
@@ -447,10 +746,20 @@ BetaPointSolve solve_beta_point(
         result.candidates.push_back(rep);
         if (cand.raw_row_index >= 0)
         {
-            auto &kept = result.raw_spectrum[(size_t)cand.raw_row_index];
-            kept.kept_after_dedup = 1;
-            kept.candidate_rank_after_dedup = rep.candidate_rank;
-            kept.filter_reason = "kept_physical_unique";
+            if (cand.raw_row_index < (int)result.raw_spectrum.size())
+            {
+                auto &kept = result.raw_spectrum[(size_t)cand.raw_row_index];
+                kept.kept_after_dedup = 1;
+                kept.candidate_rank_after_dedup = rep.candidate_rank;
+                kept.filter_reason = "kept_physical_unique";
+            }
+            if (cand.raw_row_index < (int)result.matrix_audit.size())
+            {
+                auto &kept = result.matrix_audit[(size_t)cand.raw_row_index];
+                kept.kept_after_dedup = 1;
+                kept.candidate_rank_after_dedup = rep.candidate_rank;
+                kept.filter_reason = "kept_physical_unique";
+            }
         }
     }
 
@@ -481,6 +790,7 @@ std::vector<SelectedRatioPoint> match_ratio_to_reference(
     const std::string &prefix_base = "",
     const helmvec3_output::CaseDirs *out_dirs = nullptr,
     bool export_raw_spectrum_diag = false,
+    bool export_matrix_audit_diag = false,
     double raw_spectrum_d_over_a = std::numeric_limits<double>::quiet_NaN())
 {
     std::vector<SelectedRatioPoint> out;
@@ -499,7 +809,7 @@ std::vector<SelectedRatioPoint> match_ratio_to_reference(
         const std::string point_prefix =
             prefix_base.empty() ? std::string() : (prefix_base + "_br" + label_number(s));
         const bool should_export_diag =
-            export_raw_spectrum_diag &&
+            (export_raw_spectrum_diag || export_matrix_audit_diag) &&
             out_dirs != nullptr &&
             !point_prefix.empty() &&
             std::isfinite(raw_spectrum_d_over_a) &&
@@ -513,7 +823,8 @@ std::vector<SelectedRatioPoint> match_ratio_to_reference(
             perf,
             linop_dir,
             prefix_base.empty() ? nullptr : &point_prefix,
-            should_export_diag);
+            should_export_diag,
+            should_export_diag && export_matrix_audit_diag);
         const std::string priority_point =
             should_export_diag ? figure13_priority_point_key(raw_spectrum_d_over_a, s) : std::string();
         if (solve.candidates.empty())
@@ -531,6 +842,20 @@ std::vector<SelectedRatioPoint> match_ratio_to_reference(
                 const auto raw_csv_path = out_dirs->csv / (point_prefix + "_raw_spectrum.csv");
                 if (!helmvec3_output::write_raw_spectrum_csv(raw_csv_path, rows))
                     throw std::runtime_error("Falha ao escrever CSV de espectro bruto em " + raw_csv_path.string());
+                if (export_matrix_audit_diag)
+                {
+                    std::vector<helmvec3_output::MatrixAuditCsvRecord> matrix_rows = solve.matrix_audit;
+                    for (auto &row : matrix_rows)
+                    {
+                        row.priority_point = priority_point;
+                        row.d_over_a = raw_spectrum_d_over_a;
+                        row.br_over_lambda0 = s;
+                        row.match_target_beta_over_k0 = ref_ratio[i];
+                    }
+                    const auto matrix_csv_path = out_dirs->csv / (point_prefix + "_matrix_audit.csv");
+                    if (!helmvec3_output::write_matrix_audit_csv(matrix_csv_path, matrix_rows))
+                        throw std::runtime_error("Falha ao escrever CSV de auditoria matricial em " + matrix_csv_path.string());
+                }
             }
             out.push_back(SelectedRatioPoint{});
             continue;
@@ -568,6 +893,21 @@ std::vector<SelectedRatioPoint> match_ratio_to_reference(
             const auto raw_csv_path = out_dirs->csv / (point_prefix + "_raw_spectrum.csv");
             if (!helmvec3_output::write_raw_spectrum_csv(raw_csv_path, rows))
                 throw std::runtime_error("Falha ao escrever CSV de espectro bruto em " + raw_csv_path.string());
+            if (export_matrix_audit_diag)
+            {
+                mark_selected_matrix_audit(solve.matrix_audit, selected.selected_eig_index);
+                std::vector<helmvec3_output::MatrixAuditCsvRecord> matrix_rows = solve.matrix_audit;
+                for (auto &row : matrix_rows)
+                {
+                    row.priority_point = priority_point;
+                    row.d_over_a = raw_spectrum_d_over_a;
+                    row.br_over_lambda0 = s;
+                    row.match_target_beta_over_k0 = ref_ratio[i];
+                }
+                const auto matrix_csv_path = out_dirs->csv / (point_prefix + "_matrix_audit.csv");
+                if (!helmvec3_output::write_matrix_audit_csv(matrix_csv_path, matrix_rows))
+                    throw std::runtime_error("Falha ao escrever CSV de auditoria matricial em " + matrix_csv_path.string());
+            }
         }
         if (out_dirs != nullptr && !point_prefix.empty())
         {
@@ -1053,6 +1393,7 @@ int run_helmvec3_fig13_rect(int argc, char **argv)
 
     const auto out_dirs = helmvec3_output::ensure_case_dirs("fig13_rect");
     const bool export_raw_spectrum_diag = env_flag_enabled("TP3485_HELMVEC3_DIAG_RAW_SPECTRUM");
+    const bool export_matrix_audit_diag = env_flag_enabled("TP3485_HELMVEC3_DIAG_MATRIX_AUDIT");
     execution_log::ExecutionLogScope log_scope((out_dirs.root / "run.log").string());
     if (!log_scope.active())
     {
@@ -1149,6 +1490,7 @@ int run_helmvec3_fig13_rect(int argc, char **argv)
             std::string("helmvec3_fig13_rect_table10_da") + label_number(blk.d_over_a),
             &out_dirs,
             export_raw_spectrum_diag,
+            export_matrix_audit_diag,
             blk.d_over_a);
 
         for (int i = 0; i < (int)br_over_lambda_10.size(); ++i)
