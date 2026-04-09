@@ -530,6 +530,16 @@ if [[ "$SKIP_VALIDATE" -eq 0 ]]; then
     log "Skipping 2.2.2 Table 7 CSV-based validation (no mixed 2D case selected)."
   fi
 
+  if [[ "$RUN_224" -eq 1 ]]; then
+    log "Running 2.2.4 Figure 13 / Table 10 CSV-based validation..."
+    run python3 "$ROOT_DIR/scripts/validate_2d_224_table10_csv.py" \
+      --out-root "$OUT_DIR" \
+      --backend "$BACKEND" \
+      --out-csv "$OUT_DIR/validation/validation_2d_224_table10.csv"
+  else
+    log "Skipping 2.2.4 Figure 13 / Table 10 CSV-based validation (no HELMVEC3 Figure 13 case selected)."
+  fi
+
   if [[ "$SKIP_3D" -eq 0 ]]; then
     log "Running 3D validation..."
     run python3 "$ROOT_DIR/scripts/validate_3d_31.py" \
@@ -632,6 +642,9 @@ if [[ "$SKIP_VALIDATE" -eq 0 ]]; then
   fi
   if [[ -f "$OUT_DIR/validation/validation_2d_222_table7.csv" ]]; then
     printf '  - %s\n' "$OUT_DIR/validation/validation_2d_222_table7.csv"
+  fi
+  if [[ -f "$OUT_DIR/validation/validation_2d_224_table10.csv" ]]; then
+    printf '  - %s\n' "$OUT_DIR/validation/validation_2d_224_table10.csv"
   fi
   if [[ -f "$OUT_DIR/validation/validation_2d_index.csv" ]]; then
     printf '  - %s\n' "$OUT_DIR/validation/validation_2d_index.csv"

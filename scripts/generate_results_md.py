@@ -362,6 +362,7 @@ def _write_report(
     lines.append(f"- CSV validacao 2D (2.2.1): {_md_link(out_dir / 'validation' / 'validation_2d_221.csv')}")
     lines.append(f"- CSV validacao 2D (2.2.2 Tabela 6): {_md_link(out_dir / 'validation' / 'validation_2d_222_table6.csv')}")
     lines.append(f"- CSV validacao 2D (2.2.2 Tabela 7): {_md_link(out_dir / 'validation' / 'validation_2d_222_table7.csv')}")
+    lines.append(f"- CSV validacao 2D (2.2.4 Tabela 10): {_md_link(out_dir / 'validation' / 'validation_2d_224_table10.csv')}")
     lines.append(f"- CSV validacao 2D (2.2.x): {_md_link(out_dir / 'validation' / 'validation_2d_22.csv')}")
     lines.append(f"- CSV indice consolidado 2D: {_md_link(out_dir / 'validation' / 'validation_2d_index.csv')}")
     lines.append(f"- Markdown indice consolidado 2D: {_md_link(out_dir / 'validation' / 'VALIDATION_2D_INDEX.md')}")
