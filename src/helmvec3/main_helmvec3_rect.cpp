@@ -178,8 +178,13 @@ std::string figure13_priority_point_key(double d_over_a, double br_over_lambda0)
     return "";
 }
 
-bool should_export_raw_spectrum_diag(double d_over_a, double br_over_lambda0)
+bool should_export_raw_spectrum_diag(
+    double d_over_a,
+    double br_over_lambda0,
+    bool export_all_table10_points)
 {
+    if (export_all_table10_points)
+        return std::isfinite(d_over_a) && std::isfinite(br_over_lambda0);
     return !figure13_priority_point_key(d_over_a, br_over_lambda0).empty();
 }
 
@@ -834,7 +839,8 @@ std::vector<SelectedRatioPoint> match_ratio_to_reference(
     const helmvec3_output::CaseDirs *out_dirs = nullptr,
     bool export_raw_spectrum_diag = false,
     bool export_matrix_audit_diag = false,
-    double raw_spectrum_d_over_a = std::numeric_limits<double>::quiet_NaN())
+    double raw_spectrum_d_over_a = std::numeric_limits<double>::quiet_NaN(),
+    bool export_all_table10_points = false)
 {
     std::vector<SelectedRatioPoint> out;
     out.reserve(br_over_lambda.size());
@@ -856,7 +862,7 @@ std::vector<SelectedRatioPoint> match_ratio_to_reference(
             out_dirs != nullptr &&
             !point_prefix.empty() &&
             std::isfinite(raw_spectrum_d_over_a) &&
-            should_export_raw_spectrum_diag(raw_spectrum_d_over_a, s);
+            should_export_raw_spectrum_diag(raw_spectrum_d_over_a, s, export_all_table10_points);
         auto solve = solve_beta_point(
             mesh,
             eps,
@@ -1441,6 +1447,8 @@ int run_helmvec3_fig13_rect(int argc, char **argv)
     const auto out_dirs = helmvec3_output::ensure_case_dirs("fig13_rect");
     const bool export_raw_spectrum_diag = env_flag_enabled("TP3485_HELMVEC3_DIAG_RAW_SPECTRUM");
     const bool export_matrix_audit_diag = env_flag_enabled("TP3485_HELMVEC3_DIAG_MATRIX_AUDIT");
+    const bool export_all_table10_raw_spectrum_diag =
+        env_flag_enabled("TP3485_HELMVEC3_DIAG_RAW_SPECTRUM_TABLE10_ALL");
     const CoupledBetaDiagVariant diag_variant = env_beta_diag_variant();
     execution_log::ExecutionLogScope log_scope((out_dirs.root / "run.log").string());
     if (!log_scope.active())
@@ -1541,7 +1549,8 @@ int run_helmvec3_fig13_rect(int argc, char **argv)
             &out_dirs,
             export_raw_spectrum_diag,
             export_matrix_audit_diag,
-            blk.d_over_a);
+            blk.d_over_a,
+            export_all_table10_raw_spectrum_diag);
 
         for (int i = 0; i < (int)br_over_lambda_10.size(); ++i)
         {
