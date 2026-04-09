@@ -518,14 +518,23 @@ Modo arquivo unico:
 ```bash
 python3 scripts/plot_vtk_quiver.py out/helm10/rect/vtk/te10_rect_sv.vtk --out out/img/te10_rect.png --stride 2 --scale 22 --dpi 210
 python3 scripts/plot_vtk_quiver.py out/helm10/rect/vtk/tm11_rect_sv.vtk --out out/img/tm11_rect.png --stride 2 --scale 22 --dpi 210
-python3 scripts/plot_vtk_quiver.py out/2d/2.2.1_edge/rect/edge_rect_Et.vtk --out out/img/edge_rect_Et.png --stride 2 --scale 25 --dpi 210
+python3 scripts/plot_vtk_quiver.py out/helmvec/rect/vtk/edge_rect_Et.vtk --out out/img/edge_rect_Et.png --stride 2 --scale 25 --dpi 210
 ```
 
-Modo lote (gera imagens e CSV resumo):
+Modo lote para campos 2D-base (Sec. 2.1 e 2.2.1; gera imagens e CSV resumo):
 
 ```bash
 python3 scripts/plot_vtk_quiver.py --all-img --build-dir build --vtk-root out --out-dir out/img_all --csv out/img_all/mode_summary.csv --mode-export 8 --max-rank 8
 ```
+
+O modo lote descobre VTKs no layout atual por familia:
+
+- `out/helm10/*/vtk` para `2.1_scalar`
+- `out/helmvec/*/vtk` para `2.2.1_edge`
+
+Compatibilidade barata:
+
+- se uma arvore legada `out/2d/` existir, ela continua aceita como entrada.
 
 Imagens de validacao para os casos 2.2.2, 2.2.3 e 2.2.4:
 
@@ -537,10 +546,13 @@ Observacao:
 
 - `--all_img` continua aceito como alias de compatibilidade.
 
-Saidas do lote:
+Saidas de `plot_vtk_quiver.py --all-img`:
 
-- imagens em `out/img_all/` preservando a arvore de `out/2d/`
+- imagens em `out/img_all/2.1_scalar/` e `out/img_all/2.2.1_edge/`
 - `out/img_all/mode_summary.csv`
+
+Saidas complementares de `plot_validation_2d_22.py`:
+
 - `out/img_all/validation_2d_22/` (graficos de 2.2.2/2.2.3/2.2.4)
 
 ## 8) Fluxo recomendado de reproducao
@@ -550,7 +562,7 @@ Saidas do lote:
 3. Rodar acoplados (`helmvec2_rect`, `helmvec3_fig12_rect`, `helmvec3_fig13_rect`).
 4. Rodar validacao 2D (`validate_2d_22.py`).
 5. Rodar validacao 3D (`validate_3d_31.py`).
-6. Gerar figuras (`plot_vtk_quiver.py --all-img ...`).
+6. Gerar figuras de campos 2D-base (`plot_vtk_quiver.py --all-img ...`) e, separadamente, as figuras de validacao (`plot_validation_2d_22.py`).
 
 ## 9) Script unico e comparacao entre backends
 
@@ -651,10 +663,16 @@ python3 scripts/validate_2d_22.py --build-dir build --out-csv out/validation/val
 python3 scripts/validate_3d_31.py --profile quick --solver both --build-dir build --out-modes out/validation/validation_3d_31_modes.csv --out-summary out/validation/validation_3d_31_summary.csv
 ```
 
-10. Geracao de imagens e CSV de modos:
+10. Geracao de imagens de campos 2D-base e CSV de modos:
 
 ```bash
 python3 scripts/plot_vtk_quiver.py --all-img --build-dir build --vtk-root out --out-dir out/img_all --csv out/img_all/mode_summary.csv --mode-export 8 --max-rank 8
+```
+
+11. Graficos de validacao 2.2.2 / 2.2.3 / 2.2.4:
+
+```bash
+python3 scripts/plot_validation_2d_22.py --in-csv out/validation/validation_2d_22.csv --out-dir out/img_all/validation_2d_22
 ```
 
 ## 12) Script unico (compila e roda tudo)
@@ -669,7 +687,8 @@ Ele executa:
 - todos os executaveis 2D,
 - todos os executaveis 3D (`fem3d0` e `fem3d1`),
 - validacoes 2D e 3D,
-- geracao de imagens e `mode_summary.csv`,
+- geracao das imagens de campos 2D-base (`2.1` e `2.2.1`) e de `mode_summary.csv`,
+- geracao dos graficos de validacao `2.2.2` / `2.2.3` / `2.2.4` quando `out/validation/validation_2d_22.csv` estiver disponivel,
 - log automatico em arquivo (`out/run_all.log` por padrao).
 
 Uso padrao:

@@ -300,7 +300,10 @@ Observacao:
 ## 7) Integracao com scripts
 
 `scripts/validate_2d_22.py` le este executavel e salva em:
-- `build/validation_2d_22.csv`
+- `out/validation/validation_2d_22.csv`
+
+As figuras consolidadas desta secao sao geradas depois por:
+- `python3 scripts/plot_validation_2d_22.py --in-csv out/validation/validation_2d_22.csv --out-dir out/img_all/validation_2d_22`
 
 Para inspecao detalhada durante a validacao:
 

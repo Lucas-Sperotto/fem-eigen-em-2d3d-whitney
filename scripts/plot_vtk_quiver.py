@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """
-Plot 2D vector fields from legacy ASCII VTK files generated in this repo.
+Plot 2D field images from ASCII VTK files generated in this repo.
 
 Main modes:
 1) Single file plot:
    python3 scripts/plot_vtk_quiver.py out/helm10/circle/vtk/te_circle_sv.vtk --out out/img/te_circle.png
 
-2) Batch generation:
+2) Batch generation for Sec. 2.1 scalar and Sec. 2.2.1 edge images:
    python3 scripts/plot_vtk_quiver.py --all-img --build-dir build --vtk-root out --out-dir out/img_all
 """
 
@@ -549,19 +549,32 @@ def _plot_all_images(
 
 
 def parse_args() -> argparse.Namespace:
-    p = argparse.ArgumentParser(description="Plot quiver from legacy ASCII VTK.")
+    p = argparse.ArgumentParser(
+        description="Plot 2D quiver/scalar images from ASCII VTK. In --all-img mode, regenerate Sec. 2.1 scalar and Sec. 2.2.1 edge images plus mode_summary.csv."
+    )
     p.add_argument("vtk", nargs="?", type=Path, default=None, help="Input .vtk file (single-file mode).")
     p.add_argument("--out", type=Path, default=None, help="Output image path for single-file mode.")
     p.add_argument("--stride", type=int, default=2, help="Arrow subsampling step.")
     p.add_argument("--scale", type=float, default=22.0, help="Quiver scale (smaller => longer arrows).")
     p.add_argument("--no-mesh", action="store_true", help="Hide triangular mesh lines.")
     p.add_argument("--title", type=str, default=None, help="Custom title (single-file mode).")
-    p.add_argument("--all-img", "--all_img", dest="all_img", action="store_true", help="Run all solvers, generate all images and CSV.")
-    p.add_argument("--build-dir", type=Path, default=Path("build"), help="Build/output directory.")
-    p.add_argument("--vtk-root", type=Path, default=Path("out"), help="Root folder containing VTK files for batch plotting.")
-    p.add_argument("--out-dir", type=Path, default=Path("out/img_all"), help="Folder for batch images.")
-    p.add_argument("--csv", type=Path, default=Path("out/img_all/mode_summary.csv"), help="CSV output path in batch mode.")
-    p.add_argument("--mode-export", type=int, default=8, help="Mode export count forwarded to 2D executables in --all-img mode.")
+    p.add_argument(
+        "--all-img",
+        "--all_img",
+        dest="all_img",
+        action="store_true",
+        help="Regenerate Sec. 2.1 scalar and Sec. 2.2.1 edge images plus mode_summary.csv.",
+    )
+    p.add_argument("--build-dir", type=Path, default=Path("build"), help="Build directory used to rerun helm10_* and edge_* in --all-img mode.")
+    p.add_argument(
+        "--vtk-root",
+        type=Path,
+        default=Path("out"),
+        help="Batch VTK root. Prefers out/helm10/*/vtk and out/helmvec/*/vtk; also accepts legacy out/2d when present.",
+    )
+    p.add_argument("--out-dir", type=Path, default=Path("out/img_all"), help="Folder for batch images under 2.1_scalar/ and 2.2.1_edge/.")
+    p.add_argument("--csv", type=Path, default=Path("out/img_all/mode_summary.csv"), help="CSV output path for mode_summary.csv in batch mode.")
+    p.add_argument("--mode-export", type=int, default=8, help="Mode export count forwarded to helm10_* and edge_* in --all-img mode.")
     p.add_argument("--max-rank", type=int, default=8, help="Maximum rank to render from filenames with _rankXX_ (<=0 means all).")
     p.add_argument("--dpi", type=int, default=210, help="Output image DPI.")
     return p.parse_args()
@@ -593,7 +606,7 @@ def main() -> None:
         return
 
     if args.vtk is None:
-        raise SystemExit("Provide a .vtk file or use --all-img (alias: --all_img).")
+        raise SystemExit("Provide a .vtk file or use --all-img/--all_img for batch rendering of Sec. 2.1 and Sec. 2.2.1 images.")
 
     plot_quiver(
         vtk_path=_resolve(args.vtk),
