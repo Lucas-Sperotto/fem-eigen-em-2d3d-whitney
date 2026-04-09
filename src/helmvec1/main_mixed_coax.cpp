@@ -207,6 +207,13 @@ int main(int argc, char **argv)
     const double r2 = 4.0;
     int nr = 10, nt = 48;
     helmvec1::MixedCliOptions cli;
+    const auto print_usage = []()
+    {
+        std::cerr << "Uso: ./mixed_coax [nr nt] [--backend closed-form|gauss]"
+                  << " [--debug-local-blocks] [--debug-candidates]\n";
+        std::cerr << "Aliases nomeados: [--nr NR] [--nt NT]"
+                  << " (nao misture com os posicionais principais)\n";
+    };
     try
     {
         cli = helmvec1::parse_mixed_cli_options(argc, argv);
@@ -214,12 +221,36 @@ int main(int argc, char **argv)
     catch (const std::exception &e)
     {
         std::cerr << "Erro ao interpretar argumentos: " << e.what() << "\n";
-        std::cerr << "Uso: ./mixed_coax [nr nt] [--backend closed-form|gauss]"
-                  << " [--debug-local-blocks] [--debug-candidates]\n";
+        print_usage();
         return 2;
     }
 
-    if (cli.positionals.size() >= 2)
+    const bool has_named_polar_args =
+        cli.nr_was_provided ||
+        cli.nt_was_provided;
+
+    if (cli.nx_was_provided || cli.ny_was_provided)
+    {
+        std::cerr << "Erro: mixed_coax nao aceita --nx/--ny; use --nr/--nt.\n";
+        print_usage();
+        return 2;
+    }
+
+    if (has_named_polar_args && !cli.positionals.empty())
+    {
+        std::cerr << "Erro: nao misture aliases nomeados principais com os argumentos posicionais de mixed_coax.\n";
+        print_usage();
+        return 2;
+    }
+
+    if (has_named_polar_args)
+    {
+        if (cli.nr_was_provided)
+            nr = cli.nr;
+        if (cli.nt_was_provided)
+            nt = cli.nt;
+    }
+    else if (cli.positionals.size() >= 2)
     {
         nr = std::atoi(cli.positionals[0].c_str());
         nt = std::atoi(cli.positionals[1].c_str());

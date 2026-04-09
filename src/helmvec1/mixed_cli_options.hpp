@@ -26,8 +26,28 @@ struct MixedCliOptions
     ElementAssemblyBackend backend = ElementAssemblyBackend::ClosedForm;
     bool debug_local_blocks = false;
     bool debug_candidates = false;
+    bool nx_was_provided = false;
+    int nx = 0;
+    bool ny_was_provided = false;
+    int ny = 0;
+    bool nr_was_provided = false;
+    int nr = 0;
+    bool nt_was_provided = false;
+    int nt = 0;
     std::vector<std::string> positionals;
 };
+
+inline int parse_positive_mixed_cli_int(
+    const std::string &text,
+    const std::string &name)
+{
+    const int value = std::stoi(text);
+    if (value <= 0)
+    {
+        throw std::runtime_error(name + " deve ser > 0");
+    }
+    return value;
+}
 
 /******************************************************************************/
 /* FUNCAO: parse_mixed_cli_options                                            */
@@ -72,6 +92,74 @@ inline MixedCliOptions parse_mixed_cli_options(int argc, char **argv)
         if (arg == "--debug-candidates")
         {
             opts.debug_candidates = true;
+            continue;
+        }
+
+        if (arg == "--nx")
+        {
+            if (i + 1 >= argc)
+                throw std::runtime_error("faltou valor apos --nx");
+            opts.nx_was_provided = true;
+            opts.nx = parse_positive_mixed_cli_int(argv[++i], "nx");
+            continue;
+        }
+        if (arg.rfind("--nx=", 0) == 0)
+        {
+            opts.nx_was_provided = true;
+            opts.nx = parse_positive_mixed_cli_int(
+                arg.substr(std::string("--nx=").size()),
+                "nx");
+            continue;
+        }
+
+        if (arg == "--ny")
+        {
+            if (i + 1 >= argc)
+                throw std::runtime_error("faltou valor apos --ny");
+            opts.ny_was_provided = true;
+            opts.ny = parse_positive_mixed_cli_int(argv[++i], "ny");
+            continue;
+        }
+        if (arg.rfind("--ny=", 0) == 0)
+        {
+            opts.ny_was_provided = true;
+            opts.ny = parse_positive_mixed_cli_int(
+                arg.substr(std::string("--ny=").size()),
+                "ny");
+            continue;
+        }
+
+        if (arg == "--nr")
+        {
+            if (i + 1 >= argc)
+                throw std::runtime_error("faltou valor apos --nr");
+            opts.nr_was_provided = true;
+            opts.nr = parse_positive_mixed_cli_int(argv[++i], "nr");
+            continue;
+        }
+        if (arg.rfind("--nr=", 0) == 0)
+        {
+            opts.nr_was_provided = true;
+            opts.nr = parse_positive_mixed_cli_int(
+                arg.substr(std::string("--nr=").size()),
+                "nr");
+            continue;
+        }
+
+        if (arg == "--nt")
+        {
+            if (i + 1 >= argc)
+                throw std::runtime_error("faltou valor apos --nt");
+            opts.nt_was_provided = true;
+            opts.nt = parse_positive_mixed_cli_int(argv[++i], "nt");
+            continue;
+        }
+        if (arg.rfind("--nt=", 0) == 0)
+        {
+            opts.nt_was_provided = true;
+            opts.nt = parse_positive_mixed_cli_int(
+                arg.substr(std::string("--nt=").size()),
+                "nt");
             continue;
         }
 

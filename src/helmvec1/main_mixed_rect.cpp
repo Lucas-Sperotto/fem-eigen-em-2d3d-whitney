@@ -210,6 +210,13 @@ int main(int argc, char **argv)
     // usamos uma discretizacao uniforme moderadamente refinada e expomos (nx, ny).
     int nx = 14, ny = 14;
     helmvec1::MixedCliOptions cli;
+    const auto print_usage = []()
+    {
+        std::cerr << "Uso: ./mixed_rect [nx ny] [--backend closed-form|gauss]"
+                  << " [--debug-local-blocks] [--debug-candidates]\n";
+        std::cerr << "Aliases nomeados: [--nx NX] [--ny NY]"
+                  << " (nao misture com os posicionais principais)\n";
+    };
     try
     {
         cli = helmvec1::parse_mixed_cli_options(argc, argv);
@@ -217,12 +224,36 @@ int main(int argc, char **argv)
     catch (const std::exception &e)
     {
         std::cerr << "Erro ao interpretar argumentos: " << e.what() << "\n";
-        std::cerr << "Uso: ./mixed_rect [nx ny] [--backend closed-form|gauss]"
-                  << " [--debug-local-blocks] [--debug-candidates]\n";
+        print_usage();
         return 2;
     }
 
-    if (cli.positionals.size() >= 2)
+    const bool has_named_rect_args =
+        cli.nx_was_provided ||
+        cli.ny_was_provided;
+
+    if (cli.nr_was_provided || cli.nt_was_provided)
+    {
+        std::cerr << "Erro: mixed_rect nao aceita --nr/--nt; use --nx/--ny.\n";
+        print_usage();
+        return 2;
+    }
+
+    if (has_named_rect_args && !cli.positionals.empty())
+    {
+        std::cerr << "Erro: nao misture aliases nomeados principais com os argumentos posicionais de mixed_rect.\n";
+        print_usage();
+        return 2;
+    }
+
+    if (has_named_rect_args)
+    {
+        if (cli.nx_was_provided)
+            nx = cli.nx;
+        if (cli.ny_was_provided)
+            ny = cli.ny;
+    }
+    else if (cli.positionals.size() >= 2)
     {
         nx = std::atoi(cli.positionals[0].c_str());
         ny = std::atoi(cli.positionals[1].c_str());

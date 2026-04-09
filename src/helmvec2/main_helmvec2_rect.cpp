@@ -230,6 +230,14 @@ int main(int argc, char **argv)
     int nx = 6, ny = 6; // 72 triangles
     double beta = 10.0; // beta*L = 10
     helmvec2::CoupledCliOptions cli;
+    const auto print_usage = []()
+    {
+        std::cerr << "Uso: ./helmvec2_rect [beta [nx ny [debug]]]"
+                  << " [--backend closed-form|gauss]"
+                  << " [--debug-local-blocks] [--debug-candidates]\n";
+        std::cerr << "Aliases nomeados: [--beta BETA] [--nx NX] [--ny NY]"
+                  << " (nao misture com os posicionais principais)\n";
+    };
     try
     {
         cli = helmvec2::parse_coupled_cli_options(argc, argv);
@@ -237,26 +245,55 @@ int main(int argc, char **argv)
     catch (const std::exception &e)
     {
         std::cerr << "Erro ao interpretar argumentos: " << e.what() << "\n";
-        std::cerr << "Uso: ./helmvec2_rect [beta [nx ny [debug]]]"
-                  << " [--backend closed-form|gauss]"
-                  << " [--debug-local-blocks] [--debug-candidates]\n";
+        print_usage();
         return 2;
     }
 
-    if (!cli.positionals.empty())
-        beta = std::atof(cli.positionals[0].c_str());
-    if (cli.positionals.size() >= 3)
+    const bool has_named_primary_args =
+        cli.beta_was_provided ||
+        cli.nx_was_provided ||
+        cli.ny_was_provided;
+
+    if (cli.d_over_a_preview_was_provided)
     {
-        nx = std::atoi(cli.positionals[1].c_str());
-        ny = std::atoi(cli.positionals[2].c_str());
+        std::cerr << "Erro: helmvec2_rect nao aceita --d-over-a-preview; use --beta.\n";
+        print_usage();
+        return 2;
     }
-    if (cli.positionals.size() >= 4)
+
+    if (has_named_primary_args && !cli.positionals.empty())
     {
-        const bool legacy_debug = (std::atoi(cli.positionals[3].c_str()) != 0);
-        if (legacy_debug)
+        std::cerr << "Erro: nao misture aliases nomeados principais com os argumentos posicionais de helmvec2_rect.\n";
+        print_usage();
+        return 2;
+    }
+
+    if (has_named_primary_args)
+    {
+        if (cli.beta_was_provided)
+            beta = cli.beta;
+        if (cli.nx_was_provided)
+            nx = cli.nx;
+        if (cli.ny_was_provided)
+            ny = cli.ny;
+    }
+    else
+    {
+        if (!cli.positionals.empty())
+            beta = std::atof(cli.positionals[0].c_str());
+        if (cli.positionals.size() >= 3)
         {
-            cli.debug_local_blocks = true;
-            cli.debug_candidates = true;
+            nx = std::atoi(cli.positionals[1].c_str());
+            ny = std::atoi(cli.positionals[2].c_str());
+        }
+        if (cli.positionals.size() >= 4)
+        {
+            const bool legacy_debug = (std::atoi(cli.positionals[3].c_str()) != 0);
+            if (legacy_debug)
+            {
+                cli.debug_local_blocks = true;
+                cli.debug_candidates = true;
+            }
         }
     }
 

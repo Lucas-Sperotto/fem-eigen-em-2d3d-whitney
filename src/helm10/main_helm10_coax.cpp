@@ -187,6 +187,14 @@ int main(int argc, char **argv)
     int nt = 48;
     int export_modes = 20;
     helm10::ScalarCliOptions cli;
+    const auto print_usage = []()
+    {
+        std::cerr << "Uso: ./helm10_coax [nr nt [nmodos]] [--backend closed-form|gauss]"
+                  << " [--freq-hz F] [--eps-r E] [--mu-r M]"
+                  << " [--debug-local-blocks] [--debug-candidates]\n";
+        std::cerr << "Aliases nomeados: [--nr NR] [--nt NT] [--nmodos M]"
+                  << " (nao misture com os posicionais principais)\n";
+    };
     try
     {
         cli = helm10::parse_scalar_cli_options(argc, argv);
@@ -194,37 +202,68 @@ int main(int argc, char **argv)
     catch (const std::exception &e)
     {
         std::cerr << "Erro ao interpretar argumentos: " << e.what() << "\n";
-        std::cerr << "Uso: ./helm10_coax [nr nt [nmodos]] [--backend closed-form|gauss]"
-                  << " [--freq-hz F] [--eps-r E] [--mu-r M]"
-                  << " [--debug-local-blocks] [--debug-candidates]\n";
+        print_usage();
         return 2;
     }
 
-    if (!cli.positionals.empty() && cli.positionals.size() < 2)
+    const bool has_named_polar_args =
+        cli.nr_was_provided ||
+        cli.nt_was_provided ||
+        cli.nmodos_was_provided;
+
+    if (cli.ar_m_was_provided || cli.nx_was_provided || cli.ny_was_provided)
+    {
+        std::cerr << "Erro: helm10_coax nao aceita --ar-m/--nx/--ny; use --nr/--nt.\n";
+        print_usage();
+        return 2;
+    }
+
+    if (has_named_polar_args && !cli.positionals.empty())
+    {
+        std::cerr << "Erro: nao misture aliases nomeados principais com os argumentos posicionais de helm10_coax.\n";
+        print_usage();
+        return 2;
+    }
+
+    if (!has_named_polar_args && !cli.positionals.empty() && cli.positionals.size() < 2)
     {
         std::cerr << "Erro: use ./helm10_coax [nr nt [nmodos]]"
                   << " [--backend closed-form|gauss]"
                   << " [--freq-hz F] [--eps-r E] [--mu-r M]"
                   << " [--debug-local-blocks] [--debug-candidates]\n";
+        print_usage();
         return 2;
     }
 
     try
     {
-        if (cli.positionals.size() >= 2)
+        if (has_named_polar_args)
         {
-            nr = helm10::parse_positive_cli_int(cli.positionals[0], "nr");
-            nt = helm10::parse_positive_cli_int(cli.positionals[1], "nt");
+            if (cli.nr_was_provided)
+                nr = cli.nr;
+            if (cli.nt_was_provided)
+                nt = cli.nt;
+            if (cli.nmodos_was_provided)
+                export_modes = cli.nmodos;
         }
-        if (cli.positionals.size() >= 3)
+        else
         {
-            export_modes = helm10::parse_nonnegative_cli_int(cli.positionals[2], "nmodos");
+            if (cli.positionals.size() >= 2)
+            {
+                nr = helm10::parse_positive_cli_int(cli.positionals[0], "nr");
+                nt = helm10::parse_positive_cli_int(cli.positionals[1], "nt");
+            }
+            if (cli.positionals.size() >= 3)
+            {
+                export_modes = helm10::parse_nonnegative_cli_int(cli.positionals[2], "nmodos");
+            }
         }
     }
     catch (const std::exception &e)
     {
         std::cerr << "Erro ao interpretar argumentos posicionais de helm10_coax: "
                   << e.what() << "\n";
+        print_usage();
         return 2;
     }
 

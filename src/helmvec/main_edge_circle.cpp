@@ -246,6 +246,13 @@ int main(int argc, char **argv)
     int nt = 48;
     int export_modes = 20;
     helmvec::EdgeCliOptions cli;
+    const auto print_usage = []()
+    {
+        std::cerr << "Uso: ./edge_circle [nr nt [nmodos]] [--backend closed-form|gauss]"
+                  << " [--debug-local-blocks] [--debug-candidates]\n";
+        std::cerr << "Aliases nomeados: [--nr NR] [--nt NT] [--nmodos M]"
+                  << " (nao misture com os posicionais principais)\n";
+    };
 
     try
     {
@@ -254,19 +261,49 @@ int main(int argc, char **argv)
     catch (const std::exception &e)
     {
         std::cerr << "Erro ao interpretar argumentos: " << e.what() << "\n";
-        std::cerr << "Uso: ./edge_circle [nr nt [nmodos]] [--backend closed-form|gauss]"
-                  << " [--debug-local-blocks] [--debug-candidates]\n";
+        print_usage();
         return 2;
     }
 
-    if (cli.positionals.size() >= 2)
+    const bool has_named_polar_args =
+        cli.nr_was_provided ||
+        cli.nt_was_provided ||
+        cli.nmodos_was_provided;
+
+    if (cli.nx_was_provided || cli.ny_was_provided)
     {
-        nr = std::atoi(cli.positionals[0].c_str());
-        nt = std::atoi(cli.positionals[1].c_str());
+        std::cerr << "Erro: edge_circle nao aceita --nx/--ny; use --nr/--nt.\n";
+        print_usage();
+        return 2;
     }
-    if (cli.positionals.size() >= 3)
+
+    if (has_named_polar_args && !cli.positionals.empty())
     {
-        export_modes = std::max(0, std::atoi(cli.positionals[2].c_str()));
+        std::cerr << "Erro: nao misture aliases nomeados principais com os argumentos posicionais de edge_circle.\n";
+        print_usage();
+        return 2;
+    }
+
+    if (has_named_polar_args)
+    {
+        if (cli.nr_was_provided)
+            nr = cli.nr;
+        if (cli.nt_was_provided)
+            nt = cli.nt;
+        if (cli.nmodos_was_provided)
+            export_modes = cli.nmodos;
+    }
+    else
+    {
+        if (cli.positionals.size() >= 2)
+        {
+            nr = std::atoi(cli.positionals[0].c_str());
+            nt = std::atoi(cli.positionals[1].c_str());
+        }
+        if (cli.positionals.size() >= 3)
+        {
+            export_modes = std::max(0, std::atoi(cli.positionals[2].c_str()));
+        }
     }
 
     const auto dirs = helmvec_output::ensure_case_dirs("circle");

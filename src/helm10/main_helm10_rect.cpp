@@ -370,6 +370,19 @@ int main(int argc, char **argv)
     timing::Breakdown perf;
     timing::Stopwatch total_watch;
     helm10::ScalarCliOptions cli;
+    const auto print_usage = []()
+    {
+        std::cerr << "Uso preferencial: ./helm10_rect [ar_m [nx [ny [nmodos]]]]"
+                  << " [--backend closed-form|gauss]"
+                  << " [--freq-hz F] [--eps-r E] [--mu-r M]"
+                  << " [--debug-local-blocks] [--debug-candidates]\n";
+        std::cerr << "Uso legado ainda aceito: ./helm10_rect [nx ny [nmodos]]"
+                  << " [--backend closed-form|gauss]"
+                  << " [--freq-hz F] [--eps-r E] [--mu-r M]"
+                  << " [--debug-local-blocks] [--debug-candidates]\n";
+        std::cerr << "Aliases nomeados: [--ar-m AR] [--nx NX] [--ny NY] [--nmodos M]"
+                  << " (nao misture com os posicionais principais)\n";
+    };
     try
     {
         cli = helm10::parse_scalar_cli_options(argc, argv);
@@ -377,34 +390,54 @@ int main(int argc, char **argv)
     catch (const std::exception &e)
     {
         std::cerr << "Erro ao interpretar argumentos: " << e.what() << "\n";
-        std::cerr << "Uso preferencial: ./helm10_rect [ar_m [nx [ny [nmodos]]]]"
-                  << " [--backend closed-form|gauss]"
-                  << " [--freq-hz F] [--eps-r E] [--mu-r M]"
-                  << " [--debug-local-blocks] [--debug-candidates]\n";
-        std::cerr << "Uso legado ainda aceito: ./helm10_rect [nx ny [nmodos]]"
-                  << " [--backend closed-form|gauss]"
-                  << " [--freq-hz F] [--eps-r E] [--mu-r M]"
-                  << " [--debug-local-blocks] [--debug-candidates]\n";
+        print_usage();
         return 2;
     }
 
     RectRunConfig run;
+    const bool has_named_rect_args =
+        cli.ar_m_was_provided ||
+        cli.nx_was_provided ||
+        cli.ny_was_provided ||
+        cli.nmodos_was_provided;
+
+    if (cli.nr_was_provided || cli.nt_was_provided)
+    {
+        std::cerr << "Erro: helm10_rect nao aceita --nr/--nt; use --ar-m/--nx/--ny.\n";
+        print_usage();
+        return 2;
+    }
+
+    if (has_named_rect_args && !cli.positionals.empty())
+    {
+        std::cerr << "Erro: nao misture aliases nomeados principais com os argumentos posicionais de helm10_rect.\n";
+        print_usage();
+        return 2;
+    }
+
     try
     {
-        run = parse_rect_run_config(cli);
+        if (has_named_rect_args)
+        {
+            if (cli.ar_m_was_provided)
+                run.ar_m = cli.ar_m;
+            if (cli.nx_was_provided)
+                run.nx = cli.nx;
+            if (cli.ny_was_provided)
+                run.ny = cli.ny;
+            if (cli.nmodos_was_provided)
+                run.mode_limit = cli.nmodos;
+        }
+        else
+        {
+            run = parse_rect_run_config(cli);
+        }
     }
     catch (const std::exception &e)
     {
         std::cerr << "Erro ao interpretar argumentos posicionais de helm10_rect: "
                   << e.what() << "\n";
-        std::cerr << "Uso preferencial: ./helm10_rect [ar_m [nx [ny [nmodos]]]]"
-                  << " [--backend closed-form|gauss]"
-                  << " [--freq-hz F] [--eps-r E] [--mu-r M]"
-                  << " [--debug-local-blocks] [--debug-candidates]\n";
-        std::cerr << "Uso legado ainda aceito: ./helm10_rect [nx ny [nmodos]]"
-                  << " [--backend closed-form|gauss]"
-                  << " [--freq-hz F] [--eps-r E] [--mu-r M]"
-                  << " [--debug-local-blocks] [--debug-candidates]\n";
+        print_usage();
         return 2;
     }
 

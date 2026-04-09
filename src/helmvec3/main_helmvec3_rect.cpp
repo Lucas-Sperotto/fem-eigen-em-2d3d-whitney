@@ -493,17 +493,43 @@ Fig12CliConfig parse_fig12_cli(int argc, char **argv)
     Fig12CliConfig cfg;
     cfg.cli = helmvec2::parse_coupled_cli_options(argc, argv);
 
-    if (!cfg.cli.positionals.empty())
-        cfg.nx = std::atoi(cfg.cli.positionals[0].c_str());
-    if (cfg.cli.positionals.size() >= 2)
-        cfg.ny = std::atoi(cfg.cli.positionals[1].c_str());
-    if (cfg.cli.positionals.size() >= 3)
+    const bool has_named_primary_args =
+        cfg.cli.nx_was_provided ||
+        cfg.cli.ny_was_provided;
+
+    if (cfg.cli.beta_was_provided || cfg.cli.d_over_a_preview_was_provided)
     {
-        const bool legacy_debug = (std::atoi(cfg.cli.positionals[2].c_str()) != 0);
-        if (legacy_debug)
+        throw std::runtime_error(
+            "helmvec3_fig12_rect aceita apenas --nx/--ny como aliases nomeados principais");
+    }
+
+    if (has_named_primary_args && !cfg.cli.positionals.empty())
+    {
+        throw std::runtime_error(
+            "nao misture aliases nomeados principais com os argumentos posicionais de helmvec3_fig12_rect");
+    }
+
+    if (has_named_primary_args)
+    {
+        if (cfg.cli.nx_was_provided)
+            cfg.nx = cfg.cli.nx;
+        if (cfg.cli.ny_was_provided)
+            cfg.ny = cfg.cli.ny;
+    }
+    else
+    {
+        if (!cfg.cli.positionals.empty())
+            cfg.nx = std::atoi(cfg.cli.positionals[0].c_str());
+        if (cfg.cli.positionals.size() >= 2)
+            cfg.ny = std::atoi(cfg.cli.positionals[1].c_str());
+        if (cfg.cli.positionals.size() >= 3)
         {
-            cfg.cli.debug_local_blocks = true;
-            cfg.cli.debug_candidates = true;
+            const bool legacy_debug = (std::atoi(cfg.cli.positionals[2].c_str()) != 0);
+            if (legacy_debug)
+            {
+                cfg.cli.debug_local_blocks = true;
+                cfg.cli.debug_candidates = true;
+            }
         }
     }
 
@@ -515,19 +541,48 @@ Fig13CliConfig parse_fig13_cli(int argc, char **argv)
     Fig13CliConfig cfg;
     cfg.cli = helmvec2::parse_coupled_cli_options(argc, argv);
 
-    if (!cfg.cli.positionals.empty())
-        cfg.d13_over_a = std::atof(cfg.cli.positionals[0].c_str());
-    if (cfg.cli.positionals.size() >= 2)
-        cfg.nx = std::atoi(cfg.cli.positionals[1].c_str());
-    if (cfg.cli.positionals.size() >= 3)
-        cfg.ny = std::atoi(cfg.cli.positionals[2].c_str());
-    if (cfg.cli.positionals.size() >= 4)
+    const bool has_named_primary_args =
+        cfg.cli.d_over_a_preview_was_provided ||
+        cfg.cli.nx_was_provided ||
+        cfg.cli.ny_was_provided;
+
+    if (cfg.cli.beta_was_provided)
     {
-        const bool legacy_debug = (std::atoi(cfg.cli.positionals[3].c_str()) != 0);
-        if (legacy_debug)
+        throw std::runtime_error(
+            "helmvec3_fig13_rect nao aceita --beta; use --d-over-a-preview");
+    }
+
+    if (has_named_primary_args && !cfg.cli.positionals.empty())
+    {
+        throw std::runtime_error(
+            "nao misture aliases nomeados principais com os argumentos posicionais de helmvec3_fig13_rect");
+    }
+
+    if (has_named_primary_args)
+    {
+        if (cfg.cli.d_over_a_preview_was_provided)
+            cfg.d13_over_a = cfg.cli.d_over_a_preview;
+        if (cfg.cli.nx_was_provided)
+            cfg.nx = cfg.cli.nx;
+        if (cfg.cli.ny_was_provided)
+            cfg.ny = cfg.cli.ny;
+    }
+    else
+    {
+        if (!cfg.cli.positionals.empty())
+            cfg.d13_over_a = std::atof(cfg.cli.positionals[0].c_str());
+        if (cfg.cli.positionals.size() >= 2)
+            cfg.nx = std::atoi(cfg.cli.positionals[1].c_str());
+        if (cfg.cli.positionals.size() >= 3)
+            cfg.ny = std::atoi(cfg.cli.positionals[2].c_str());
+        if (cfg.cli.positionals.size() >= 4)
         {
-            cfg.cli.debug_local_blocks = true;
-            cfg.cli.debug_candidates = true;
+            const bool legacy_debug = (std::atoi(cfg.cli.positionals[3].c_str()) != 0);
+            if (legacy_debug)
+            {
+                cfg.cli.debug_local_blocks = true;
+                cfg.cli.debug_candidates = true;
+            }
         }
     }
 
@@ -570,6 +625,8 @@ int run_helmvec3_fig12_rect(int argc, char **argv)
         std::cerr << "Uso: ./helmvec3_fig12_rect [nx [ny [debug]]]"
                   << " [--backend closed-form|gauss]"
                   << " [--debug-local-blocks] [--debug-candidates]\n";
+        std::cerr << "Aliases nomeados: [--nx NX] [--ny NY]"
+                  << " (nao misture com os posicionais principais)\n";
         return 2;
     }
 
@@ -709,6 +766,8 @@ int run_helmvec3_fig13_rect(int argc, char **argv)
         std::cerr << "Uso: ./helmvec3_fig13_rect [d_over_a_preview [nx [ny [debug]]]]"
                   << " [--backend closed-form|gauss]"
                   << " [--debug-local-blocks] [--debug-candidates]\n";
+        std::cerr << "Aliases nomeados: [--d-over-a-preview VAL] [--nx NX] [--ny NY]"
+                  << " (nao misture com os posicionais principais)\n";
         return 2;
     }
 

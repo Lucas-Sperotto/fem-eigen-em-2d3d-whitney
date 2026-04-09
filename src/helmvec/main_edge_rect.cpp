@@ -248,6 +248,13 @@ int main(int argc, char **argv)
     int ny = 14;
     int export_modes = 20;
     helmvec::EdgeCliOptions cli;
+    const auto print_usage = []()
+    {
+        std::cerr << "Uso: ./edge_rect [nx ny [nmodos]] [--backend closed-form|gauss]"
+                  << " [--debug-local-blocks] [--debug-candidates]\n";
+        std::cerr << "Aliases nomeados: [--nx NX] [--ny NY] [--nmodos M]"
+                  << " (nao misture com os posicionais principais)\n";
+    };
     try
     {
         cli = helmvec::parse_edge_cli_options(argc, argv);
@@ -255,19 +262,49 @@ int main(int argc, char **argv)
     catch (const std::exception &e)
     {
         std::cerr << "Erro ao interpretar argumentos: " << e.what() << "\n";
-        std::cerr << "Uso: ./edge_rect [nx ny [nmodos]] [--backend closed-form|gauss]"
-                  << " [--debug-local-blocks] [--debug-candidates]\n";
+        print_usage();
         return 2;
     }
 
-    if (cli.positionals.size() >= 2)
+    const bool has_named_rect_args =
+        cli.nx_was_provided ||
+        cli.ny_was_provided ||
+        cli.nmodos_was_provided;
+
+    if (cli.nr_was_provided || cli.nt_was_provided)
     {
-        nx = std::atoi(cli.positionals[0].c_str());
-        ny = std::atoi(cli.positionals[1].c_str());
+        std::cerr << "Erro: edge_rect nao aceita --nr/--nt; use --nx/--ny.\n";
+        print_usage();
+        return 2;
     }
-    if (cli.positionals.size() >= 3)
+
+    if (has_named_rect_args && !cli.positionals.empty())
     {
-        export_modes = std::max(0, std::atoi(cli.positionals[2].c_str()));
+        std::cerr << "Erro: nao misture aliases nomeados principais com os argumentos posicionais de edge_rect.\n";
+        print_usage();
+        return 2;
+    }
+
+    if (has_named_rect_args)
+    {
+        if (cli.nx_was_provided)
+            nx = cli.nx;
+        if (cli.ny_was_provided)
+            ny = cli.ny;
+        if (cli.nmodos_was_provided)
+            export_modes = cli.nmodos;
+    }
+    else
+    {
+        if (cli.positionals.size() >= 2)
+        {
+            nx = std::atoi(cli.positionals[0].c_str());
+            ny = std::atoi(cli.positionals[1].c_str());
+        }
+        if (cli.positionals.size() >= 3)
+        {
+            export_modes = std::max(0, std::atoi(cli.positionals[2].c_str()));
+        }
     }
 
     const auto dirs = helmvec_output::ensure_case_dirs("rect");

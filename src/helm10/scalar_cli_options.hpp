@@ -31,6 +31,18 @@ struct ScalarCliOptions
     ElementAssemblyBackend backend = ElementAssemblyBackend::ClosedForm;
     bool debug_local_blocks = false;
     bool debug_candidates = false;
+    bool ar_m_was_provided = false;
+    double ar_m = 1.0;
+    bool nx_was_provided = false;
+    int nx = 0;
+    bool ny_was_provided = false;
+    int ny = 0;
+    bool nr_was_provided = false;
+    int nr = 0;
+    bool nt_was_provided = false;
+    int nt = 0;
+    bool nmodos_was_provided = false;
+    int nmodos = 0;
     bool frequency_was_provided = false;
     double frequency_hz = 0.0;
     double eps_r = 1.0;
@@ -143,6 +155,120 @@ inline ScalarCliOptions parse_scalar_cli_options(int argc, char **argv)
             opts.frequency_hz = parse_positive_cli_real(
                 arg.substr(std::string("--freq-hz=").size()),
                 "freq_hz");
+            continue;
+        }
+
+        if (arg == "--ar-m")
+        {
+            if (i + 1 >= argc)
+            {
+                throw std::runtime_error("faltou valor apos --ar-m");
+            }
+            opts.ar_m_was_provided = true;
+            opts.ar_m = parse_positive_cli_real(argv[++i], "ar_m");
+            continue;
+        }
+        if (arg.rfind("--ar-m=", 0) == 0)
+        {
+            opts.ar_m_was_provided = true;
+            opts.ar_m = parse_positive_cli_real(
+                arg.substr(std::string("--ar-m=").size()),
+                "ar_m");
+            continue;
+        }
+
+        if (arg == "--nx")
+        {
+            if (i + 1 >= argc)
+            {
+                throw std::runtime_error("faltou valor apos --nx");
+            }
+            opts.nx_was_provided = true;
+            opts.nx = parse_positive_cli_int(argv[++i], "nx");
+            continue;
+        }
+        if (arg.rfind("--nx=", 0) == 0)
+        {
+            opts.nx_was_provided = true;
+            opts.nx = parse_positive_cli_int(
+                arg.substr(std::string("--nx=").size()),
+                "nx");
+            continue;
+        }
+
+        if (arg == "--ny")
+        {
+            if (i + 1 >= argc)
+            {
+                throw std::runtime_error("faltou valor apos --ny");
+            }
+            opts.ny_was_provided = true;
+            opts.ny = parse_positive_cli_int(argv[++i], "ny");
+            continue;
+        }
+        if (arg.rfind("--ny=", 0) == 0)
+        {
+            opts.ny_was_provided = true;
+            opts.ny = parse_positive_cli_int(
+                arg.substr(std::string("--ny=").size()),
+                "ny");
+            continue;
+        }
+
+        if (arg == "--nr")
+        {
+            if (i + 1 >= argc)
+            {
+                throw std::runtime_error("faltou valor apos --nr");
+            }
+            opts.nr_was_provided = true;
+            opts.nr = parse_positive_cli_int(argv[++i], "nr");
+            continue;
+        }
+        if (arg.rfind("--nr=", 0) == 0)
+        {
+            opts.nr_was_provided = true;
+            opts.nr = parse_positive_cli_int(
+                arg.substr(std::string("--nr=").size()),
+                "nr");
+            continue;
+        }
+
+        if (arg == "--nt")
+        {
+            if (i + 1 >= argc)
+            {
+                throw std::runtime_error("faltou valor apos --nt");
+            }
+            opts.nt_was_provided = true;
+            opts.nt = parse_positive_cli_int(argv[++i], "nt");
+            continue;
+        }
+        if (arg.rfind("--nt=", 0) == 0)
+        {
+            opts.nt_was_provided = true;
+            opts.nt = parse_positive_cli_int(
+                arg.substr(std::string("--nt=").size()),
+                "nt");
+            continue;
+        }
+
+        if (arg == "--nmodos")
+        {
+            if (i + 1 >= argc)
+            {
+                throw std::runtime_error("faltou valor apos --nmodos");
+            }
+            opts.nmodos_was_provided = true;
+            opts.nmodos = parse_nonnegative_cli_int(argv[++i], "nmodos");
+            continue;
+        }
+        if (arg.rfind("--nmodos=", 0) == 0)
+        {
+            opts.nmodos_was_provided = true;
+            opts.nmodos = parse_nonnegative_cli_int(
+                arg.substr(std::string("--nmodos=").size()),
+                "nmodos");
             continue;
         }
 
