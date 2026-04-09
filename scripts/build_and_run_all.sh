@@ -514,12 +514,19 @@ if [[ "$SKIP_VALIDATE" -eq 0 ]]; then
   fi
 
   if [[ "$RUN_222" -eq 1 ]]; then
+    log "Running 2.2.2 Table 6 CSV-based validation..."
+    run python3 "$ROOT_DIR/scripts/validate_2d_222_table6_csv.py" \
+      --out-root "$OUT_DIR" \
+      --backend "$BACKEND" \
+      --out-csv "$OUT_DIR/validation/validation_2d_222_table6.csv"
+
     log "Running 2.2.2 Table 7 CSV-based validation..."
     run python3 "$ROOT_DIR/scripts/validate_2d_222_table7_csv.py" \
       --out-root "$OUT_DIR" \
       --backend "$BACKEND" \
       --out-csv "$OUT_DIR/validation/validation_2d_222_table7.csv"
   else
+    log "Skipping 2.2.2 Table 6 CSV-based validation (no mixed 2D case selected)."
     log "Skipping 2.2.2 Table 7 CSV-based validation (no mixed 2D case selected)."
   fi
 
@@ -537,6 +544,12 @@ if [[ "$SKIP_VALIDATE" -eq 0 ]]; then
   else
     log "Skipping 3D validation because --skip-3d is active."
   fi
+
+  log "Generating consolidated 2D validation index..."
+  run python3 "$ROOT_DIR/scripts/generate_validation_2d_index.py" \
+    --validation-dir "$OUT_DIR/validation" \
+    --out-csv "$OUT_DIR/validation/validation_2d_index.csv" \
+    --out-md "$OUT_DIR/validation/VALIDATION_2D_INDEX.md"
 else
   log "Skipping validations (--skip-validate)."
 fi
@@ -595,8 +608,17 @@ if [[ "$SKIP_VALIDATE" -eq 0 ]]; then
   if [[ -f "$OUT_DIR/validation/validation_2d_221.csv" ]]; then
     printf '  - %s\n' "$OUT_DIR/validation/validation_2d_221.csv"
   fi
+  if [[ -f "$OUT_DIR/validation/validation_2d_222_table6.csv" ]]; then
+    printf '  - %s\n' "$OUT_DIR/validation/validation_2d_222_table6.csv"
+  fi
   if [[ -f "$OUT_DIR/validation/validation_2d_222_table7.csv" ]]; then
     printf '  - %s\n' "$OUT_DIR/validation/validation_2d_222_table7.csv"
+  fi
+  if [[ -f "$OUT_DIR/validation/validation_2d_index.csv" ]]; then
+    printf '  - %s\n' "$OUT_DIR/validation/validation_2d_index.csv"
+  fi
+  if [[ -f "$OUT_DIR/validation/VALIDATION_2D_INDEX.md" ]]; then
+    printf '  - %s\n' "$OUT_DIR/validation/VALIDATION_2D_INDEX.md"
   fi
   if [[ "$SKIP_3D" -eq 0 ]]; then
     printf '  - %s\n' "$OUT_DIR/validation/validation_3d_31_modes.csv"
