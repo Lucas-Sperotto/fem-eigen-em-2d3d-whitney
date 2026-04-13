@@ -1,0 +1,64 @@
+Log file: /home/sperotto/tp3485-fem-eigen-em/out/fem_efgmi_mode_report_base/base/efgm/helmvec1/circle/run.log
+Output dir: "/home/sperotto/tp3485-fem-eigen-em/out/fem_efgmi_mode_report_base/base/efgm/helmvec1/circle"
+CSV dir: "/home/sperotto/tp3485-fem-eigen-em/out/fem_efgmi_mode_report_base/base/efgm/helmvec1/circle/csv"
+VTK dir: "/home/sperotto/tp3485-fem-eigen-em/out/fem_efgmi_mode_report_base/base/efgm/helmvec1/circle/vtk"
+LinOp dir: "/home/sperotto/tp3485-fem-eigen-em/out/fem_efgmi_mode_report_base/base/efgm/helmvec1/circle/linop"
+Mixed circle: nodes=121 tris=225 R=1 nr=8 nt=15 backend=efgmi
+
+[E-formulation | circle]
+
+TE (edge block)
+lambda_filter(kc^2) = 1e-10
+ i  (m,p)   kc_ana      kc_fem      err(%)    |rho|
+ 1  (1,1)  1.84118  1.87261  1.7067  0.967477
+ 2  (1,1)  1.84118  1.87261  1.7067  0.967477
+ 3  (2,1)  3.05424  3.14861  3.09  0.992281
+ 4  (2,1)  3.05424  3.14861  3.09  0.992281
+ 5  (0,1)  3.83171  3.77039  1.60028  0.999622
+ 6  (3,1)  4.20119  4.39313  4.56868  0.991269
+ 7  (3,1)  4.20119  4.39313  4.56868  0.991269
+ 8  (1,2)  5.33144  5.21746  2.13786  0.878864
+
+TM (scalar block)
+lambda_filter(kc^2) = 1e-10
+ i  (m,p)   kc_ana      kc_fem      err(%)    |rho|
+ 1  (0,1)  2.40483  2.46189  2.37291  0.999826
+ 2  (1,1)  3.83171  4.00256  4.45897  0.909404
+ 3  (1,1)  3.83171  4.00256  4.45897  0.909404
+ 4  (2,1)  5.13562  5.5652  8.3646  0.987597
+ 5  (2,1)  5.13562  5.5652  8.3646  0.987597
+ 6  (0,2)  5.52008  5.84124  5.81811  0.997196
+ 7  (3,1)  6.38016  7.25785  13.7566  0.983164
+ 8  (3,1)  6.38016  7.25785  13.7566  0.983164
+
+[H-formulation | circle]
+
+TM (edge block)
+lambda_filter(kc^2) = 1e-10
+ i  (m,p)   kc_ana      kc_fem      err(%)    |rho|
+ 1  (0,1)  2.40483  2.43355  1.19442  0.999893
+ 2  (1,1)  3.83171  3.87454  1.11781  0.986197
+ 3  (1,1)  3.83171  3.87454  1.11781  0.986197
+ 4  (2,1)  5.13562  5.21257  1.49839  0.917508
+ 5  (2,1)  5.13562  5.21257  1.49839  0.917508
+ 6  (0,2)  5.52008  5.43842  1.47936  0.997706
+ 7  (3,1)  6.38016  6.51966  2.18637  0.827095
+ 8  (3,1)  6.38016  6.51966  2.18637  0.827095
+
+TE (scalar block)
+lambda_filter(kc^2) = 1e-10
+ i  (m,p)   kc_ana      kc_fem      err(%)    |rho|
+ 1  (1,1)  1.84118  1.8847  2.36338  0.922239
+ 2  (1,1)  1.84118  1.8847  2.36338  0.922239
+ 3  (2,1)  3.05424  3.20262  4.85823  0.999702
+ 4  (2,1)  3.05424  3.20262  4.85823  0.999702
+ 5  (0,1)  3.83171  4.0014  4.42856  0.999768
+ 6  (3,1)  4.20119  4.54983  8.29867  0.921865
+ 7  (3,1)  4.20119  4.54983  8.29867  0.921865
+ 8  (1,2)  5.33144  5.73837  7.63261  0.896346
+[timing] label=mixed_circle assembly_ms=326.437 solve_ms=204.471 post_ms=6992.997 total_ms=7821.370
+Saved: /home/sperotto/tp3485-fem-eigen-em/out/fem_efgmi_mode_report_base/base/efgm/helmvec1/circle/csv/mixed_circle_modes.csv
+Saved: /home/sperotto/tp3485-fem-eigen-em/out/fem_efgmi_mode_report_base/base/efgm/helmvec1/circle/run_timing.csv
+
+
+[stderr]

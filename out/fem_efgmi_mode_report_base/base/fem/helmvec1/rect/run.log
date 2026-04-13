@@ -1,0 +1,66 @@
+Log file: /home/sperotto/tp3485-fem-eigen-em/out/fem_efgmi_mode_report_base/base/fem/helmvec1/rect/run.log
+Output dir: "/home/sperotto/tp3485-fem-eigen-em/out/fem_efgmi_mode_report_base/base/fem/helmvec1/rect"
+CSV dir: "/home/sperotto/tp3485-fem-eigen-em/out/fem_efgmi_mode_report_base/base/fem/helmvec1/rect/csv"
+VTK dir: "/home/sperotto/tp3485-fem-eigen-em/out/fem_efgmi_mode_report_base/base/fem/helmvec1/rect/vtk"
+LinOp dir: "/home/sperotto/tp3485-fem-eigen-em/out/fem_efgmi_mode_report_base/base/fem/helmvec1/rect/linop"
+backend=closed-form
+Mixed rect: nodes=231 tris=400 a=1 b=0.5 nx=10 ny=20
+
+[E-formulation] TE cutoffs (edge block)
+lambda_filter(kc^2) = 1e-10
+ i  (m,n)   kc_ana      kc_fem      err(%)    |rho|
+ 1  (1,0)  3.14159  3.14333  0.0551999  1
+ 2  (0,1)  6.28319  6.23321  0.795414  0.999995
+ 3  (2,0)  6.28319  6.29664  0.214125  0.999968
+ 4  (1,1)  7.02481  6.99714  0.393908  0.999897
+ 5  (2,1)  8.88577  8.91126  0.286877  0.999779
+ 6  (3,0)  9.42478  9.46845  0.463399  0.999653
+ 7  (3,1)  11.3272  11.4274  0.885203  0.999747
+ 8  (0,2)  12.5664  12.1809  3.06768  0.999782
+ 9  (1,2)  12.9531  12.613  2.62599  0.999657
+ 10  (4,0)  12.5664  12.6611  0.753657  0.999727
+
+[E-formulation] TM cutoffs (scalar block)
+lambda_filter(kc^2) = 1e-10
+ i  (m,n)   kc_ana      kc_fem      err(%)    |rho|
+ 1  (1,1)  7.02481  7.08558  0.865031  0.999998
+ 2  (2,1)  8.88577  9.12097  2.64693  0.999974
+ 3  (3,1)  11.3272  11.905  5.10164  0.999727
+ 4  (1,2)  12.9531  13.1127  1.23213  0.999884
+ 5  (2,2)  14.0496  14.5388  3.48172  0.99925
+ 6  (4,1)  14.0496  15.2065  8.23406  0.997439
+ 7  (3,2)  15.708  16.7744  6.78937  0.99541
+ 8  (5,1)  16.918  18.932  11.9048  0.97316
+ 9  (1,3)  19.1096  19.44  1.72929  0.989958
+ 10  (4,2)  17.7715  19.7318  11.0304  0.955698
+
+[H-formulation] TM cutoffs (edge block)
+lambda_filter(kc^2) = 1e-10
+ i  (m,n)   kc_ana      kc_fem      err(%)    |rho|
+ 1  (1,1)  7.02481  6.99709  0.394738  0.999965
+ 2  (2,1)  8.88577  8.91161  0.290882  0.999975
+ 3  (3,1)  11.3272  11.4283  0.892598  0.999944
+ 4  (1,2)  12.9531  12.6132  2.62407  0.999724
+ 5  (2,2)  14.0496  13.8361  1.51977  0.99936
+ 6  (4,1)  14.0496  14.2481  1.41269  0.999593
+ 7  (3,2)  15.708  15.6812  0.170286  0.998867
+ 8  (5,1)  16.918  17.2292  1.83949  0.997068
+ 9  (1,3)  19.1096  17.9406  6.11741  0.94538
+ 10  (4,2)  17.7715  17.9831  1.1907  0.941187
+
+[H-formulation] TE cutoffs (scalar block)
+lambda_filter(kc^2) = 1e-10
+ i  (m,n)   kc_ana      kc_fem      err(%)    |rho|
+ 1  (1,0)  3.14159  3.1545  0.411002  1
+ 2  (0,1)  6.28319  6.2895  0.100471  0.999997
+ 3  (2,0)  6.28319  6.38672  1.64783  0.999971
+ 4  (1,1)  7.02481  7.08522  0.859816  0.99995
+ 5  (2,1)  8.88577  9.11966  2.63225  0.99963
+ 6  (3,0)  9.42478  9.77577  3.72414  0.999577
+ 7  (3,1)  11.3272  11.9019  5.07388  0.999243
+ 8  (0,2)  12.5664  12.6169  0.402225  0.999844
+ 9  (1,2)  12.9531  13.1098  1.2095  0.999749
+ 10  (4,0)  12.5664  13.3978  6.61619  0.999529
+[timing] label=mixed_rect assembly_ms=58.496 solve_ms=1120.191 post_ms=14818.032 total_ms=16615.800
+Saved: /home/sperotto/tp3485-fem-eigen-em/out/fem_efgmi_mode_report_base/base/fem/helmvec1/rect/csv/mixed_rect_modes.csv
+Saved: /home/sperotto/tp3485-fem-eigen-em/out/fem_efgmi_mode_report_base/base/fem/helmvec1/rect/run_timing.csv

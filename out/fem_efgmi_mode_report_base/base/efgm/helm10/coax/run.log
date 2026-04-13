@@ -1,0 +1,93 @@
+Log file: /home/sperotto/tp3485-fem-eigen-em/out/fem_efgmi_mode_report_base/base/efgm/helm10/coax/run.log
+Output dir: "/home/sperotto/tp3485-fem-eigen-em/out/fem_efgmi_mode_report_base/base/efgm/helm10/coax"
+VTK dir: "/home/sperotto/tp3485-fem-eigen-em/out/fem_efgmi_mode_report_base/base/efgm/helm10/coax/vtk"
+CSV dir: "/home/sperotto/tp3485-fem-eigen-em/out/fem_efgmi_mode_report_base/base/efgm/helm10/coax/csv"
+LinOp dir: "/home/sperotto/tp3485-fem-eigen-em/out/fem_efgmi_mode_report_base/base/efgm/helm10/coax/linop"
+Backend escalar: efgmi
+Coax mesh: nodes=187 tris=340 r1=1 r2=4 nr=10 nt=17
+
+[TE scalar (Neumann) - coax]
+ 1  kc=0.419318
+ 2  kc=0.419318
+ 3  kc=0.778968
+ 4  kc=0.778968
+ 5  kc=1.109755
+ 6  kc=1.109755
+ 7  kc=1.153554
+ 8  kc=1.310257
+ 9  kc=1.310257
+10  kc=1.443043
+11  kc=1.443043
+12  kc=1.710879
+
+Tabela 3 (TE coax): FEM vs Analitico (det J'/Y')
+i  (m,p)   kc_ana      kc_fem      err(%)    |rho|
+1  (1,1)   0.411126   0.419318    1.992  0.9864
+2  (1,1)   0.411126   0.419318    1.992  0.9864
+3  (2,1)   0.752324   0.778968    3.542  0.9616
+4  (2,1)   0.752324   0.778968    3.542  0.9616
+5  (3,1)   1.048386   1.109755    5.854  0.8625
+6  (3,1)   1.048386   1.109755    5.854  0.8625
+7  (0,1)   1.111876   1.153554    3.748  0.9997
+8  (1,2)   1.251115   1.310257    4.727  0.7115
+
+[TM scalar (Dirichlet) - coax]
+ 1  kc=1.037743
+ 2  kc=1.138809
+ 3  kc=1.138809
+ 4  kc=1.399535
+ 5  kc=1.399535
+ 6  kc=1.752920
+ 7  kc=1.752920
+ 8  kc=2.158416
+ 9  kc=2.158416
+10  kc=2.192563
+11  kc=2.269054
+12  kc=2.269054
+Saved: "/home/sperotto/tp3485-fem-eigen-em/out/fem_efgmi_mode_report_base/base/efgm/helm10/coax/linop/helm10_coax_te_S_crs.csv"
+Saved: "/home/sperotto/tp3485-fem-eigen-em/out/fem_efgmi_mode_report_base/base/efgm/helm10/coax/linop/helm10_coax_te_T_crs.csv"
+Saved: "/home/sperotto/tp3485-fem-eigen-em/out/fem_efgmi_mode_report_base/base/efgm/helm10/coax/linop/helm10_coax_te_eigenvalues.csv"
+Saved: "/home/sperotto/tp3485-fem-eigen-em/out/fem_efgmi_mode_report_base/base/efgm/helm10/coax/linop/helm10_coax_te_eigenvectors.csv"
+Saved: "/home/sperotto/tp3485-fem-eigen-em/out/fem_efgmi_mode_report_base/base/efgm/helm10/coax/linop/helm10_coax_tm_S_crs.csv"
+Saved: "/home/sperotto/tp3485-fem-eigen-em/out/fem_efgmi_mode_report_base/base/efgm/helm10/coax/linop/helm10_coax_tm_T_crs.csv"
+Saved: "/home/sperotto/tp3485-fem-eigen-em/out/fem_efgmi_mode_report_base/base/efgm/helm10/coax/linop/helm10_coax_tm_eigenvalues.csv"
+Saved: "/home/sperotto/tp3485-fem-eigen-em/out/fem_efgmi_mode_report_base/base/efgm/helm10/coax/linop/helm10_coax_tm_eigenvectors.csv"
+Reconstrucao de campos: freq=104615102.874207 Hz, eps_r=1.000000, mu_r=1.000000, k=2.192570 rad/m, politica=automatica_tm_referencia_ztm1
+Referencia automatica TM: kc_ref=2.192563, Ztm_ref_real=1.000000
+Aviso didatico: os campos TM exportados usam gradiente+sinal como saida principal, sem multiplicacao por Ztm; beta e Ztm ficam apenas no modes.csv.
+
+Tabela 3 (TM coax): FEM vs Analitico (det J/Y)
+i  (m,p)   kc_ana      kc_fem      err(%)    |rho|
+1  (0,1)   1.024421   1.037743    1.300  0.9988
+2  (1,1)   1.111876   1.138809    2.422  0.9021
+3  (1,1)   1.111876   1.138809    2.422  0.9021
+4  (2,1)   1.329967   1.399535    5.231  0.7609
+5  (2,1)   1.329967   1.399535    5.231  0.7609
+6  (3,1)   1.606618   1.752920    9.106  0.8601
+7  (3,1)   1.606618   1.752920    9.106  0.8601
+8  (4,1)   1.899602   2.158416   13.625  0.7917
+Saved: te_coax_m1_p1_rank01_sv.vtk (psi + Et)
+Saved: te_coax_sv.vtk (psi + Et)
+Saved: te_coax_m1_p1_rank02_sv.vtk (psi + Et)
+Saved: te_coax_m2_p1_rank03_sv.vtk (psi + Et)
+Saved: te_coax_m2_p1_rank04_sv.vtk (psi + Et)
+Saved: te_coax_m3_p1_rank05_sv.vtk (psi + Et)
+Saved: te_coax_m3_p1_rank06_sv.vtk (psi + Et)
+Saved: te_coax_m0_p1_rank07_sv.vtk (psi + Et)
+Saved: te_coax_m1_p2_rank08_sv.vtk (psi + Et)
+Saved: te_coax_m1_p2_rank09_sv.vtk (psi + Et)
+Saved: te_coax_m4_p1_rank10_sv.vtk (psi + Et)
+Saved: tm_coax_m0_p1_rank01_sv.vtk (psi + Et)
+Saved: tm_coax_sv.vtk (psi + Et)
+Saved: tm_coax_m1_p1_rank02_sv.vtk (psi + Et)
+Saved: tm_coax_m1_p1_rank03_sv.vtk (psi + Et)
+Saved: tm_coax_m2_p1_rank04_sv.vtk (psi + Et)
+Saved: tm_coax_m2_p1_rank05_sv.vtk (psi + Et)
+Saved: tm_coax_m3_p1_rank06_sv.vtk (psi + Et)
+Saved: tm_coax_m3_p1_rank07_sv.vtk (psi + Et)
+Saved: tm_coax_m4_p1_rank08_sv.vtk (psi + Et)
+Saved: tm_coax_m4_p1_rank09_sv.vtk (psi + Et)
+Saved: tm_coax_m0_p2_rank10_sv.vtk (psi + Et)
+Saved: /home/sperotto/tp3485-fem-eigen-em/out/fem_efgmi_mode_report_base/base/efgm/helm10/coax/csv/helm10_coax_modes.csv
+Saved: /home/sperotto/tp3485-fem-eigen-em/out/fem_efgmi_mode_report_base/base/efgm/helm10/coax/run_timing.csv
+[timing] label=helm10_coax assembly_ms=503.213 solve_ms=94.621 post_ms=2154.506 total_ms=3834.191

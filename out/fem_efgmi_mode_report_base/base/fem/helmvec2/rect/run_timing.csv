@@ -1,0 +1,2 @@
+case_label,geometry,backend,debug_local_blocks,debug_candidates,beta,L,betaL,nx,ny,mesh_nodes,mesh_tris,eps_top,eps_bottom,mu_r,k0_min_phys,candidate_count_raw,candidate_count_phys,matched_mode_count,assembly_ms,solve_ms,post_ms,total_ms
+helmvec2_rect,rect,closed-form,0,0,10,1,10,20,20,441,800,1,1.5,1,8.164965809277261,1160,1160,10,152.839797,23679.151107,1.145664,25171.564501

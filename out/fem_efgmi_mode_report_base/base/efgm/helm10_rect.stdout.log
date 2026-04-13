@@ -1,0 +1,97 @@
+Log file: /home/sperotto/tp3485-fem-eigen-em/out/fem_efgmi_mode_report_base/base/efgm/helm10/rect/run.log
+Output dir: "/home/sperotto/tp3485-fem-eigen-em/out/fem_efgmi_mode_report_base/base/efgm/helm10/rect"
+VTK dir: "/home/sperotto/tp3485-fem-eigen-em/out/fem_efgmi_mode_report_base/base/efgm/helm10/rect/vtk"
+CSV dir: "/home/sperotto/tp3485-fem-eigen-em/out/fem_efgmi_mode_report_base/base/efgm/helm10/rect/csv"
+LinOp dir: "/home/sperotto/tp3485-fem-eigen-em/out/fem_efgmi_mode_report_base/base/efgm/helm10/rect/linop"
+Backend escalar: efgmi
+Rect mesh: nodes=231 tris=400
+ar=1 m, b=0.5 m, nx=10 ny=20 nmodos=10
+
+[TE scalar (Neumann)]
+ 1  kc=3.154456
+ 2  kc=6.354062
+ 3  kc=6.385745
+ 4  kc=7.123315
+ 5  kc=9.098965
+ 6  kc=9.768288
+ 7  kc=11.802362
+ 8  kc=13.179564
+ 9  kc=13.368721
+10  kc=13.618197
+11  kc=14.894835
+12  kc=14.991079
+
+Tabela 1 (TE): FEM vs Analitico (match por correlacao com T)
+i  (m,n)   kc_ana      kc_fem      kcAr_fem    err(%)    |rho|
+1  (1,0)   3.141593   3.154456    3.154456    0.409  1.0000
+2  (0,1)   6.283185   6.354062    6.354062    1.128  1.0000
+3  (2,0)   6.283185   6.385745    6.385745    1.632  1.0000
+4  (1,1)   7.024815   7.123315    7.123315    1.402  1.0000
+5  (2,1)   8.885766   9.098965    9.098965    2.399  1.0000
+6  (3,0)   9.424778   9.768288    9.768288    3.645  0.9998
+7  (3,1)  11.327173  11.802362   11.802362    4.195  0.9998
+8  (0,2)  12.566371  13.179564   13.179564    4.880  0.9993
+
+[TM scalar (Dirichlet)]
+ 1  kc=7.106128
+ 2  kc=9.146578
+ 3  kc=11.934133
+ 4  kc=13.489481
+ 5  kc=14.885642
+ 6  kc=15.228119
+ 7  kc=17.061349
+ 8  kc=18.931515
+ 9  kc=19.881267
+10  kc=20.749804
+11  kc=21.904737
+12  kc=22.954823
+Saved: "/home/sperotto/tp3485-fem-eigen-em/out/fem_efgmi_mode_report_base/base/efgm/helm10/rect/linop/helm10_rect_te_S_crs.csv"
+Saved: "/home/sperotto/tp3485-fem-eigen-em/out/fem_efgmi_mode_report_base/base/efgm/helm10/rect/linop/helm10_rect_te_T_crs.csv"
+Saved: "/home/sperotto/tp3485-fem-eigen-em/out/fem_efgmi_mode_report_base/base/efgm/helm10/rect/linop/helm10_rect_te_eigenvalues.csv"
+Saved: "/home/sperotto/tp3485-fem-eigen-em/out/fem_efgmi_mode_report_base/base/efgm/helm10/rect/linop/helm10_rect_te_eigenvectors.csv"
+Saved: "/home/sperotto/tp3485-fem-eigen-em/out/fem_efgmi_mode_report_base/base/efgm/helm10/rect/linop/helm10_rect_tm_S_crs.csv"
+Saved: "/home/sperotto/tp3485-fem-eigen-em/out/fem_efgmi_mode_report_base/base/efgm/helm10/rect/linop/helm10_rect_tm_T_crs.csv"
+Saved: "/home/sperotto/tp3485-fem-eigen-em/out/fem_efgmi_mode_report_base/base/efgm/helm10/rect/linop/helm10_rect_tm_eigenvalues.csv"
+Saved: "/home/sperotto/tp3485-fem-eigen-em/out/fem_efgmi_mode_report_base/base/efgm/helm10/rect/linop/helm10_rect_tm_eigenvectors.csv"
+Reconstrucao de campos: freq=990048273.115886 Hz, eps_r=1.000000, mu_r=1.000000, k=20.749877 rad/m, politica=automatica_tm_referencia_ztm1
+Referencia automatica TM: kc_ref=20.749804, Ztm_ref_real=1.000000
+Aviso didatico: os campos TM exportados usam gradiente+sinal como saida principal, sem multiplicacao por Ztm; beta e Ztm ficam apenas no modes.csv.
+
+Tabela 1 (TM): FEM vs Analitico (match por correlacao com T)
+i  (m,n)   kc_ana      kc_fem      kcAr_fem    err(%)    |rho|
+1  (1,1)   7.024815   7.106128    7.106128    1.158  0.9997
+2  (2,1)   8.885766   9.146578    9.146578    2.935  0.9997
+3  (3,1)  11.327173  11.934133   11.934133    5.358  0.9997
+4  (1,2)  12.953118  13.489481   13.489481    4.141  0.9980
+5  (2,2)  14.049629  14.885642   14.885642    5.950  0.9980
+6  (4,1)  14.049629  15.228119   15.228119    8.388  0.9997
+7  (3,2)  15.707963  17.061349   17.061349    8.616  0.9980
+8  (5,1)  16.917994  18.931515   18.931515   11.902  0.9998
+Saved: te_rect_m1_n0_rank01_sv.vtk (psi + Et)
+Saved: te10_rect_sv.vtk (psi + Et)
+Saved: te_rect_m0_n1_rank02_sv.vtk (psi + Et)
+Saved: te_rect_m2_n0_rank03_sv.vtk (psi + Et)
+Saved: te_rect_m1_n1_rank04_sv.vtk (psi + Et)
+Saved: te_rect_m2_n1_rank05_sv.vtk (psi + Et)
+Saved: te_rect_m3_n0_rank06_sv.vtk (psi + Et)
+Saved: te_rect_m3_n1_rank07_sv.vtk (psi + Et)
+Saved: te_rect_m0_n2_rank08_sv.vtk (psi + Et)
+Saved: te_rect_m4_n0_rank09_sv.vtk (psi + Et)
+Saved: te_rect_m1_n2_rank10_sv.vtk (psi + Et)
+Saved: tm_rect_m1_n1_rank01_sv.vtk (psi + Et)
+Saved: tm11_rect_sv.vtk (psi + Et)
+Saved: tm_rect_m2_n1_rank02_sv.vtk (psi + Et)
+Saved: tm_rect_m3_n1_rank03_sv.vtk (psi + Et)
+Saved: tm_rect_m1_n2_rank04_sv.vtk (psi + Et)
+Saved: tm_rect_m2_n2_rank05_sv.vtk (psi + Et)
+Saved: tm_rect_m4_n1_rank06_sv.vtk (psi + Et)
+Saved: tm_rect_m3_n2_rank07_sv.vtk (psi + Et)
+Saved: tm_rect_m5_n1_rank08_sv.vtk (psi + Et)
+Saved: tm_rect_m4_n2_rank09_sv.vtk (psi + Et)
+Saved: tm_rect_m1_n3_rank10_sv.vtk (psi + Et)
+Saved: /home/sperotto/tp3485-fem-eigen-em/out/fem_efgmi_mode_report_base/base/efgm/helm10/rect/csv/helm10_rect_modes.csv
+Saved: /home/sperotto/tp3485-fem-eigen-em/out/fem_efgmi_mode_report_base/base/efgm/helm10/rect/run_timing.csv
+[timing] label=helm10_rect assembly_ms=609.495 solve_ms=45.674 post_ms=1427.844 total_ms=3225.739
+
+
+[stderr]

@@ -1,0 +1,2 @@
+case_label,geometry,backend,debug_local_blocks,debug_candidates,ar_m,b_m,r_m,r1_m,r2_m,nx,ny,nr,nt,mesh_nodes,mesh_tris,e_assembly_ms,e_solve_ms,e_post_ms,h_assembly_ms,h_solve_ms,h_post_ms,assembly_ms_total,solve_ms_total,post_ms_total,total_ms
+mixed_rect,rect,efgmi,0,0,1,0.5,,,,10,20,,,231,400,346.885865,335.442265,6881.278623,304.432645,429.747994,7069.196654,651.3185100000001,765.190259,13950.475277,16016.452565

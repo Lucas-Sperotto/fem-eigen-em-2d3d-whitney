@@ -1,0 +1,2 @@
+case_label,geometry,backend,debug_local_blocks,debug_candidates,a,b,d12,d13_preview_over_a,eps_fill,nx,ny,mesh_nodes,mesh_tris,table9_sample_count,preview_sample_count,table10_block_count,table10_row_count,assembly_ms,solve_ms,post_ms,total_ms
+helmvec3_fig13_rect,rect,efgmi,0,0,1,0.45,0.225,0.2,2.45,10,5,66,100,0,5,7,45,2688.39156,2518.398890000001,3205.074913999998,8411.865363999999

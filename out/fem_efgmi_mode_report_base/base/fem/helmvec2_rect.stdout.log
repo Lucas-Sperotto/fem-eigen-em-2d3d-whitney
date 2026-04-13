@@ -1,0 +1,39 @@
+[output] root_dir="/home/sperotto/tp3485-fem-eigen-em/out/fem_efgmi_mode_report_base/base/fem/helmvec2/rect"
+[output] csv_dir="/home/sperotto/tp3485-fem-eigen-em/out/fem_efgmi_mode_report_base/base/fem/helmvec2/rect/csv"
+[output] vtk_dir="/home/sperotto/tp3485-fem-eigen-em/out/fem_efgmi_mode_report_base/base/fem/helmvec2/rect/vtk"
+[output] img_dir="/home/sperotto/tp3485-fem-eigen-em/out/fem_efgmi_mode_report_base/base/fem/helmvec2/rect/img"
+[output] linop_dir="/home/sperotto/tp3485-fem-eigen-em/out/fem_efgmi_mode_report_base/base/fem/helmvec2/rect/linop"
+[2.2.3] wave-number from given beta (Figure 11)
+L=1 beta=10 beta*L=10 nx=20 ny=20 tris=800 k0_min_phys~8.16497 backend=closed-form
+
+first raw roots (k0L), after physical filter:
+ 1  8.80967
+ 2  9.01088
+ 3  9.39144
+ 4  9.87586
+ 5  10.2813
+ 6  10.4527
+ 7  10.8741
+ 8  11.1126
+ 9  11.2613
+ 10  11.3824
+ 11  11.4224
+ 12  12.0254
+ 13  12.2547
+ 14  12.2929
+
+mode  k0L(FEM matched)  HELMVEC2(ref)  Hayata(ref)
+1  8.80967  8.815  8.8093
+2  9.39144  9.443  9.3896
+3  10.2813  10.35  10.2752
+4  11.1126  11.141  11.103
+5  11.2613  11.289  11.2677
+6  11.4224  11.4246  11.4501
+7  12.2547  12.146  11.9882
+8  12.643  12.5894  12.6686
+9  12.8433  12.8237  12.8092
+10  12.9101  12.9987  12.9575
+[timing] label=helmvec2_rect assembly_ms=152.840 solve_ms=23679.151 post_ms=1.146 total_ms=25171.565
+
+
+[stderr]
