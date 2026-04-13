@@ -166,14 +166,14 @@ Circular:
 Coaxial:
 
 ```bash
-./build/edge_coax 10 48
-./build/edge_coax 10 48 20
+./build/edge_coax 10 17
+./build/edge_coax 10 17 10
 ```
 
 Convencoes publicas atuais:
 
 - `nmodos` indica quantos modos positivos de cada ramo serao exportados;
-- se `nmodos` nao for informado, o padrao publico agora e `20`;
+- se `nmodos` nao for informado, o padrao publico agora e `10`;
 - sem `--backend`, o fluxo principal do executavel e `closed-form`.
 
 ## 7.1) Backends e depuracao

@@ -46,17 +46,17 @@ cmake --build build \
     -j"${JOBS}"
 
 echo "🚀 Executando HELM10 com a discretização de referência do artigo..."
-./build/helm10_rect 1.0 10 20 10 --backend closed-form #400 elementos
-./build/helm10_circle 8 15 10 --backend closed-form #200 elementos
-./build/helm10_coax 10 17 10 --backend closed-form #340 elementos
+./build/helm10_rect --ar-m 1.0 --nx 10 --ny 20 --nmodos 10 --backend closed-form #400 elementos
+./build/helm10_circle --nr 8 --nt 15 --nmodos 10 --backend closed-form #200 elementos
+./build/helm10_coax --nr 10 --nt 17 --nmodos 10 --backend closed-form #340 elementos
 
 echo "📊 Gerando imagens do HELM10..."
 python3 scripts/helm10.py
 
 echo "🚀 Executando HELMVEC com a discretização de referência do artigo..."
-./build/edge_rect 10 20 10 --backend closed-form #400 elementos
-./build/edge_circle 8 15 10 --backend closed-form #200 elementos
-./build/edge_coax 10 17 10 --backend closed-form #340 elementos
+./build/edge_rect --nx 10 --ny 20 --nmodos 10 --backend closed-form #400 elementos
+./build/edge_circle --nr 8 --nt 15 --nmodos 10 --backend closed-form #200 elementos
+./build/edge_coax --nr 10 --nt 17 --nmodos 10 --backend closed-form #340 elementos
 
 echo "📊 Gerando imagens do HELMVEC..."
 python3 scripts/helmvec.py
@@ -76,8 +76,8 @@ echo "📊 Gerando imagens do HELMVEC2..."
 python3 scripts/helmvec2.py
 
 echo "🚀 Executando HELMVEC3 com a discretização de referência do artigo..."
-./build/helmvec3_fig12_rect 10 5 --backend closed-form #100 elementos
-./build/helmvec3_fig13_rect 0.20 10 5 --backend closed-form #100 elementos
+./build/helmvec3_fig12_rect --nx 10 --ny 5 --backend closed-form #100 elementos
+./build/helmvec3_fig13_rect --d-over-a-preview 0.20 --nx 10 --ny 5 --backend closed-form #100 elementos
 
 echo "📊 Gerando imagens do HELMVEC3..."
 python3 scripts/helmvec3.py

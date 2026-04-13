@@ -38,7 +38,7 @@ CASE_SPECS = (
     CaseSpec(
         case="edge_rect_table4",
         source_rel=Path("helmvec/rect/csv/edge_rect_modes.csv"),
-        rerun_cmd=("./build/edge_rect", "--nx", "14", "--ny", "14", "--nmodos", "20"),
+        rerun_cmd=("./build/edge_rect", "--nx", "10", "--ny", "20", "--nmodos", "10"),
         required_modes=(
             RequiredMode("TE10", "TE", "TE_m1_n0"),
             RequiredMode("TE20", "TE", "TE_m2_n0"),
@@ -63,7 +63,7 @@ CASE_SPECS = (
     CaseSpec(
         case="edge_circle_table5",
         source_rel=Path("helmvec/circle/csv/edge_circle_modes.csv"),
-        rerun_cmd=("./build/edge_circle", "--nr", "10", "--nt", "48", "--nmodos", "20"),
+        rerun_cmd=("./build/edge_circle", "--nr", "8", "--nt", "15", "--nmodos", "10"),
         required_modes=(
             RequiredMode("TE01", "TE", "TE_m0_p1"),
             RequiredMode("TE11", "TE", "TE_m1_p1"),

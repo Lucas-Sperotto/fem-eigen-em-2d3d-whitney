@@ -20,6 +20,7 @@
 
 #pragma once
 
+#include "core/assembly_backend.hpp"
 #include "core/mesh2d.hpp"
 
 #include <string>
@@ -51,8 +52,8 @@ struct ReconstructedField2D
     std::vector<double> psi;
     std::vector<double> dpsi_dx;
     std::vector<double> dpsi_dy;
-    std::vector<double> ex;
-    std::vector<double> ey;
+    std::vector<double> ex; // Campo principal, sem Ztm para TM
+    std::vector<double> ey; // Campo principal, sem Ztm para TM
     std::vector<double> ex_without_ztm;
     std::vector<double> ey_without_ztm;
     std::vector<double> ex_with_ztm;
@@ -174,6 +175,16 @@ ReconstructedField2D reconstruct_transverse_fields(
     LongitudinalScalarKind kind,
     double kc,
     const HomogeneousMedium &medium,
+    bool normalize_transverse_field = false,
+    double area_tolerance = 1e-14);
+
+ReconstructedField2D reconstruct_transverse_fields(
+    const Mesh2D &mesh,
+    const std::vector<double> &psi_nodal,
+    LongitudinalScalarKind kind,
+    double kc,
+    const HomogeneousMedium &medium,
+    ElementAssemblyBackend backend,
     bool normalize_transverse_field = false,
     double area_tolerance = 1e-14);
 

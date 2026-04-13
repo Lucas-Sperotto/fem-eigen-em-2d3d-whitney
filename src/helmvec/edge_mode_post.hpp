@@ -18,6 +18,7 @@
 #include "core/mesh2d.hpp"
 #include "edge/edge_assembly.hpp"
 #include "edge/edge_basis.hpp"
+#include "meshfree/efgmi_2d.hpp"
 #include <array>
 #include <algorithm>
 #include <cmath>
@@ -100,32 +101,63 @@ inline void reconstruct_cell_field_from_edge_mode(
     auto idx_col = [&](int i, int j)
     { return (size_t)j * (size_t)sys.ed.ndof + (size_t)i; };
 
-    for (int tid = 0; tid < (int)mesh.tris.size(); ++tid)
+    if (sys.backend == ElementAssemblyBackend::EfgmiConsistent)
     {
-        const Tri &tri = mesh.tris[(size_t)tid];
-        const TriGeomEdge tg = tri_geom_edge(mesh, tri);
-        const TriEdges &te = sys.ed.tri_edges[(size_t)tid];
-
-        double e_loc[3] = {0.0, 0.0, 0.0};
-        for (int m = 0; m < 3; ++m)
+        const auto ctx = efgmi2d::make_edge_context(mesh, sys.ed);
+        for (int tid = 0; tid < (int)mesh.tris.size(); ++tid)
         {
-            const int eid = te.e[m];
-            const int sgn = te.sgn[m];
-            const int dof = sys.ed.edge_to_dof[(size_t)eid];
-            const double val = (dof >= 0) ? zcol[idx_col(dof, mode_idx)] : 0.0;
-            e_loc[m] = (double)sgn * val;
-        }
+            const TriEdges &te = sys.ed.tri_edges[(size_t)tid];
+            const Tri &tri = mesh.tris[(size_t)tid];
+            const Node2D &n0 = mesh.nodes[(size_t)tri.v[0]];
+            const Node2D &n1 = mesh.nodes[(size_t)tri.v[1]];
+            const Node2D &n2 = mesh.nodes[(size_t)tri.v[2]];
+            const double xc = (n0.x + n1.x + n2.x) / 3.0;
+            const double yc = (n0.y + n1.y + n2.y) / 3.0;
+            const auto edge_basis = efgmi2d::evaluate_triangle_edge_basis(ctx, tid, xc, yc);
 
-        double fx = 0.0;
-        double fy = 0.0;
-        for (int m = 0; m < 3; ++m)
-        {
-            const Vec2 Wm = whitney_W_local(m, tg, lam);
-            fx += e_loc[m] * Wm.x;
-            fy += e_loc[m] * Wm.y;
+            double fx = 0.0;
+            double fy = 0.0;
+            for (int m = 0; m < 3; ++m)
+            {
+                const int dof = sys.ed.edge_to_dof[(size_t)te.e[m]];
+                const double val = (dof >= 0) ? zcol[idx_col(dof, mode_idx)] : 0.0;
+                const double e_loc = static_cast<double>(te.sgn[m]) * val;
+                fx += e_loc * edge_basis.vx[(size_t)m];
+                fy += e_loc * edge_basis.vy[(size_t)m];
+            }
+            cell_vx[(size_t)tid] = fx;
+            cell_vy[(size_t)tid] = fy;
         }
-        cell_vx[(size_t)tid] = fx;
-        cell_vy[(size_t)tid] = fy;
+    }
+    else
+    {
+        for (int tid = 0; tid < (int)mesh.tris.size(); ++tid)
+        {
+            const Tri &tri = mesh.tris[(size_t)tid];
+            const TriGeomEdge tg = tri_geom_edge(mesh, tri);
+            const TriEdges &te = sys.ed.tri_edges[(size_t)tid];
+
+            double e_loc[3] = {0.0, 0.0, 0.0};
+            for (int m = 0; m < 3; ++m)
+            {
+                const int eid = te.e[m];
+                const int sgn = te.sgn[m];
+                const int dof = sys.ed.edge_to_dof[(size_t)eid];
+                const double val = (dof >= 0) ? zcol[idx_col(dof, mode_idx)] : 0.0;
+                e_loc[m] = (double)sgn * val;
+            }
+
+            double fx = 0.0;
+            double fy = 0.0;
+            for (int m = 0; m < 3; ++m)
+            {
+                const Vec2 Wm = whitney_W_local(m, tg, lam);
+                fx += e_loc[m] * Wm.x;
+                fy += e_loc[m] * Wm.y;
+            }
+            cell_vx[(size_t)tid] = fx;
+            cell_vy[(size_t)tid] = fy;
+        }
     }
 
     if (!normalize)

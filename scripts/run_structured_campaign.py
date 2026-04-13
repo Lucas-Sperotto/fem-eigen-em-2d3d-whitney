@@ -544,46 +544,64 @@ def config_specs_for_case(
     if case.case_id in {"helm10_rect", "edge_rect"}:
         return finalize_config_specs(case, [
             ConfigSpec(
-                config_id=f"nx14_ny14_modes{mode_export}",
+                config_id=f"nx10_ny20_modes{mode_export}",
                 label="Primary rectangular 2D run",
                 purposes=("direct_default",),
-                params={"nx": 14, "ny": 14, "mode_export": mode_export},
+                params={"nx": 10, "ny": 20, "mode_export": mode_export},
             )
         ], node_scale)
-    if case.case_id in {"helm10_circle", "helm10_coax", "edge_circle", "edge_coax"}:
+    if case.case_id in {"helm10_circle", "edge_circle"}:
         return finalize_config_specs(case, [
             ConfigSpec(
-                config_id=f"nr10_nt48_modes{mode_export}",
-                label="Primary polar 2D run",
+                config_id=f"nr8_nt15_modes{mode_export}",
+                label="Primary circular 2D run",
                 purposes=("direct_default",),
-                params={"nr": 10, "nt": 48, "mode_export": mode_export},
+                params={"nr": 8, "nt": 15, "mode_export": mode_export},
+            )
+        ], node_scale)
+    if case.case_id in {"helm10_coax", "edge_coax"}:
+        return finalize_config_specs(case, [
+            ConfigSpec(
+                config_id=f"nr10_nt17_modes{mode_export}",
+                label="Primary coaxial 2D run",
+                purposes=("direct_default",),
+                params={"nr": 10, "nt": 17, "mode_export": mode_export},
             )
         ], node_scale)
     if case.case_id == "mixed_rect":
         return finalize_config_specs(case, [
             ConfigSpec(
-                config_id="nx12_ny6",
+                config_id="nx10_ny20",
                 label="Mixed rectangular cutoff run",
                 purposes=("direct_default",),
-                params={"nx": 12, "ny": 6},
+                params={"nx": 10, "ny": 20},
             )
         ], node_scale)
-    if case.case_id in {"mixed_circle", "mixed_coax"}:
+    if case.case_id == "mixed_circle":
         return finalize_config_specs(case, [
             ConfigSpec(
-                config_id="nr10_nt48",
-                label="Mixed polar cutoff run",
+                config_id="nr8_nt15",
+                label="Mixed circular cutoff run",
                 purposes=("direct_default",),
-                params={"nr": 10, "nt": 48},
+                params={"nr": 8, "nt": 15},
+            )
+        ], node_scale)
+    if case.case_id == "mixed_coax":
+        return finalize_config_specs(case, [
+            ConfigSpec(
+                config_id="nr10_nt17",
+                label="Mixed coaxial cutoff run",
+                purposes=("direct_default",),
+                params={"nr": 10, "nt": 17},
             )
         ], node_scale)
     if case.case_id == "helmvec2_rect":
         return finalize_config_specs(case, [
             ConfigSpec(
-                config_id="beta10_nx6_ny6",
+                config_id="beta10_nx20_ny20",
                 label="Figure 11 / Table 8 default run",
                 purposes=("direct_default", "validation_default"),
-                params={"beta": 10.0, "nx": 6, "ny": 6, "legacy_debug": 0},
+                params={"beta": 10.0, "nx": 20, "ny": 20, "legacy_debug": 0},
             )
         ], node_scale)
     if case.case_id == "helmvec3_fig12_rect":

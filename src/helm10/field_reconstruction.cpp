@@ -19,6 +19,7 @@
 #include "helm10/field_reconstruction.hpp"
 
 #include "core/fem_scalar.hpp"
+#include "meshfree/efgmi_2d.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -74,8 +75,25 @@ void compute_checked_smoothed_gradient(
     const std::vector<double> &psi_nodal,
     std::vector<double> &dpsi_dx,
     std::vector<double> &dpsi_dy,
+    ElementAssemblyBackend backend,
     double area_tolerance)
 {
+    if (backend == ElementAssemblyBackend::EfgmiConsistent)
+    {
+        const auto ctx = efgmi2d::make_context(mesh);
+        dpsi_dx.assign(mesh.nodes.size(), 0.0);
+        dpsi_dy.assign(mesh.nodes.size(), 0.0);
+        for (size_t node_id = 0; node_id < mesh.nodes.size(); ++node_id)
+        {
+            const Node2D &node = mesh.nodes[node_id];
+            const auto sample =
+                efgmi2d::evaluate_scalar_field(ctx, psi_nodal, node.x, node.y, false);
+            dpsi_dx[node_id] = sample.dx;
+            dpsi_dy[node_id] = sample.dy;
+        }
+        return;
+    }
+
     dpsi_dx.assign(mesh.nodes.size(), 0.0);
     dpsi_dy.assign(mesh.nodes.size(), 0.0);
     std::vector<double> area_weight_sum(mesh.nodes.size(), 0.0);
@@ -262,6 +280,27 @@ ReconstructedField2D reconstruct_transverse_fields(
     bool normalize_transverse_field,
     double area_tolerance)
 {
+    return reconstruct_transverse_fields(
+        mesh,
+        psi_nodal,
+        kind,
+        kc,
+        medium,
+        ElementAssemblyBackend::ClosedForm,
+        normalize_transverse_field,
+        area_tolerance);
+}
+
+ReconstructedField2D reconstruct_transverse_fields(
+    const Mesh2D &mesh,
+    const std::vector<double> &psi_nodal,
+    LongitudinalScalarKind kind,
+    double kc,
+    const HomogeneousMedium &medium,
+    ElementAssemblyBackend backend,
+    bool normalize_transverse_field,
+    double area_tolerance)
+{
     if (psi_nodal.size() != mesh.nodes.size())
         throw std::runtime_error("psi_nodal.size() deve coincidir com mesh.nodes.size()");
     if (kc < 0.0)
@@ -286,6 +325,7 @@ ReconstructedField2D reconstruct_transverse_fields(
         psi_nodal,
         result.dpsi_dx,
         result.dpsi_dy,
+        backend,
         area_tolerance);
 
     result.ex.assign(mesh.nodes.size(), 0.0);

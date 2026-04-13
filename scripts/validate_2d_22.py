@@ -244,15 +244,15 @@ def parse_args() -> argparse.Namespace:
         default="closed-form",
         help="Backend de montagem a validar (default: closed-form).",
     )
-    ap.add_argument("--rect-nx", type=int, default=12)
-    ap.add_argument("--rect-ny", type=int, default=6)
-    ap.add_argument("--circle-nr", type=int, default=10)
-    ap.add_argument("--circle-nt", type=int, default=48)
+    ap.add_argument("--rect-nx", type=int, default=10)
+    ap.add_argument("--rect-ny", type=int, default=20)
+    ap.add_argument("--circle-nr", type=int, default=8)
+    ap.add_argument("--circle-nt", type=int, default=15)
     ap.add_argument("--coax-nr", type=int, default=10)
-    ap.add_argument("--coax-nt", type=int, default=48)
+    ap.add_argument("--coax-nt", type=int, default=17)
     ap.add_argument("--beta", type=float, default=10.0, help="beta*L for helmvec2_rect.")
-    ap.add_argument("--hv2-nx", type=int, default=6)
-    ap.add_argument("--hv2-ny", type=int, default=6)
+    ap.add_argument("--hv2-nx", type=int, default=20)
+    ap.add_argument("--hv2-ny", type=int, default=20)
     ap.add_argument("--d-over-a", type=float, default=0.20, help="Figure 13 preview parameter for helmvec3_fig13_rect.")
     ap.add_argument("--hv3-nx", type=int, default=10)
     ap.add_argument("--hv3-ny", type=int, default=5)
@@ -282,37 +282,37 @@ def main() -> None:
     for backend in backends:
         out_mixed_rect = run_checked(
             build_dir,
-            ["./mixed_rect", str(args.rect_nx), str(args.rect_ny), "--backend", backend, *debug_args],
+            ["./mixed_rect", "--nx", str(args.rect_nx), "--ny", str(args.rect_ny), "--backend", backend, *debug_args],
             args.verbose,
             args.show_output,
         )
         out_mixed_circle = run_checked(
             build_dir,
-            ["./mixed_circle", str(args.circle_nr), str(args.circle_nt), "--backend", backend, *debug_args],
+            ["./mixed_circle", "--nr", str(args.circle_nr), "--nt", str(args.circle_nt), "--backend", backend, *debug_args],
             args.verbose,
             args.show_output,
         )
         out_mixed_coax = run_checked(
             build_dir,
-            ["./mixed_coax", str(args.coax_nr), str(args.coax_nt), "--backend", backend, *debug_args],
+            ["./mixed_coax", "--nr", str(args.coax_nr), "--nt", str(args.coax_nt), "--backend", backend, *debug_args],
             args.verbose,
             args.show_output,
         )
         out_hv2 = run_checked(
             build_dir,
-            ["./helmvec2_rect", f"{args.beta}", str(args.hv2_nx), str(args.hv2_ny), "0", "--backend", backend, *debug_args],
+            ["./helmvec2_rect", "--beta", f"{args.beta}", "--nx", str(args.hv2_nx), "--ny", str(args.hv2_ny), "--backend", backend, *debug_args],
             args.verbose,
             args.show_output,
         )
         out_hv3_fig12 = run_checked(
             build_dir,
-            ["./helmvec3_fig12_rect", str(args.hv3_nx), str(args.hv3_ny), "0", "--backend", backend, *debug_args],
+            ["./helmvec3_fig12_rect", "--nx", str(args.hv3_nx), "--ny", str(args.hv3_ny), "--backend", backend, *debug_args],
             args.verbose,
             args.show_output,
         )
         out_hv3_fig13 = run_checked(
             build_dir,
-            ["./helmvec3_fig13_rect", f"{args.d_over_a}", str(args.hv3_nx), str(args.hv3_ny), "0", "--backend", backend, *debug_args],
+            ["./helmvec3_fig13_rect", "--d-over-a-preview", f"{args.d_over_a}", "--nx", str(args.hv3_nx), "--ny", str(args.hv3_ny), "--backend", backend, *debug_args],
             args.verbose,
             args.show_output,
         )

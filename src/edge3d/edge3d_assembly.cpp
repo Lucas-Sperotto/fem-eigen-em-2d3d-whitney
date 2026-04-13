@@ -81,70 +81,6 @@ void validate_tet_material_data(
 }
 
 /******************************************************************************/
-/* FUNCAO: build_eq178_local_tet_blocks                                       */
-/* DESCRICAO: Monta os blocos locais Sel/Tel do tetraedro 3D escolhendo entre */
-/* backend por quadratura/cubatura e backend closed-form. No caminho          */
-/* closed-form, esta rotina materializa explicitamente as Eq. (181) e (182),  */
-/* que depois alimentam a Eq. (178).                                          */
-/* ENTRADA: tg: const TetGeomEdge &; eps_r: double; mu_r: double; backend:    */
-/* ElementAssemblyBackend.                                                    */
-/* SAIDA: Eq178TetLocalBlocks3D.                                              */
-/******************************************************************************/
-Eq178TetLocalBlocks3D build_eq178_local_tet_blocks(
-    const TetGeomEdge &tg,
-    double eps_r,
-    double mu_r,
-    ElementAssemblyBackend backend)
-{
-  Eq178TetLocalBlocks3D blk;
-
-  if (backend == ElementAssemblyBackend::ClosedForm)
-  {
-    // Eq. (181)-(182): caminho totalmente explicito via cofatores da Eq. (162)
-    // e coeficientes das Eq. (164)-(172).
-    explicit_tet3d::tet3d_edge_closed_form_eq_181_182(
-        tg,
-        1.0 / mu_r,
-        eps_r,
-        blk.Sel,
-        blk.Tel);
-    return blk;
-  }
-
-  // Eq. (176): bloco curl-curl.
-  // Mesmo no backend "gauss", esse termo e avaliado exatamente porque
-  // curl(W_i) e constante no tetraedro linear.
-  Vec3d curlW[6];
-  for (int m = 0; m < 6; ++m)
-    curlW[m] = whitney_curl_local_3d(m, tg);
-
-  for (int i = 0; i < 6; ++i)
-  {
-    for (int j = 0; j < 6; ++j)
-      blk.Sel[i][j] = (tg.V / mu_r) * dot3(curlW[i], curlW[j]);
-  }
-
-  // Eq. (177): bloco de massa vetorial.
-  // W_i.W_j e polinomio de grau 2; a cubatura tetraedrica de 4 pontos
-  // adotada aqui integra esse termo exatamente.
-  for (const auto &lam : kTetQuadP2)
-  {
-    const double w = tg.V / 4.0;
-    Vec3d W[6];
-    for (int m = 0; m < 6; ++m)
-      W[m] = whitney_W_local_3d(m, tg, lam);
-
-    for (int i = 0; i < 6; ++i)
-    {
-      for (int j = 0; j < 6; ++j)
-        blk.Tel[i][j] += eps_r * w * dot3(W[i], W[j]);
-    }
-  }
-
-  return blk;
-}
-
-/******************************************************************************/
 /* FUNCAO: uniform_data                                                       */
 /* DESCRICAO: Cria vetor de material uniforme por tetraedro para facilitar    */
 /* chamadas com meios homogeneos.                                             */
@@ -185,7 +121,47 @@ void assemble_eq178_global_generic(
     const double eps_r = eps_r_tet[(size_t)tid];
     const double mu_r = mu_r_tet[(size_t)tid];
 
-    const auto blk = build_eq178_local_tet_blocks(tg, eps_r, mu_r, backend);
+    Eq178TetLocalBlocks3D blk;
+    if (backend == ElementAssemblyBackend::ClosedForm)
+    {
+      // Eq. (181)-(182): caminho totalmente explicito via cofatores da Eq. (162)
+      // e coeficientes das Eq. (164)-(172).
+      explicit_tet3d::tet3d_edge_closed_form_eq_181_182(
+          tg,
+          1.0 / mu_r,
+          eps_r,
+          blk.Sel,
+          blk.Tel);
+    }
+    else
+    {
+      // Backend por quadratura de Gauss, inlined para clareza.
+      // Eq. (176): bloco curl-curl.
+      // curl(W_i) e constante no tetraedro linear, entao a integral e exata.
+      Vec3d curlW[6];
+      for (int m = 0; m < 6; ++m)
+        curlW[m] = whitney_curl_local_3d(m, tg);
+
+      for (int i = 0; i < 6; ++i)
+      {
+        for (int j = 0; j < 6; ++j)
+          blk.Sel[i][j] = (tg.V / mu_r) * dot3(curlW[i], curlW[j]);
+      }
+
+      // Eq. (177): bloco de massa vetorial.
+      // W_i.W_j e polinomio de grau 2; a cubatura de 4 pontos e exata.
+      for (const auto &lam : kTetQuadP2)
+      {
+        const double w = tg.V / 4.0;
+        Vec3d W[6];
+        for (int m = 0; m < 6; ++m)
+          W[m] = whitney_W_local_3d(m, tg, lam);
+
+        for (int i = 0; i < 6; ++i)
+          for (int j = 0; j < 6; ++j)
+            blk.Tel[i][j] += eps_r * w * dot3(W[i], W[j]);
+      }
+    }
 
     for (int li = 0; li < 6; ++li)
     {

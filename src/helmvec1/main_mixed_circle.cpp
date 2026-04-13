@@ -201,11 +201,11 @@ int main(int argc, char **argv)
     timing::Breakdown perf_h;
     // Caso circular de referencia para a secao 2.2.2 (blocos escalar+vetorial homogeneos).
     const double r = 1.0;
-    int nr = 10, nt = 48;
+    int nr = 8, nt = 15;
     helmvec1::MixedCliOptions cli;
     const auto print_usage = [](std::ostream &os)
     {
-        os << "Uso: ./mixed_circle [nr nt] [--backend closed-form|gauss]"
+        os << "Uso: ./mixed_circle [nr nt] [--backend closed-form|gauss|efgmi]"
            << " [--debug-local-blocks] [--debug-candidates]\n";
         os << "Aliases nomeados: [--nr NR] [--nt NT]"
            << " (nao misture com os posicionais principais)\n";

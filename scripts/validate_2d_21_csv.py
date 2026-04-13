@@ -41,7 +41,7 @@ CASE_SPECS = (
     CaseSpec(
         case="helm10_rect_table1",
         source_rel=Path("helm10/rect/csv/helm10_rect_modes.csv"),
-        rerun_cmd=("./build/helm10_rect", "--ar-m", "1.0", "--nx", "14", "--ny", "14", "--nmodos", "10"),
+        rerun_cmd=("./build/helm10_rect", "--ar-m", "1.0", "--nx", "10", "--ny", "20", "--nmodos", "10"),
         required_modes=(
             RequiredMode("TE10", "TE", "TE_m1_n0"),
             RequiredMode("TE20", "TE", "TE_m2_n0"),
@@ -59,7 +59,7 @@ CASE_SPECS = (
     CaseSpec(
         case="helm10_circle_table2",
         source_rel=Path("helm10/circle/csv/helm10_circle_modes.csv"),
-        rerun_cmd=("./build/helm10_circle", "--nr", "10", "--nt", "48", "--nmodos", "14"),
+        rerun_cmd=("./build/helm10_circle", "--nr", "8", "--nt", "15", "--nmodos", "10"),
         required_modes=(
             RequiredMode("TE01", "TE", "TE_m0_p1"),
             RequiredMode("TE11", "TE", "TE_m1_p1"),
@@ -78,7 +78,7 @@ CASE_SPECS = (
     CaseSpec(
         case="helm10_coax_table3",
         source_rel=Path("helm10/coax/csv/helm10_coax_modes.csv"),
-        rerun_cmd=("./build/helm10_coax", "--nr", "10", "--nt", "48", "--nmodos", "8"),
+        rerun_cmd=("./build/helm10_coax", "--nr", "10", "--nt", "17", "--nmodos", "10"),
         required_modes=(
             RequiredMode("TE11", "TE", "TE_m1_p1"),
             RequiredMode("TE21", "TE", "TE_m2_p1"),

@@ -428,12 +428,12 @@ def _parse_dims(text: str) -> Dict[str, float]:
 
 def _collect_all_mode_rows(build_dir: Path, mode_export: int, out_root: Path) -> List[ModeRow]:
     runs = [
-        (["./helm10_rect", "14", "14", f"{mode_export}"], "rect", "scalar", "n"),
-        (["./helm10_circle", "10", "48", f"{mode_export}"], "circle", "scalar", "p"),
-        (["./helm10_coax", "10", "48", f"{mode_export}"], "coax", "scalar", "p"),
-        (["./edge_rect", "14", "14", f"{mode_export}"], "rect", "edge", "n"),
-        (["./edge_circle", "10", "48", f"{mode_export}"], "circle", "edge", "p"),
-        (["./edge_coax", "10", "48", f"{mode_export}"], "coax", "edge", "p"),
+        (["./helm10_rect", "--ar-m", "1.0", "--nx", "10", "--ny", "20", "--nmodos", f"{mode_export}"], "rect", "scalar", "n"),
+        (["./helm10_circle", "--nr", "8", "--nt", "15", "--nmodos", f"{mode_export}"], "circle", "scalar", "p"),
+        (["./helm10_coax", "--nr", "10", "--nt", "17", "--nmodos", f"{mode_export}"], "coax", "scalar", "p"),
+        (["./edge_rect", "--nx", "10", "--ny", "20", "--nmodos", f"{mode_export}"], "rect", "edge", "n"),
+        (["./edge_circle", "--nr", "8", "--nt", "15", "--nmodos", f"{mode_export}"], "circle", "edge", "p"),
+        (["./edge_coax", "--nr", "10", "--nt", "17", "--nmodos", f"{mode_export}"], "coax", "edge", "p"),
     ]
     all_rows: List[ModeRow] = []
     env = os.environ.copy()

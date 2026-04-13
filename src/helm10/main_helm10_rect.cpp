@@ -51,9 +51,9 @@ namespace
 struct RectRunConfig
 {
     double ar_m = 1.0;
-    int nx = 14;
-    int ny = 14;
-    int mode_limit = 20;
+    int nx = 10;
+    int ny = 20;
+    int mode_limit = 10;
     bool used_positional_cli = false;
     bool used_legacy_cli = false;
 };
@@ -376,11 +376,11 @@ int main(int argc, char **argv)
     const auto print_usage = [](std::ostream &os)
     {
         os << "Uso preferencial: ./helm10_rect [ar_m [nx [ny [nmodos]]]]"
-           << " [--backend closed-form|gauss]"
+           << " [--backend closed-form|gauss|efgmi]"
            << " [--freq-hz F] [--eps-r E] [--mu-r M]"
            << " [--debug-local-blocks] [--debug-candidates]\n";
         os << "Uso legado ainda aceito: ./helm10_rect [nx ny [nmodos]]"
-           << " [--backend closed-form|gauss]"
+           << " [--backend closed-form|gauss|efgmi]"
            << " [--freq-hz F] [--eps-r E] [--mu-r M]"
            << " [--debug-local-blocks] [--debug-candidates]\n";
         os << "Aliases nomeados: [--ar-m AR] [--nx NX] [--ny NY] [--nmodos M]"
@@ -679,6 +679,7 @@ int main(int argc, char **argv)
                 : helm10::field_reconstruction::LongitudinalScalarKind::TM_Ez,
             kc_fem,
             medium,
+            cli.backend,
             true);
         write_vtk_unstructured_tri_scalar_vector(
             output_paths::file_in(vtk_dir, vtk_name),
@@ -728,6 +729,7 @@ int main(int argc, char **argv)
                     : helm10::field_reconstruction::LongitudinalScalarKind::TM_Ez,
                 kc_fem,
                 medium,
+                cli.backend,
                 false);
 
             ModeExportRecord rec;

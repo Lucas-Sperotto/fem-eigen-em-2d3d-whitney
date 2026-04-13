@@ -15,6 +15,7 @@
 
 #include "helm10_scalar_system.hpp"
 #include "fem_scalar.hpp"
+#include "meshfree/efgmi_2d.hpp"
 #include <algorithm>
 #include <stdexcept>
 
@@ -39,6 +40,74 @@ static std::vector<int> build_dof_map(const Mesh2D &m, ScalarBC bc)
     }
     return map;
 }
+
+namespace
+{
+DenseMat assemble_scalar_matrix_efgmi(
+    const Mesh2D &mesh,
+    const std::vector<int> &dof_map,
+    int ndof,
+    const std::vector<double> &eps_r_tri,
+    const std::vector<double> &mu_r_tri,
+    bool stiffness_matrix)
+{
+    DenseMat out(ndof);
+    const auto ctx = efgmi2d::make_context(mesh, eps_r_tri, mu_r_tri);
+
+    for (int tid = 0; tid < (int)mesh.tris.size(); ++tid)
+    {
+        const Tri &tri = mesh.tris[(size_t)tid];
+        const Node2D &n0 = mesh.nodes[(size_t)tri.v[0]];
+        const Node2D &n1 = mesh.nodes[(size_t)tri.v[1]];
+        const Node2D &n2 = mesh.nodes[(size_t)tri.v[2]];
+        const TriGeom geom = tri_geom(mesh, tri);
+        const double eps_r = eps_r_tri[(size_t)tid];
+        const double mu_r = mu_r_tri[(size_t)tid];
+
+        for (const auto &qp : efgmi2d::kTriQuadP5)
+        {
+            const double x =
+                qp.lambda[0] * n0.x +
+                qp.lambda[1] * n1.x +
+                qp.lambda[2] * n2.x;
+            const double y =
+                qp.lambda[0] * n0.y +
+                qp.lambda[1] * n1.y +
+                qp.lambda[2] * n2.y;
+            const double w = geom.A * qp.weight;
+
+            const auto sample = efgmi2d::evaluate_shape(ctx, x, y, false, -1, tid);
+            for (size_t a = 0; a < sample.node_ids.size(); ++a)
+            {
+                const int I = dof_map[(size_t)sample.node_ids[a]];
+                if (I < 0)
+                    continue;
+
+                for (size_t b = 0; b < sample.node_ids.size(); ++b)
+                {
+                    const int J = dof_map[(size_t)sample.node_ids[b]];
+                    if (J < 0)
+                        continue;
+
+                    if (stiffness_matrix)
+                    {
+                        const double grad_dot =
+                            sample.dphidx[a] * sample.dphidx[b] +
+                            sample.dphidy[a] * sample.dphidy[b];
+                        out(I, J) += (w / mu_r) * grad_dot;
+                    }
+                    else
+                    {
+                        out(I, J) += (w * eps_r) * (sample.phi[a] * sample.phi[b]);
+                    }
+                }
+            }
+        }
+    }
+
+    return out;
+}
+} // namespace
 
 /******************************************************************************/
 /* FUNCAO: build_helm10_scalar_system                                         */
@@ -70,6 +139,15 @@ ScalarSystem build_helm10_scalar_system(
     if (ndof <= 0)
         throw std::runtime_error("ndof invalido.");
 
+    if (backend == ElementAssemblyBackend::EfgmiConsistent)
+    {
+        const std::vector<double> eps_r_tri(mesh.tris.size(), 1.0);
+        const std::vector<double> mu_r_tri(mesh.tris.size(), 1.0);
+        DenseMat S = assemble_scalar_matrix_efgmi(mesh, map, ndof, eps_r_tri, mu_r_tri, true);
+        DenseMat T = assemble_scalar_matrix_efgmi(mesh, map, ndof, eps_r_tri, mu_r_tri, false);
+        return {S, T, ndof, map, backend};
+    }
+
     DenseMat S(ndof), T(ndof);
 
     for (const auto &tri : mesh.tris)
@@ -95,7 +173,7 @@ ScalarSystem build_helm10_scalar_system(
         }
     }
 
-    return {S, T, ndof, map};
+    return {S, T, ndof, map, backend};
 }
 
 
@@ -129,6 +207,13 @@ ScalarSystem build_helm10_scalar_system(
             ndof = std::max(ndof, v + 1);
     if (ndof <= 0)
         throw std::runtime_error("ndof invalido.");
+
+    if (backend == ElementAssemblyBackend::EfgmiConsistent)
+    {
+        DenseMat S = assemble_scalar_matrix_efgmi(mesh, map, ndof, eps_r_tri, mu_r_tri, true);
+        DenseMat T = assemble_scalar_matrix_efgmi(mesh, map, ndof, eps_r_tri, mu_r_tri, false);
+        return {S, T, ndof, map, backend};
+    }
 
     DenseMat S(ndof), T(ndof);
 
@@ -171,5 +256,5 @@ ScalarSystem build_helm10_scalar_system(
         }
     }
 
-    return {S, T, ndof, map};
+    return {S, T, ndof, map, backend};
 }

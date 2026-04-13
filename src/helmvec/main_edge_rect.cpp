@@ -244,13 +244,13 @@ int main(int argc, char **argv)
     const double a = 1.0;
     const double b = 0.5;
 
-    int nx = 14;
-    int ny = 14;
-    int export_modes = 20;
+    int nx = 10;
+    int ny = 20;
+    int export_modes = 10;
     helmvec::EdgeCliOptions cli;
     const auto print_usage = [](std::ostream &os)
     {
-        os << "Uso: ./edge_rect [nx ny [nmodos]] [--backend closed-form|gauss]"
+        os << "Uso: ./edge_rect [nx ny [nmodos]] [--backend closed-form|gauss|efgmi]"
            << " [--debug-local-blocks] [--debug-candidates]\n";
         os << "Aliases nomeados: [--nx NX] [--ny NY] [--nmodos M]"
            << " (nao misture com os posicionais principais)\n";

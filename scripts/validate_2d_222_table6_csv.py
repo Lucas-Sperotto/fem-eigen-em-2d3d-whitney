@@ -75,7 +75,7 @@ CASE_SPECS = (
     CaseSpec(
         case="mixed_rect_table6_E_TE",
         source_rel=Path("helmvec1/rect/csv/mixed_rect_modes.csv"),
-        rerun_cmd=("./build/mixed_rect", "--nx", "12", "--ny", "6"),
+        rerun_cmd=("./build/mixed_rect", "--nx", "10", "--ny", "20"),
         required_modes=TABLE6_E_TE_MODES,
         required_columns=("n",),
         expected_count=8,
@@ -83,7 +83,7 @@ CASE_SPECS = (
     CaseSpec(
         case="mixed_rect_table6_H_TE",
         source_rel=Path("helmvec1/rect/csv/mixed_rect_modes.csv"),
-        rerun_cmd=("./build/mixed_rect", "--nx", "12", "--ny", "6"),
+        rerun_cmd=("./build/mixed_rect", "--nx", "10", "--ny", "20"),
         required_modes=TABLE6_H_TE_MODES,
         required_columns=("n",),
         expected_count=8,
@@ -91,7 +91,7 @@ CASE_SPECS = (
     CaseSpec(
         case="mixed_rect_table6_E_TM",
         source_rel=Path("helmvec1/rect/csv/mixed_rect_modes.csv"),
-        rerun_cmd=("./build/mixed_rect", "--nx", "12", "--ny", "6"),
+        rerun_cmd=("./build/mixed_rect", "--nx", "10", "--ny", "20"),
         required_modes=TABLE6_E_TM_MODES,
         required_columns=("n",),
         expected_count=4,
@@ -99,7 +99,7 @@ CASE_SPECS = (
     CaseSpec(
         case="mixed_rect_table6_H_TM",
         source_rel=Path("helmvec1/rect/csv/mixed_rect_modes.csv"),
-        rerun_cmd=("./build/mixed_rect", "--nx", "12", "--ny", "6"),
+        rerun_cmd=("./build/mixed_rect", "--nx", "10", "--ny", "20"),
         required_modes=TABLE6_H_TM_MODES,
         required_columns=("n",),
         expected_count=4,

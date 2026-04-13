@@ -243,12 +243,12 @@ int main(int argc, char **argv)
     timing::Stopwatch total_watch;
     const double r = 1.0;
     int nr = 8;
-    int nt = 48;
-    int export_modes = 20;
+    int nt = 15;
+    int export_modes = 10;
     helmvec::EdgeCliOptions cli;
     const auto print_usage = [](std::ostream &os)
     {
-        os << "Uso: ./edge_circle [nr nt [nmodos]] [--backend closed-form|gauss]"
+        os << "Uso: ./edge_circle [nr nt [nmodos]] [--backend closed-form|gauss|efgmi]"
            << " [--debug-local-blocks] [--debug-candidates]\n";
         os << "Aliases nomeados: [--nr NR] [--nt NT] [--nmodos M]"
            << " (nao misture com os posicionais principais)\n";

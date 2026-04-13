@@ -17,8 +17,8 @@ Eles devem ser lidos junto com:
 Ao rodar:
 
 ```bash
-./build/helmvec3_fig12_rect 10 5 --backend closed-form
-./build/helmvec3_fig13_rect 0.20 10 5 --backend closed-form
+./build/helmvec3_fig12_rect --nx 10 --ny 5 --backend closed-form
+./build/helmvec3_fig13_rect --d-over-a-preview 0.20 --nx 10 --ny 5 --backend closed-form
 ```
 
 o projeto grava em:

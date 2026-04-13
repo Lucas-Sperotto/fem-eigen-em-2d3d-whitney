@@ -209,27 +209,27 @@ Convenio do caso retangular:
 - `ar_m`: largura do guia retangular em metros; padrao `1.0`;
 - `b = ar/2`, mantendo a razao didatica `a_r / b_r = 2`;
 - `nmodos`: quantidade de modos TE e quantidade de modos TM exportados;
-- se `nmodos` nao for informado, o padrao publico agora e `20`.
+- se `nmodos` nao for informado, o padrao publico agora e `10`.
 
 Circular:
 
 ```bash
 ./build/helm10_circle
-./build/helm10_circle 10 48 20
+./build/helm10_circle 8 15 10
 ```
 
 Coaxial:
 
 ```bash
 ./build/helm10_coax
-./build/helm10_coax 10 48 20
+./build/helm10_coax 10 17 10
 ```
 
 Convenio dos casos circular e coaxial:
 
 - `nr`, `nt`: discretizacao radial/angular da malha;
 - `nmodos`: quantidade de modos TE e quantidade de modos TM exportados;
-- se `nmodos` nao for informado, o padrao publico agora tambem e `20`.
+- se `nmodos` nao for informado, o padrao publico agora tambem e `10`.
 
 Exemplo didatico isolado:
 

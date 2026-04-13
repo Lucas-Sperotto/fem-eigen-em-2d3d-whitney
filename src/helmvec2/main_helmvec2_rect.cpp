@@ -227,13 +227,13 @@ int main(int argc, char **argv)
     // Secao 2.2.3.5 / Figura 11: quadrado, parte superior eps=1.0 e inferior eps=1.5.
     // Objetivo: reproduzir Tabela 8 com beta fixo e extrair k0L dos modos LSM.
     const double L = 1.0;
-    int nx = 6, ny = 6; // 72 triangles
+    int nx = 20, ny = 20; // 800 triangles
     double beta = 10.0; // beta*L = 10
     helmvec2::CoupledCliOptions cli;
     const auto print_usage = [](std::ostream &os)
     {
         os << "Uso: ./helmvec2_rect [beta [nx ny [debug]]]"
-           << " [--backend closed-form|gauss]"
+           << " [--backend closed-form|gauss|efgmi]"
            << " [--debug-local-blocks] [--debug-candidates]\n";
         os << "Aliases nomeados: [--beta BETA] [--nx NX] [--ny NY]"
            << " (nao misture com os posicionais principais)\n";

@@ -205,11 +205,11 @@ int main(int argc, char **argv)
     // Caso coaxial de referencia para a secao 2.2.2 (blocos escalar+vetorial homogeneos).
     const double r1 = 1.0;
     const double r2 = 4.0;
-    int nr = 10, nt = 48;
+    int nr = 10, nt = 17;
     helmvec1::MixedCliOptions cli;
     const auto print_usage = [](std::ostream &os)
     {
-        os << "Uso: ./mixed_coax [nr nt] [--backend closed-form|gauss]"
+        os << "Uso: ./mixed_coax [nr nt] [--backend closed-form|gauss|efgmi]"
            << " [--debug-local-blocks] [--debug-candidates]\n";
         os << "Aliases nomeados: [--nr NR] [--nt NT]"
            << " (nao misture com os posicionais principais)\n";

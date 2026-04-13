@@ -17,9 +17,12 @@
 #include "helmvec2_coupled_system.hpp"
 #include "edge/edge_basis.hpp"
 #include "explicit/tri2d_coupled_explicit.hpp"
+#include "meshfree/efgmi_2d.hpp"
 #include <array>
 #include <cmath>
+#include <cstdlib>
 #include <stdexcept>
+#include <string>
 #include <utility>
 
 namespace
@@ -32,6 +35,18 @@ constexpr std::array<std::array<double, 3>, 3> kTriQuadP2 = {{
     {1.0 / 6.0, 2.0 / 3.0, 1.0 / 6.0},
     {1.0 / 6.0, 1.0 / 6.0, 2.0 / 3.0},
 }};
+
+inline ElementAssemblyBackend scalar_backend_for_mixed(ElementAssemblyBackend backend)
+{
+    return backend;
+}
+
+inline ElementAssemblyBackend vector_backend_for_mixed(ElementAssemblyBackend backend)
+{
+    if (backend == ElementAssemblyBackend::EfgmiConsistent)
+        return ElementAssemblyBackend::ClosedForm;
+    return backend;
+}
 
 struct CoupledContextE
 {
@@ -166,6 +181,8 @@ CoupledContextE build_context_E(
     ElementAssemblyBackend backend)
 {
     validate_tri_data(mesh, eps_r_tri, mu_r_tri);
+    const ElementAssemblyBackend edge_backend = vector_backend_for_mixed(backend);
+    const ElementAssemblyBackend scalar_backend = scalar_backend_for_mixed(backend);
 
     CoupledContextE ctx;
     ctx.edge = build_helm10_edge_system(
@@ -173,20 +190,20 @@ CoupledContextE build_context_E(
         EdgeBC::TE_PEC_TangentialZero,
         eps_r_tri,
         mu_r_tri,
-        backend);
+        edge_backend);
     ctx.scal = build_helm10_scalar_system(
         mesh,
         ScalarBC::TM_Dirichlet,
         eps_r_tri,
         mu_r_tri,
-        backend);
+        scalar_backend);
     ctx.nt = ctx.edge.ed.ndof;
     ctx.nz = ctx.scal.ndof;
     ctx.mt_muinv = build_edge_mass_with_inverse_mu(
         mesh,
         EdgeBC::TE_PEC_TangentialZero,
         mu_r_tri,
-        backend);
+        edge_backend);
     return ctx;
 }
 
@@ -289,9 +306,66 @@ void assemble_coupling_block_C_named(
     const Mesh2D &mesh,
     const EdgeDofs &ed,
     const std::vector<int> &node_to_dof,
+    const std::vector<double> &eps_r_tri,
     const std::vector<double> &mu_r_tri,
     ElementAssemblyBackend backend)
 {
+    if (backend == ElementAssemblyBackend::EfgmiConsistent)
+    {
+        const auto scalar_ctx = efgmi2d::make_context(mesh, eps_r_tri, mu_r_tri);
+        for (int tid = 0; tid < (int)mesh.tris.size(); ++tid)
+        {
+            const Tri &tri = mesh.tris[(size_t)tid];
+            const Node2D &n0 = mesh.nodes[(size_t)tri.v[0]];
+            const Node2D &n1 = mesh.nodes[(size_t)tri.v[1]];
+            const Node2D &n2 = mesh.nodes[(size_t)tri.v[2]];
+            const TriEdges &te = ed.tri_edges[(size_t)tid];
+            const TriGeom geom = tri_geom(mesh, tri);
+            const TriGeomEdge tg = tri_geom_edge(mesh, tri);
+            const double inv_mu = 1.0 / mu_r_tri[(size_t)tid];
+
+            for (const auto &qp : efgmi2d::kTriQuadP5)
+            {
+                const double x =
+                    qp.lambda[0] * n0.x +
+                    qp.lambda[1] * n1.x +
+                    qp.lambda[2] * n2.x;
+                const double y =
+                    qp.lambda[0] * n0.y +
+                    qp.lambda[1] * n1.y +
+                    qp.lambda[2] * n2.y;
+                const double w = inv_mu * geom.A * qp.weight;
+
+                const auto nodal_sample = efgmi2d::evaluate_shape(scalar_ctx, x, y, false, -1, tid);
+                std::array<Vec2, 3> W{};
+                for (int m = 0; m < 3; ++m)
+                    W[(size_t)m] = whitney_W_local(m, tg, qp.lambda);
+
+                for (int a = 0; a < 3; ++a)
+                {
+                    const int I = ed.edge_to_dof[(size_t)te.e[a]];
+                    if (I < 0)
+                        continue;
+                    const double edge_sign = static_cast<double>(te.sgn[a]);
+
+                    for (size_t b = 0; b < nodal_sample.node_ids.size(); ++b)
+                    {
+                        const int J = node_to_dof[(size_t)nodal_sample.node_ids[b]];
+                        if (J < 0)
+                            continue;
+
+                        const double cij = w *
+                                           (W[(size_t)a].x * nodal_sample.dphidx[b] +
+                                            W[(size_t)a].y * nodal_sample.dphidy[b]);
+                        top_right(I, J) += coeff_top_right * edge_sign * cij;
+                        bottom_left(J, I) += coeff_bottom_left * edge_sign * cij;
+                    }
+                }
+            }
+        }
+        return;
+    }
+
     // Monta o bloco C e seu acoplamento transposto com orientacao:
     //   C_mj = int (1/mu_r) W_m . grad(N_j) dA
     // e escreve explicitamente:
@@ -618,20 +692,44 @@ void apply_beta_diag_variant(
     CoupledBetaDiagVariant diag_variant)
 {
     const double k02 = k0 * k0;
+    const auto parse_env_real = [](const char *name, double fallback) -> double
+    {
+        const char *raw = std::getenv(name);
+        if (raw == nullptr || std::string(raw).empty())
+            return fallback;
+        try
+        {
+            return std::stod(std::string(raw));
+        }
+        catch (const std::exception &)
+        {
+            throw std::runtime_error(std::string("Valor invalido em ") + name + ": " + raw);
+        }
+    };
     const auto set_qtt_eps_mass = [&]()
     {
         out.Q_tt = DenseMat(out.nt);
         add_block_scaled(out.Q_tt, 0, 0, out.edge.T, -1.0);
+    };
+    const auto set_qtt_blend = [&](double weight_eps_mass)
+    {
+        out.Q_tt = DenseMat(out.nt);
+        add_block_scaled(out.Q_tt, 0, 0, ctx.mt_muinv, -(1.0 - weight_eps_mass));
+        add_block_scaled(out.Q_tt, 0, 0, out.edge.T, -weight_eps_mass);
     };
     const auto set_pzz_double = [&]()
     {
         out.P_zz = DenseMat(out.nz);
         add_block_scaled(out.P_zz, 0, 0, out.scal.T, +(2.0 * k02));
     };
-    const auto set_qzz_half = [&]()
+    const auto set_qzz_scale = [&](double scale)
     {
         out.Q_zz = DenseMat(out.nz);
-        add_block_scaled(out.Q_zz, 0, 0, out.scal.S, +0.5);
+        add_block_scaled(out.Q_zz, 0, 0, out.scal.S, +scale);
+    };
+    const auto set_qzz_half = [&]()
+    {
+        set_qzz_scale(0.5);
     };
 
     if (diag_variant == CoupledBetaDiagVariant::Baseline)
@@ -692,6 +790,19 @@ void apply_beta_diag_variant(
     {
         set_qtt_eps_mass();
         set_qzz_half();
+        return;
+    }
+
+    if (diag_variant == CoupledBetaDiagVariant::DiagParametricQttQzz)
+    {
+        const double qtt_blend = parse_env_real("TP3485_HELMVEC3_DIAG_QTT_BLEND", 0.0);
+        const double qzz_scale = parse_env_real("TP3485_HELMVEC3_DIAG_QZZ_SCALE", 1.0);
+        if (!(qtt_blend >= 0.0 && qtt_blend <= 1.0))
+            throw std::runtime_error("TP3485_HELMVEC3_DIAG_QTT_BLEND deve estar em [0,1].");
+        if (!(qzz_scale > 0.0))
+            throw std::runtime_error("TP3485_HELMVEC3_DIAG_QZZ_SCALE deve ser positivo.");
+        set_qtt_blend(qtt_blend);
+        set_qzz_scale(qzz_scale);
         return;
     }
 
@@ -769,6 +880,7 @@ CoupledWaveNumberSystem build_coupled_wavenumber_system_E(
         mesh,
         out.edge.ed,
         out.scal.dof_map,
+        eps_r_tri,
         mu_r_tri,
         backend);
 
@@ -869,6 +981,7 @@ CoupledBetaSystem build_coupled_beta_system_E(
         mesh,
         out.edge.ed,
         out.scal.dof_map,
+        eps_r_tri,
         mu_r_tri,
         backend);
 

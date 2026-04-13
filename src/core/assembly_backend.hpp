@@ -24,7 +24,8 @@
 enum class ElementAssemblyBackend
 {
     ClosedForm,
-    GaussianQuadrature
+    GaussianQuadrature,
+    EfgmiConsistent
 };
 
 /******************************************************************************/
@@ -42,6 +43,8 @@ inline const char *element_assembly_backend_name(ElementAssemblyBackend backend)
             return "closed-form";
         case ElementAssemblyBackend::GaussianQuadrature:
             return "gauss";
+        case ElementAssemblyBackend::EfgmiConsistent:
+            return "efgmi";
     }
     return "desconhecido";
 }
@@ -101,6 +104,15 @@ inline ElementAssemblyBackend parse_element_assembly_backend(const std::string &
         return ElementAssemblyBackend::GaussianQuadrature;
     }
 
+    if (normalized == "efgmi" ||
+        normalized == "meshfree" ||
+        normalized == "consistency" ||
+        normalized == "consistent" ||
+        normalized == "efgmiconsistent")
+    {
+        return ElementAssemblyBackend::EfgmiConsistent;
+    }
+
     throw std::runtime_error(
-        "backend invalido: use 'closed-form' ou 'gauss'.");
+        "backend invalido: use 'closed-form', 'gauss' ou 'efgmi'.");
 }

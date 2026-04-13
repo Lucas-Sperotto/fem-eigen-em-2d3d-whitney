@@ -37,6 +37,7 @@ struct ScalarSystem
     DenseMat T;
     int ndof = 0;
     std::vector<int> dof_map; // node -> dof (>=0) ou -1 eliminado
+    ElementAssemblyBackend backend = ElementAssemblyBackend::ClosedForm;
 };
 
 /******************************************************************************/

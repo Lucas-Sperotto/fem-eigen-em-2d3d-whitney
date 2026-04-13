@@ -32,6 +32,7 @@ struct EdgeSystem
 {
   DenseMat S, T;
   EdgeDofs ed;
+  ElementAssemblyBackend backend = ElementAssemblyBackend::ClosedForm;
 };
 
 // Material homogeneo; usa a politica padrao de DOFs de aresta.

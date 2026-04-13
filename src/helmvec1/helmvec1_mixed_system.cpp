@@ -19,6 +19,18 @@
 
 namespace
 {
+inline ElementAssemblyBackend scalar_backend_for_mixed(ElementAssemblyBackend backend)
+{
+    return backend;
+}
+
+inline ElementAssemblyBackend vector_backend_for_mixed(ElementAssemblyBackend backend)
+{
+    if (backend == ElementAssemblyBackend::EfgmiConsistent)
+        return ElementAssemblyBackend::ClosedForm;
+    return backend;
+}
+
 /******************************************************************************/
 /* FUNCAO: load_named_eq92_blocks_from_subsystems                             */
 /* DESCRICAO: Copia, com nomes explicitos da Eq. (92), os blocos locais ja    */
@@ -66,31 +78,18 @@ MixedSystem92 build_system92_E(
     ElementAssemblyBackend backend)
 {
     MixedSystem92 ms;
-
-    // Formulacao E da Secao 2.2.2:
-    //   Eq. (88): Sel(t) = (1/mu_r) * curl-curl
-    //            (na pratica, reaproveita Eq. (66) no bloco edge)
-    //   Eq. (90): Tel(t) = eps_r * massa vetorial
-    //            (na pratica, reaproveita Eq. (67) no bloco edge)
-    // com Et tangencial nulo no contorno PEC.
     ms.edge = build_helm10_edge_system(
         mesh,
         EdgeBC::TE_PEC_TangentialZero,
         eps_r_tri,
         mu_r_tri,
-        backend);
-
-    // Bloco longitudinal escalar para Ez com Dirichlet homogenea em PEC:
-    //   Eq. (89): Sel(z) = (1/mu_r) * grad-grad
-    //   Eq. (91): Tel(z) = eps_r * massa escalar
-    // com reaproveitamento das Eq. (31) e (33) do bloco escalar.
+        vector_backend_for_mixed(backend));
     ms.scal = build_helm10_scalar_system(
         mesh,
         ScalarBC::TM_Dirichlet,
         eps_r_tri,
         mu_r_tri,
-        backend);
-
+        scalar_backend_for_mixed(backend));
     load_named_eq92_blocks_from_subsystems(ms);
     assemble_eq92_global_from_named_blocks(ms);
     return ms;
@@ -112,29 +111,18 @@ MixedSystem92 build_system92_H(
     ElementAssemblyBackend backend)
 {
     MixedSystem92 ms;
-
-    // Formulacao H (dual da formulacao E):
-    //   Eq. (88)-(91) com troca constitutiva E<->H:
-    //   S ~ (1/eps_r) * curl-curl / grad-grad
-    //   T ~ mu_r * massa vetorial / massa escalar
-    // Reuso do mesmo montador trocando os vetores de material:
-    //   eps_proxy <- mu_r_tri
-    //   mu_proxy  <- eps_r_tri
     ms.edge = build_helm10_edge_system(
         mesh,
         EdgeBC::TM_PEC_NormalZero,
-        /*eps_proxy*/ mu_r_tri,
-        /*mu_proxy */ eps_r_tri,
-        backend);
-
-    // Bloco escalar dual (Hz) com condicao natural de Neumann.
+        mu_r_tri,
+        eps_r_tri,
+        vector_backend_for_mixed(backend));
     ms.scal = build_helm10_scalar_system(
         mesh,
         ScalarBC::TE_Neumann,
-        /*eps_proxy*/ mu_r_tri,
-        /*mu_proxy */ eps_r_tri,
-        backend);
-
+        mu_r_tri,
+        eps_r_tri,
+        scalar_backend_for_mixed(backend));
     load_named_eq92_blocks_from_subsystems(ms);
     assemble_eq92_global_from_named_blocks(ms);
     return ms;

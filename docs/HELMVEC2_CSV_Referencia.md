@@ -16,7 +16,7 @@ Eles devem ser lidos junto com:
 Ao rodar:
 
 ```bash
-./build/helmvec2_rect 10 6 6 --backend closed-form
+./build/helmvec2_rect --beta 10 --nx 20 --ny 20 --backend closed-form
 ```
 
 o projeto grava em:

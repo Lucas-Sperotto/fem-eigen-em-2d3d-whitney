@@ -218,12 +218,11 @@ inline Tri2DCoupledBetaLocalBlocks tri2d_beta_closed_form_eq_137_142(
         for (int n = 0; n < 3; ++n)
         {
             // Eq. (137): Sel(tt) = (1/mu) curl-curl - k0^2 eps_r massa_t.
-            blk.Sel_tt[m][n] =
-                inv_mu * tri2d_edge_curlcurl_entry_eq_66(edge, m, n) -
-                k02 * eps_r * tri2d_edge_mass_entry_eq_67(edge, m, n);
+        
+            blk.Sel_tt[m][n] = inv_mu * tri2d_edge_curlcurl_entry_eq_66(edge, m, n) - k02 * eps_r * tri2d_edge_mass_entry_eq_67(edge, m, n);
 
-            // Eq. (141): Tel(tt) = eps_r * massa_t.
-            blk.Tel_tt[m][n] = eps_r * tri2d_edge_mass_entry_eq_67(edge, m, n);
+            // Eq. (141): Tel(tt) = (1/mu) * massa_t.
+            blk.Tel_tt[m][n] = inv_mu * tri2d_edge_mass_entry_eq_67(edge, m, n);
         }
     }
 
@@ -248,9 +247,9 @@ inline Tri2DCoupledBetaLocalBlocks tri2d_beta_closed_form_eq_137_142(
             // Eq. (140): Sel(zz) = (1/mu) grad-grad escalar.
             blk.Sel_zz[i][j] = inv_mu * scalar_sel[i][j];
 
-            // Eq. (142): Tel(zz) = (1/mu) grad-grad + k0^2 eps_r massa_z.
+            // Eq. (142): Tel(zz) = (1/mu) grad-grad - k0^2 eps_r massa_z.
             blk.Tel_zz[i][j] =
-                inv_mu * scalar_sel[i][j] +
+                inv_mu * scalar_sel[i][j] -
                 k02 * eps_r * scalar_tel[i][j];
         }
     }
@@ -274,9 +273,7 @@ inline Tri2DCoupledBetaRearrangedLocalBlocks tri2d_beta_rearranged_closed_form_e
     double mu_r)
 {
     Tri2DCoupledBetaRearrangedLocalBlocks blk136;
-    const double inv_mu = 1.0 / mu_r;
     const auto blk = tri2d_beta_closed_form_eq_137_142(tg, k0, eps_r, mu_r);
-    const Tri2DEdgeClosedFormData edge = tri2d_edge_closed_form_data(tg);
 
     for (int m = 0; m < 3; ++m)
     {
@@ -287,7 +284,7 @@ inline Tri2DCoupledBetaRearrangedLocalBlocks tri2d_beta_rearranged_closed_form_e
 
             // Forma validada do repositorio para a Eq. (136):
             // Q_tt = -(1/mu_r) * M_t
-            blk136.Q_tt[m][n] = -inv_mu * tri2d_edge_mass_entry_eq_67(edge, m, n);
+            blk136.Q_tt[m][n] = -blk.Tel_tt[m][n];
         }
     }
 
@@ -309,8 +306,8 @@ inline Tri2DCoupledBetaRearrangedLocalBlocks tri2d_beta_rearranged_closed_form_e
             blk136.Q_zz[i][j] = blk.Sel_zz[i][j];
 
             // Isola apenas a parcela k0^2 eps_r M_z para P_zz:
-            //   Tel(zz) - Sel(zz) = k0^2 eps_r M_z
-            blk136.P_zz[i][j] = blk.Tel_zz[i][j] - blk.Sel_zz[i][j];
+            //   Sel(zz) - Tel(zz) = k0^2 eps_r M_z
+            blk136.P_zz[i][j] = blk.Sel_zz[i][j] - blk.Tel_zz[i][j];
         }
     }
 

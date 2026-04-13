@@ -6,7 +6,7 @@ BUILD_DIR="$ROOT_DIR/build"
 OUT_DIR="$ROOT_DIR/out"
 BUILD_TYPE="Release"
 PROFILE="quick"
-MODE_EXPORT=8
+MODE_EXPORT=10
 BACKEND="closed-form"
 SKIP_VALIDATE=0
 SKIP_IMAGES=0
@@ -53,8 +53,8 @@ Options:
   --build-type <type>    CMake build type (default: Release)
   --jobs <N>             Parallel build jobs (default: nproc)
   --profile <quick|full> Profile for validate_3d_31.py (default: quick)
-  --mode-export <N>      Number of exported 2D modes per TE/TM block (default: 8)
-  --backend <name>       Backend: closed-form|gauss (default: closed-form)
+  --mode-export <N>      Number of exported 2D modes per TE/TM block (default: 10)
+  --backend <name>       Backend: closed-form|gauss|efgmi (default: closed-form)
   --case <id>            Run only selected section/case (repeatable)
   --log-file <path>      Write console log to file (default: <out-dir>/run_all.log)
   --no-log               Disable log file output
@@ -295,8 +295,13 @@ if [[ "$PROFILE" != "quick" && "$PROFILE" != "full" ]]; then
   exit 2
 fi
 
-if [[ "$BACKEND" != "gauss" && "$BACKEND" != "closed-form" ]]; then
-  echo "Invalid --backend: $BACKEND (expected gauss|closed-form)" >&2
+if [[ "$BACKEND" != "gauss" && "$BACKEND" != "closed-form" && "$BACKEND" != "efgmi" ]]; then
+  echo "Invalid --backend: $BACKEND (expected gauss|closed-form|efgmi)" >&2
+  exit 2
+fi
+
+if [[ "$BACKEND" == "efgmi" && "$SKIP_3D" -eq 0 ]]; then
+  echo "Backend efgmi esta disponivel apenas para os casos 2D; use --skip-3d no fluxo canonico." >&2
   exit 2
 fi
 
@@ -414,36 +419,40 @@ if [[ "$RUN_21" -eq 1 || "$RUN_221" -eq 1 || "$RUN_222" -eq 1 || "$RUN_223" -eq 
       if [[ "$HELM10_RECT_MODES" -lt 10 ]]; then
         HELM10_RECT_MODES=10
       fi
-      if [[ "$HELM10_CIRCLE_MODES" -lt 14 ]]; then
-        HELM10_CIRCLE_MODES=14
+      if [[ "$HELM10_CIRCLE_MODES" -lt 10 ]]; then
+        HELM10_CIRCLE_MODES=10
       fi
-      if [[ "$HELM10_COAX_MODES" -lt 8 ]]; then
-        HELM10_COAX_MODES=8
+      if [[ "$HELM10_COAX_MODES" -lt 10 ]]; then
+        HELM10_COAX_MODES=10
       fi
-      run ./helm10_rect --ar-m 1.0 --nx 14 --ny 14 --nmodos "$HELM10_RECT_MODES" --backend "$BACKEND" "${DEBUG_ARGS[@]}"
-      run ./helm10_circle --nr 10 --nt 48 --nmodos "$HELM10_CIRCLE_MODES" --backend "$BACKEND" "${DEBUG_ARGS[@]}"
-      run ./helm10_coax --nr 10 --nt 48 --nmodos "$HELM10_COAX_MODES" --backend "$BACKEND" "${DEBUG_ARGS[@]}"
+      run ./helm10_rect --ar-m 1.0 --nx 10 --ny 20 --nmodos "$HELM10_RECT_MODES" --backend "$BACKEND" "${DEBUG_ARGS[@]}"
+      run ./helm10_circle --nr 8 --nt 15 --nmodos "$HELM10_CIRCLE_MODES" --backend "$BACKEND" "${DEBUG_ARGS[@]}"
+      run ./helm10_coax --nr 10 --nt 17 --nmodos "$HELM10_COAX_MODES" --backend "$BACKEND" "${DEBUG_ARGS[@]}"
     fi
 
     if [[ "$RUN_221" -eq 1 ]]; then
-      run ./edge_rect --nx 14 --ny 14 --nmodos 20 --backend "$BACKEND" "${DEBUG_ARGS[@]}"
-      run ./edge_circle --nr 10 --nt 48 --nmodos 20 --backend "$BACKEND" "${DEBUG_ARGS[@]}"
-      run ./edge_coax 10 48 "$MODE_EXPORT" --backend "$BACKEND" "${DEBUG_ARGS[@]}"
+      EDGE_MODES="$MODE_EXPORT"
+      if [[ "$EDGE_MODES" -lt 10 ]]; then
+        EDGE_MODES=10
+      fi
+      run ./edge_rect --nx 10 --ny 20 --nmodos "$EDGE_MODES" --backend "$BACKEND" "${DEBUG_ARGS[@]}"
+      run ./edge_circle --nr 8 --nt 15 --nmodos "$EDGE_MODES" --backend "$BACKEND" "${DEBUG_ARGS[@]}"
+      run ./edge_coax --nr 10 --nt 17 --nmodos "$EDGE_MODES" --backend "$BACKEND" "${DEBUG_ARGS[@]}"
     fi
 
     if [[ "$RUN_222" -eq 1 ]]; then
-      run ./mixed_rect 12 6 --backend "$BACKEND" "${DEBUG_ARGS[@]}"
-      run ./mixed_circle 10 48 --backend "$BACKEND" "${DEBUG_ARGS[@]}"
-      run ./mixed_coax 10 48 --backend "$BACKEND" "${DEBUG_ARGS[@]}"
+      run ./mixed_rect --nx 10 --ny 20 --backend "$BACKEND" "${DEBUG_ARGS[@]}"
+      run ./mixed_circle --nr 8 --nt 15 --backend "$BACKEND" "${DEBUG_ARGS[@]}"
+      run ./mixed_coax --nr 10 --nt 17 --backend "$BACKEND" "${DEBUG_ARGS[@]}"
     fi
 
     if [[ "$RUN_223" -eq 1 ]]; then
-      run ./helmvec2_rect 10 6 6 --backend "$BACKEND" "${DEBUG_ARGS[@]}"
+      run ./helmvec2_rect --beta 10 --nx 20 --ny 20 --backend "$BACKEND" "${DEBUG_ARGS[@]}"
     fi
 
     if [[ "$RUN_224" -eq 1 ]]; then
-      run ./helmvec3_fig12_rect 10 5 --backend "$BACKEND" "${DEBUG_ARGS[@]}"
-      run ./helmvec3_fig13_rect 0.20 10 5 --backend "$BACKEND" "${DEBUG_ARGS[@]}"
+      run ./helmvec3_fig12_rect --nx 10 --ny 5 --backend "$BACKEND" "${DEBUG_ARGS[@]}"
+      run ./helmvec3_fig13_rect --d-over-a-preview 0.20 --nx 10 --ny 5 --backend "$BACKEND" "${DEBUG_ARGS[@]}"
     fi
   )
 else
@@ -485,13 +494,17 @@ if [[ "$SKIP_VALIDATE" -eq 0 ]]; then
     VALIDATE_OUTPUT_ARGS+=("--show-output")
   fi
 
-  log "Running 2D validation..."
-  run python3 "$ROOT_DIR/scripts/validate_2d_22.py" \
-    --build-dir "$BUILD_DIR" \
-    --backend "$BACKEND" \
-    --out-csv "$OUT_DIR/validation/validation_2d_22.csv" \
-    "${VALIDATE_OUTPUT_ARGS[@]}" \
-    "${DEBUG_ARGS[@]}"
+  if [[ "$RUN_222" -eq 1 && "$RUN_223" -eq 1 && "$RUN_224" -eq 1 ]]; then
+    log "Running 2D validation..."
+    run python3 "$ROOT_DIR/scripts/validate_2d_22.py" \
+      --build-dir "$BUILD_DIR" \
+      --backend "$BACKEND" \
+      --out-csv "$OUT_DIR/validation/validation_2d_22.csv" \
+      "${VALIDATE_OUTPUT_ARGS[@]}" \
+      "${DEBUG_ARGS[@]}"
+  else
+    log "Skipping combined 2D validation (validation_2d_22.csv) because 2.2.2, 2.2.3 and 2.2.4 were not all selected."
+  fi
 
   if [[ "$RUN_21" -eq 1 ]]; then
     log "Running 2.1 CSV-based validation..."
@@ -630,7 +643,9 @@ run python3 "$ROOT_DIR/scripts/generate_results_md.py" \
 log "Pipeline completed."
 log "Main outputs:"
 if [[ "$SKIP_VALIDATE" -eq 0 ]]; then
-  printf '  - %s\n' "$OUT_DIR/validation/validation_2d_22.csv"
+  if [[ -f "$OUT_DIR/validation/validation_2d_22.csv" ]]; then
+    printf '  - %s\n' "$OUT_DIR/validation/validation_2d_22.csv"
+  fi
   if [[ -f "$OUT_DIR/validation/validation_2d_21.csv" ]]; then
     printf '  - %s\n' "$OUT_DIR/validation/validation_2d_21.csv"
   fi

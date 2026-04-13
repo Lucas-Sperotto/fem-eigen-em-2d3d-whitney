@@ -119,7 +119,7 @@ $$
 Para uma cavidade delimitada por um **condutor elétrico perfeito (PEC)**:
 
 👉 o campo elétrico tangencial na superfície é nulo
-👉 a função teste $\mathbf{T}$ também é nula na superfície
+👉 a componente tangencial da função teste $\mathbf{T}$ também é nula na superfície
 
 Logo, o termo de superfície desaparece.
 

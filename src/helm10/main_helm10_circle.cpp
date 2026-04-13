@@ -182,13 +182,13 @@ int main(int argc, char **argv)
     timing::Breakdown perf;
     timing::Stopwatch total_watch;
     const double r = 1.0;
-    int nr = 10;
-    int nt = 48;
-    int export_modes = 20;
+    int nr = 8;
+    int nt = 15;
+    int export_modes = 10;
     helm10::ScalarCliOptions cli;
     const auto print_usage = [](std::ostream &os)
     {
-        os << "Uso: ./helm10_circle [nr nt [nmodos]] [--backend closed-form|gauss]"
+        os << "Uso: ./helm10_circle [nr nt [nmodos]] [--backend closed-form|gauss|efgmi]"
            << " [--freq-hz F] [--eps-r E] [--mu-r M]"
            << " [--debug-local-blocks] [--debug-candidates]\n";
         os << "Aliases nomeados: [--nr NR] [--nt NT] [--nmodos M]"
@@ -234,7 +234,7 @@ int main(int argc, char **argv)
     if (!has_named_polar_args && !cli.positionals.empty() && cli.positionals.size() < 2)
     {
         std::cerr << "Erro: use ./helm10_circle [nr nt [nmodos]]"
-                  << " [--backend closed-form|gauss]"
+                  << " [--backend closed-form|gauss|efgmi]"
                   << " [--freq-hz F] [--eps-r E] [--mu-r M]"
                   << " [--debug-local-blocks] [--debug-candidates]\n";
         print_usage(std::cerr);
@@ -482,6 +482,7 @@ int main(int argc, char **argv)
                 : helm10::field_reconstruction::LongitudinalScalarKind::TM_Ez,
             std::sqrt(res.w[(size_t)eig_idx]),
             medium,
+            cli.backend,
             true);
         write_vtk_unstructured_tri_scalar_vector(
             output_paths::file_in(vtk_dir, vtk_name),
@@ -520,6 +521,7 @@ int main(int argc, char **argv)
             helm10::field_reconstruction::LongitudinalScalarKind::TE_Hz,
             kc_fem,
             medium,
+            cli.backend,
             false);
         const std::string label = circle_mode_label("TE", id.m, id.p);
         std::ostringstream fields_name;
@@ -615,6 +617,7 @@ int main(int argc, char **argv)
             helm10::field_reconstruction::LongitudinalScalarKind::TM_Ez,
             kc_fem,
             medium,
+            cli.backend,
             false);
         const std::string label = circle_mode_label("TM", id.m, id.p);
         std::ostringstream fields_name;

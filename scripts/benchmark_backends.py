@@ -43,22 +43,22 @@ class CaseSpec:
 
 
 CORE_CASES = [
-    CaseSpec("helm10_rect", "2.1", "helm10_rect", ("14", "14", "0"), "retangular escalar, sem exportacao"),
-    CaseSpec("edge_rect", "2.2.1", "edge_rect", ("14", "14", "0"), "retangular vetorial, sem exportacao"),
-    CaseSpec("mixed_rect", "2.2.2", "mixed_rect", ("12", "6"), "sistema misto retangular"),
-    CaseSpec("helmvec2_rect", "2.2.3", "helmvec2_rect", ("10", "6", "6", "0"), "k0 dado beta, Figura 11"),
-    CaseSpec("helmvec3_fig13_rect", "2.2.4", "helmvec3_fig13_rect", ("0.20", "10", "5", "0"), "beta dado k0, Fig. 13 / Tabela 10"),
+    CaseSpec("helm10_rect", "2.1", "helm10_rect", ("--ar-m", "1.0", "--nx", "10", "--ny", "20", "--nmodos", "10"), "retangular escalar, sem exportacao"),
+    CaseSpec("edge_rect", "2.2.1", "edge_rect", ("--nx", "10", "--ny", "20", "--nmodos", "10"), "retangular vetorial, sem exportacao"),
+    CaseSpec("mixed_rect", "2.2.2", "mixed_rect", ("--nx", "10", "--ny", "20"), "sistema misto retangular"),
+    CaseSpec("helmvec2_rect", "2.2.3", "helmvec2_rect", ("--beta", "10", "--nx", "20", "--ny", "20"), "k0 dado beta, Figura 11"),
+    CaseSpec("helmvec3_fig13_rect", "2.2.4", "helmvec3_fig13_rect", ("--d-over-a-preview", "0.20", "--nx", "10", "--ny", "5"), "beta dado k0, Fig. 13 / Tabela 10"),
     CaseSpec("fem3d0_air", "3.1", "fem3d0_air", ("--nx", "8", "--ny", "4", "--nz", "6"), "cavidade retangular 3D densa"),
     CaseSpec("fem3d1_air", "3.1", "fem3d1_air", ("--nx", "8", "--ny", "4", "--nz", "6"), "cavidade retangular 3D esparsa"),
 ]
 
 ALL_CASES = CORE_CASES + [
-    CaseSpec("helm10_circle", "2.1", "helm10_circle", ("16", "72", "0"), "circular escalar, sem exportacao"),
-    CaseSpec("helm10_coax", "2.1", "helm10_coax", ("16", "72", "0"), "coaxial escalar, sem exportacao"),
-    CaseSpec("edge_circle", "2.2.1", "edge_circle", ("14", "72", "0"), "circular vetorial, sem exportacao"),
-    CaseSpec("edge_coax", "2.2.1", "edge_coax", ("16", "96", "0"), "coaxial vetorial, sem exportacao"),
-    CaseSpec("mixed_circle", "2.2.2", "mixed_circle", ("14", "72"), "sistema misto circular"),
-    CaseSpec("mixed_coax", "2.2.2", "mixed_coax", ("14", "72"), "sistema misto coaxial"),
+    CaseSpec("helm10_circle", "2.1", "helm10_circle", ("--nr", "8", "--nt", "15", "--nmodos", "10"), "circular escalar, sem exportacao"),
+    CaseSpec("helm10_coax", "2.1", "helm10_coax", ("--nr", "10", "--nt", "17", "--nmodos", "10"), "coaxial escalar, sem exportacao"),
+    CaseSpec("edge_circle", "2.2.1", "edge_circle", ("--nr", "8", "--nt", "15", "--nmodos", "10"), "circular vetorial, sem exportacao"),
+    CaseSpec("edge_coax", "2.2.1", "edge_coax", ("--nr", "10", "--nt", "17", "--nmodos", "10"), "coaxial vetorial, sem exportacao"),
+    CaseSpec("mixed_circle", "2.2.2", "mixed_circle", ("--nr", "8", "--nt", "15"), "sistema misto circular"),
+    CaseSpec("mixed_coax", "2.2.2", "mixed_coax", ("--nr", "10", "--nt", "17"), "sistema misto coaxial"),
     CaseSpec("fem3d0_half", "3.1", "fem3d0_half", ("--nx", "8", "--ny", "6", "--nz", "6"), "cavidade meia-preenchida 3D densa"),
     CaseSpec("fem3d1_half", "3.1", "fem3d1_half", ("--nx", "8", "--ny", "6", "--nz", "6"), "cavidade meia-preenchida 3D esparsa"),
 ]

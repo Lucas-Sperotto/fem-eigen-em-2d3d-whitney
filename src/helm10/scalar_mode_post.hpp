@@ -19,6 +19,7 @@
 #pragma once
 #include "core/helm10_scalar_system.hpp"
 #include "core/mesh2d.hpp"
+#include "meshfree/efgmi_2d.hpp"
 #include <algorithm>
 #include <cmath>
 #include <iomanip>
@@ -110,6 +111,18 @@ inline std::vector<double> extract_mode_nodal_from_Z(
     {
         const int dof = sys.dof_map[ni];
         phi[ni] = (dof >= 0) ? zcol[idx_col(dof, mode_idx)] : 0.0;
+    }
+
+    if (sys.backend == ElementAssemblyBackend::EfgmiConsistent)
+    {
+        const auto ctx = efgmi2d::make_context(mesh);
+        std::vector<double> sampled(mesh.nodes.size(), 0.0);
+        for (size_t ni = 0; ni < mesh.nodes.size(); ++ni)
+        {
+            const Node2D &node = mesh.nodes[ni];
+            sampled[ni] = efgmi2d::evaluate_scalar_field(ctx, phi, node.x, node.y, true).value;
+        }
+        phi = std::move(sampled);
     }
 
     if (!normalize)

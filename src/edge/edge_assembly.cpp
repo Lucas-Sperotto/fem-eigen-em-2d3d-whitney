@@ -17,6 +17,7 @@
 #include "edge_assembly.hpp"
 #include "edge_basis.hpp"
 #include "explicit/tri2d_edge_explicit.hpp"
+#include "meshfree/efgmi_2d.hpp"
 #include <array>
 #include <stdexcept>
 #include <utility>
@@ -30,95 +31,11 @@ constexpr std::array<std::array<double, 3>, 3> kTriQuadP2 = {{
     {1.0 / 6.0, 1.0 / 6.0, 2.0 / 3.0},
 }};
 
-/******************************************************************************/
-/* FUNCAO: element_mats_edge_gauss                                            */
-/* DESCRICAO: Calcula os blocos locais de rigidez e massa do elemento de      */
-/* aresta por cubatura triangular. A regra de 3 pontos e exata aqui porque os*/
-/* integrandos sao constante (curl-curl) e quadratico (massa vetorial).       */
-/* ENTRADA: tg: const TriGeomEdge &; eps_r: double; mu_r: double; Sel:        */
-/* double[3][3]; Tel: double[3][3].                                           */
-/* SAIDA: sem retorno explicito (void).                                       */
-/******************************************************************************/
-void element_mats_edge_gauss(
-    const TriGeomEdge &tg,
-    double eps_r,
-    double mu_r,
-    double Sel[3][3],
-    double Tel[3][3])
-{
-    for (int i = 0; i < 3; ++i)
-    {
-        for (int j = 0; j < 3; ++j)
-        {
-            Sel[i][j] = 0.0;
-            Tel[i][j] = 0.0;
-        }
-    }
-
-    double curl[3];
-    for (int m = 0; m < 3; ++m)
-        curl[m] = whitney_curl_local(m, tg);
-
-    for (const auto &lam : kTriQuadP2)
-    {
-        const double w = tg.g.A / 3.0;
-        Vec2 W[3];
-        for (int m = 0; m < 3; ++m)
-            W[m] = whitney_W_local(m, tg, lam);
-
-        for (int i = 0; i < 3; ++i)
-        {
-            for (int j = 0; j < 3; ++j)
-            {
-                Sel[i][j] += (w / mu_r) * (curl[i] * curl[j]);
-                Tel[i][j] += eps_r * w * (W[i].x * W[j].x + W[i].y * W[j].y);
-            }
-        }
-    }
-}
-
-/******************************************************************************/
-/* FUNCAO: element_mats_edge_closed_form                                      */
-/* DESCRICAO: Calcula os blocos locais de rigidez e massa do elemento de      */
-/* aresta pela forma fechada do artigo, usando as Eq. (66) e (67).           */
-/* ENTRADA: tg: const TriGeomEdge &; eps_r: double; mu_r: double; Sel:        */
-/* double[3][3]; Tel: double[3][3].                                           */
-/* SAIDA: sem retorno explicito (void).                                       */
-/******************************************************************************/
-void element_mats_edge_closed_form(
-    const TriGeomEdge &tg,
-    double eps_r,
-    double mu_r,
-    double Sel[3][3],
-    double Tel[3][3])
-{
-    explicit_tri2d::tri2d_edge_closed_form_eq_66_67(tg, 1.0 / mu_r, eps_r, Sel, Tel);
-}
-
-/******************************************************************************/
-/* FUNCAO: element_mats_edge                                                  */
-/* DESCRICAO: Seleciona o backend local do elemento de aresta 2D, permitindo  */
-/* comparar quadratura de Gauss e closed-form com a mesma interface.          */
-/* ENTRADA: tg: const TriGeomEdge &; eps_r: double; mu_r: double; backend:    */
-/* ElementAssemblyBackend; Sel: double[3][3]; Tel: double[3][3].              */
-/* SAIDA: sem retorno explicito (void).                                       */
-/******************************************************************************/
-void element_mats_edge(
-    const TriGeomEdge &tg,
-    double eps_r,
-    double mu_r,
-    ElementAssemblyBackend backend,
-    double Sel[3][3],
-    double Tel[3][3])
-{
-    if (backend == ElementAssemblyBackend::ClosedForm)
-    {
-        element_mats_edge_closed_form(tg, eps_r, mu_r, Sel, Tel);
-        return;
-    }
-
-    element_mats_edge_gauss(tg, eps_r, mu_r, Sel, Tel);
-}
+EdgeSystem assemble_edge_system_efgmi(
+    const Mesh2D &mesh,
+    EdgeDofs edge_dofs,
+    const std::vector<double> &eps_r_tri,
+    const std::vector<double> &mu_r_tri);
 
 /******************************************************************************/
 /* FUNCAO: assemble_edge_system_with_tri_material                             */
@@ -138,8 +55,12 @@ EdgeSystem assemble_edge_system_with_tri_material(
     const std::vector<double> &mu_r_tri,
     ElementAssemblyBackend backend)
 {
+    if (backend == ElementAssemblyBackend::EfgmiConsistent)
+        return assemble_edge_system_efgmi(mesh, std::move(edge_dofs), eps_r_tri, mu_r_tri);
+
     EdgeSystem sys;
     sys.ed = std::move(edge_dofs);
+    sys.backend = backend;
 
     const int ndof = sys.ed.ndof;
     sys.S = DenseMat(ndof);
@@ -153,7 +74,34 @@ EdgeSystem assemble_edge_system_with_tri_material(
         const double mu_r = mu_r_tri[tid];
 
         double Sel[3][3] = {{0}}, Tel[3][3] = {{0}};
-        element_mats_edge(tg, eps_r, mu_r, backend, Sel, Tel);
+        if (backend == ElementAssemblyBackend::ClosedForm)
+        {
+            explicit_tri2d::tri2d_edge_closed_form_eq_66_67(tg, 1.0 / mu_r, eps_r, Sel, Tel);
+        }
+        else
+        {
+            // Backend por quadratura de Gauss, inlined para clareza.
+            double curl[3];
+            for (int m = 0; m < 3; ++m)
+                curl[m] = whitney_curl_local(m, tg);
+
+            for (const auto &lam : kTriQuadP2)
+            {
+                const double w = tg.g.A / 3.0;
+                Vec2 W[3];
+                for (int m = 0; m < 3; ++m)
+                    W[m] = whitney_W_local(m, tg, lam);
+
+                for (int i = 0; i < 3; ++i)
+                {
+                    for (int j = 0; j < 3; ++j)
+                    {
+                        Sel[i][j] += (w / mu_r) * (curl[i] * curl[j]);
+                        Tel[i][j] += eps_r * w * (W[i].x * W[j].x + W[i].y * W[j].y);
+                    }
+                }
+            }
+        }
 
         // Espalhamento local->global com correcao de orientacao:
         // o sinal local da aresta precisa ser alinhado com a orientacao global.
@@ -194,6 +142,71 @@ EdgeSystem assemble_edge_system_with_tri_material(
 std::vector<double> make_uniform_tri_data(int ntri, double value)
 {
     return std::vector<double>((size_t)ntri, value);
+}
+
+EdgeSystem assemble_edge_system_efgmi(
+    const Mesh2D &mesh,
+    EdgeDofs edge_dofs,
+    const std::vector<double> &eps_r_tri,
+    const std::vector<double> &mu_r_tri)
+{
+    EdgeSystem sys;
+    sys.ed = std::move(edge_dofs);
+    sys.backend = ElementAssemblyBackend::EfgmiConsistent;
+
+    const int ndof = sys.ed.ndof;
+    sys.S = DenseMat(ndof);
+    sys.T = DenseMat(ndof);
+
+    const auto ctx = efgmi2d::make_edge_context(mesh, sys.ed);
+    for (int tid = 0; tid < (int)mesh.tris.size(); ++tid)
+    {
+        const Tri &tri = mesh.tris[(size_t)tid];
+        const Node2D &n0 = mesh.nodes[(size_t)tri.v[0]];
+        const Node2D &n1 = mesh.nodes[(size_t)tri.v[1]];
+        const Node2D &n2 = mesh.nodes[(size_t)tri.v[2]];
+        const TriEdges &te = sys.ed.tri_edges[(size_t)tid];
+        const TriGeom geom = tri_geom(mesh, tri);
+        const double eps_r = eps_r_tri[(size_t)tid];
+        const double mu_r = mu_r_tri[(size_t)tid];
+
+        for (const auto &qp : efgmi2d::kTriQuadP5)
+        {
+            const double x =
+                qp.lambda[0] * n0.x +
+                qp.lambda[1] * n1.x +
+                qp.lambda[2] * n2.x;
+            const double y =
+                qp.lambda[0] * n0.y +
+                qp.lambda[1] * n1.y +
+                qp.lambda[2] * n2.y;
+            const double w = geom.A * qp.weight;
+            const auto edge_basis = efgmi2d::evaluate_triangle_edge_basis(ctx, tid, x, y);
+
+            for (int a = 0; a < 3; ++a)
+            {
+                const int I = sys.ed.edge_to_dof[(size_t)te.e[a]];
+                if (I < 0)
+                    continue;
+
+                for (int b = 0; b < 3; ++b)
+                {
+                    const int J = sys.ed.edge_to_dof[(size_t)te.e[b]];
+                    if (J < 0)
+                        continue;
+
+                    const double sign = static_cast<double>(te.sgn[a] * te.sgn[b]);
+                    sys.S(I, J) += sign * (w / mu_r) *
+                                   edge_basis.curl[(size_t)a] * edge_basis.curl[(size_t)b];
+                    sys.T(I, J) += sign * eps_r * w *
+                                   (edge_basis.vx[(size_t)a] * edge_basis.vx[(size_t)b] +
+                                    edge_basis.vy[(size_t)a] * edge_basis.vy[(size_t)b]);
+                }
+            }
+        }
+    }
+
+    return sys;
 }
 } // namespace
 

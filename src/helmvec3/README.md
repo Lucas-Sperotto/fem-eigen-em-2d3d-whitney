@@ -94,11 +94,11 @@ Sel(zz)(i,j) =
     (1/mu_r) int_T grad(N_i) . grad(N_j) dA
 
 Tel(tt)(m,n) =
-    eps_r int_T W_m . W_n dA
+    (1/mu_r) int_T W_m . W_n dA
 
 Tel(zz)(i,j) =
     (1/mu_r) int_T grad(N_i) . grad(N_j) dA
-  + k0^2 eps_r int_T N_i N_j dA
+  - k0^2 eps_r int_T N_i N_j dA
 ```
 
 As Eq. `(137)` a `(142)` sao justamente as versoes `closed-form` desses blocos.
@@ -145,8 +145,8 @@ Sel(tt) = (1/mu_r) * curlcurl_t - k0^2 * eps_r * mass_t
 Tel(tz) = (1/mu_r) * C
 Tel(zt) = (1/mu_r) * C^T
 Sel(zz) = (1/mu_r) * gradgrad_z
-Tel(tt) = eps_r * mass_t
-Tel(zz) = (1/mu_r) * gradgrad_z + k0^2 * eps_r * mass_z
+Tel(tt) = (1/mu_r) * mass_t
+Tel(zz) = (1/mu_r) * gradgrad_z - k0^2 * eps_r * mass_z
 ```
 
 Depois, esses blocos sao rearranjados para a Eq. `(136)`.

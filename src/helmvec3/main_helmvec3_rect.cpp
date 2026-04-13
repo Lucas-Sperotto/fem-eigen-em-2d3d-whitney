@@ -157,6 +157,8 @@ CoupledBetaDiagVariant env_beta_diag_variant()
         return CoupledBetaDiagVariant::DiagEq141EpsMassQttPlusPzzDouble;
     if (token == "diag_eq141_eps_mass_qtt_plus_qzz_half" || token == "eq141_qtt_plus_qzz_half")
         return CoupledBetaDiagVariant::DiagEq141EpsMassQttPlusQzzHalf;
+    if (token == "diag_parametric_qtt_qzz" || token == "parametric_qtt_qzz" || token == "param_qtt_qzz")
+        return CoupledBetaDiagVariant::DiagParametricQttQzz;
 
     throw std::runtime_error(
         "Valor invalido em TP3485_HELMVEC3_DIAG_BETA_VARIANT: " + std::string(raw));
@@ -1254,7 +1256,7 @@ int run_helmvec3_fig12_rect(int argc, char **argv)
     const auto print_usage = [](std::ostream &os)
     {
         os << "Uso: ./helmvec3_fig12_rect [nx [ny [debug]]]"
-           << " [--backend closed-form|gauss]"
+           << " [--backend closed-form|gauss|efgmi]"
            << " [--debug-local-blocks] [--debug-candidates]\n";
         os << "Aliases nomeados: [--nx NX] [--ny NY]"
            << " (nao misture com os posicionais principais)\n";
@@ -1417,7 +1419,7 @@ int run_helmvec3_fig13_rect(int argc, char **argv)
     const auto print_usage = [](std::ostream &os)
     {
         os << "Uso: ./helmvec3_fig13_rect [d_over_a_preview [nx [ny [debug]]]]"
-           << " [--backend closed-form|gauss]"
+           << " [--backend closed-form|gauss|efgmi]"
            << " [--debug-local-blocks] [--debug-candidates]\n";
         os << "Aliases nomeados: [--d-over-a-preview VAL] [--nx NX] [--ny NY]"
            << " (nao misture com os posicionais principais)\n";

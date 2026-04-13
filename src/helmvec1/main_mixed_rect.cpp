@@ -208,11 +208,11 @@ int main(int argc, char **argv)
     timing::Breakdown perf_h;
     // Malha padrao (2*nx*ny triangulos). Para comparacao em formato de tabela,
     // usamos uma discretizacao uniforme moderadamente refinada e expomos (nx, ny).
-    int nx = 14, ny = 14;
+    int nx = 10, ny = 20;
     helmvec1::MixedCliOptions cli;
     const auto print_usage = [](std::ostream &os)
     {
-        os << "Uso: ./mixed_rect [nx ny] [--backend closed-form|gauss]"
+        os << "Uso: ./mixed_rect [nx ny] [--backend closed-form|gauss|efgmi]"
            << " [--debug-local-blocks] [--debug-candidates]\n";
         os << "Aliases nomeados: [--nx NX] [--ny NY]"
            << " (nao misture com os posicionais principais)\n";
