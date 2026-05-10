@@ -1,24 +1,61 @@
-# NASA TP-3485 reproduction (FEM eigenvalue EM)
+# NASA TP-3485 — Reprodução FEM Eigenvalue EM
 
-Reproducao numerica da NASA Technical Paper 3485:
-*Finite Element Method for Eigenvalue Problems in Electromagnetics* (1994).
+Reprodução numérica completa da NASA Technical Paper 3485:
+**Finite Element Method for Eigenvalue Problems in Electromagnetics** (Jin, 1994).
 
-Este repositorio implementa, valida e organiza os blocos 2D e 3D do artigo,
-com foco em:
+Implementa, valida e documenta todos os **14 casos numéricos** do artigo —
+formulações 2D escalares, vetoriais, mistas e acopladas, e cavidades 3D —
+com dois backends de montagem elementar (**FEM closed-form** e **EFGMI**).
 
-- formulacao didatica,
-- comparacao com tabelas de referencia,
-- fluxo reprodutivel via executaveis C++ e scripts Python.
+---
+
+## Navegação rápida — Resultados
+
+| # | Caso | Seção | Resultado | Fig. artigo |
+| --- | --- | --- | --- | --- |
+| [01](docs/results/caso_01_tab1_helm10_rect.md) | Guia retangular escalar | 2.1 | Tabela 1 — `kc` TE/TM | ![Figura 4](docs/figs/figura4.png) |
+| [02](docs/results/caso_02_tab2_helm10_circle.md) | Guia circular escalar | 2.1 | Tabela 2 — `kc` TE/TM | ![Figura 6](docs/figs/figura6.png) |
+| [03](docs/results/caso_03_tab3_helm10_coax.md) | Linha coaxial escalar | 2.1 | Tabela 3 — `kc` TE/TM | ![Figura 8](docs/figs/figura8.png) |
+| [04](docs/results/caso_04_tab4_helmvec_rect.md) | Guia retangular edge 2D | 2.2.1 | Tabela 4 — `kc` vetorial | ![Figura 4](docs/figs/figura4.png) |
+| [05](docs/results/caso_05_tab5_helmvec_circle.md) | Guia circular edge 2D | 2.2.1 | Tabela 5 — `kc` vetorial | ![Figura 6](docs/figs/figura6.png) |
+| [06](docs/results/caso_06_tab6_helmvec1_rect.md) | Retangular misto 3 comp. | 2.2.2 | Tabela 6 — `kc` misto E/H | ![Figura 4](docs/figs/figura4.png) |
+| [07](docs/results/caso_07_tab7_helmvec1_circle.md) | Circular misto 3 comp. | 2.2.2 | Tabela 7 — `kc` misto E/H | ![Figura 6](docs/figs/figura6.png) |
+| [08](docs/results/caso_08_fig11_tab8_helmvec2.md) | Guia parcialmente preenchido — `k0(β)` | 2.2.3 | Fig. 11 / Tabela 8 | ![Figura 11](docs/figs/figura11.png) |
+| [09](docs/results/caso_09_fig12_tab9_helmvec3.md) | Guia parcial — `β(k0)`, ex. 1 | 2.2.4 | Fig. 12 / Tabela 9 | ![Figura 12](docs/figs/figura12.png) |
+| [10](docs/results/caso_10_fig13_tab10_helmvec3.md) | Guia parcial — `β(k0)`, ex. 2 | 2.2.4 | Fig. 13 / Tabela 10 | ![Figura 13](docs/figs/figura13.png) |
+| [11](docs/results/caso_11_tab12_fem3d_air.md) | Cavidade 3D ar | 3.1 | Tabela 12 — `k0` | ![Figura 15](docs/figs/figura15.png) |
+| [12](docs/results/caso_12_tab13_fem3d_half.md) | Cavidade 3D semi-preenchida | 3.1 | Tabela 13 — `k0` | ![Figura 16](docs/figs/figura16.png) |
+| [13](docs/results/caso_13_tab14_fem3d_cyl.md) | Cavidade cilíndrica 3D | 3.1 | Tabela 14 — `k0` | ![Figura 17](docs/figs/figura17.png) |
+| [14](docs/results/caso_14_tab15_fem3d_sphere.md) | Cavidade esférica 3D | 3.1 | Tabela 15 — `k0` | — |
+
+→ **[docs/results/README.md](docs/results/README.md)** — índice completo com tabelas de resultados e figuras
+→ **[docs/results/fem_vs_efgmi.md](docs/results/fem_vs_efgmi.md)** — comparação FEM × EFGMI (timing e erro)
+
+---
+
+## Documentação completa
+
+| Área | Link |
+|---|---|
+| Índice geral de todos os .md | [docs/INDICE.md](docs/INDICE.md) |
+| Trilha teórica (tradução do artigo) | [docs/README.md](docs/README.md) |
+| PDF original do artigo | [docs/refs/19950011772.pdf](docs/refs/19950011772.pdf) |
+| Rastreabilidade equações → código | [docs/Rastreabilidade_Equacoes_Artigo_Codigo.md](docs/Rastreabilidade_Equacoes_Artigo_Codigo.md) |
+| Tabela de executáveis e E/S | [docs/Tabela_Executaveis_Entradas_Saidas.md](docs/Tabela_Executaveis_Entradas_Saidas.md) |
+| 14 casos do artigo (tabela) | [docs/Casos_de_Teste_do_Artigo.md](docs/Casos_de_Teste_do_Artigo.md) |
+| Diagramas de execução | [docs/diagramas_execucao/](docs/diagramas_execucao/) |
+
+---
 
 ## 0) Trilha teorica e documentacao
 
 Antes de entrar no codigo, a trilha teorica revisada do artigo esta em:
 
 - [docs/README.md](docs/README.md): indice geral da documentacao, em ordem de estudo.
-- [docs/19950011772.pdf](docs/19950011772.pdf): PDF original do paper.
+- [docs/refs/19950011772.pdf](docs/refs/19950011772.pdf): PDF original do paper.
 - [docs/Rastreabilidade_Equacoes_Artigo_Codigo.md](docs/Rastreabilidade_Equacoes_Artigo_Codigo.md): trilha central de rastreabilidade entre equacoes do artigo e funcoes/arquivos C++.
 - [docs/Tabela_Executaveis_Entradas_Saidas.md](docs/Tabela_Executaveis_Entradas_Saidas.md): tabela unificada com todos os executaveis gerados, suas entradas e suas saidas.
-- [docs/results/README.md](docs/results/README.md): resultados curados, figuras e validacoes preservadas no repositorio.
+- [docs/results/README.md](docs/results/README.md): resultados curados, figuras e validacoes.
 
 Os arquivos principais em `docs/` preservam a traducao-base do artigo e receberam comentarios complementares, explicacoes intermediarias entre equacoes e notas de consistencia para estudo.
 

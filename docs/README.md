@@ -1,4 +1,9 @@
-# Documentação Teórica
+# Documentação — NASA TP-3485
+
+→ **[INDICE.md](INDICE.md)** — mapa completo de todos os arquivos `.md` do repositório
+→ **[results/README.md](results/README.md)** — índice dos 14 casos com resultados e figuras
+
+---
 
 Esta pasta reúne a trilha principal de leitura do artigo NASA TP-3485 dentro do projeto. Os arquivos numerados em `docs/traducao/` preservam a tradução-base revisada manualmente e receberam notas de leitura, passagens intermediárias entre equações e observações editoriais pontuais.
 
