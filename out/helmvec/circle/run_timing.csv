@@ -1,0 +1,2 @@
+case_label,geometry,backend,debug_local_blocks,debug_candidates,ar_m,b_m,r_m,r1_m,r2_m,nx,ny,nr,nt,nmodos,mesh_nodes,mesh_tris,te_assembly_ms,te_solve_ms,te_post_ms,tm_assembly_ms,tm_solve_ms,tm_post_ms,assembly_ms_total,solve_ms_total,post_ms_total,total_ms
+edge_circle,circle,closed-form,0,0,,,1.000000,,,,,8,15,10,121,225,0.912668,192.906133,869.644125,0.69599,93.142222,867.386196,1.608658,286.048355,1737.030321,3621.011466

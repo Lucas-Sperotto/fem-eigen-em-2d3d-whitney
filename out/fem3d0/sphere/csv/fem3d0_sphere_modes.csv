@@ -1,0 +1,12 @@
+reference_index,mode_label,k0_analytic,k0_fem,ref_paper,error_percent_analytic,error_percent_ref_paper,matched_eig_index,match_status,field_status,fields_csv_file,vtk_file
+1,TM010,2.744,2.660340074010974,2.799,3.048831122049046,4.953909467274939,28,matched,E_cell_centroid_unit_peak_normalized,fem3d0_sphere_mode01_TM010_E_fields.csv,fem3d0_sphere_mode01_TM010_E.vtk
+2,TM001,2.744,2.757157143023261,2.802,0.4794877195065754,1.600387472403262,29,matched,E_cell_centroid_unit_peak_normalized,fem3d0_sphere_mode02_TM001_E_fields.csv,fem3d0_sphere_mode02_TM001_E.vtk
+3,TM100,2.744,2.808196125554073,2.811,2.339508948763571,0.09974651177258394,30,matched,E_cell_centroid_unit_peak_normalized,fem3d0_sphere_mode03_TM100_E_fields.csv,fem3d0_sphere_mode03_TM100_E.vtk
+4,TM021,3.87,3.782163216115298,3.948,2.269684338105991,4.200526440848574,41,matched,E_cell_centroid_unit_peak_normalized,fem3d0_sphere_mode04_TM021_E_fields.csv,fem3d0_sphere_mode04_TM021_E.vtk
+5,TM121e,3.87,3.945347816294391,3.986,1.946971997271074,1.019874152172843,42,matched,E_cell_centroid_unit_peak_normalized,fem3d0_sphere_mode05_TM121e_E_fields.csv,fem3d0_sphere_mode05_TM121e_E.vtk
+6,TM121o,3.87,4.007393963321878,3.994,3.550231610384436,0.3353521112137604,43,matched,E_cell_centroid_unit_peak_normalized,fem3d0_sphere_mode06_TM121o_E_fields.csv,fem3d0_sphere_mode06_TM121o_E.vtk
+7,TM221e,3.87,4.01802714264283,4.038,3.824990765964597,0.4946225199893573,44,matched,E_cell_centroid_unit_peak_normalized,fem3d0_sphere_mode07_TM221e_E_fields.csv,fem3d0_sphere_mode07_TM221e_E.vtk
+8,TM221o,3.87,4.107327867026751,4.048,6.13250302394704,1.465609363309055,45,matched,E_cell_centroid_unit_peak_normalized,fem3d0_sphere_mode08_TM221o_E_fields.csv,fem3d0_sphere_mode08_TM221o_E.vtk
+9,TE001,4.493,4.427622263112157,4.433,1.455102089647073,0.1213114569781748,47,matched,E_cell_centroid_unit_peak_normalized,fem3d0_sphere_mode09_TE001_E_fields.csv,fem3d0_sphere_mode09_TE001_E.vtk
+10,TE111e,4.493,4.649263419451503,4.472,3.477930546438969,3.963851061080116,48,matched,E_cell_centroid_unit_peak_normalized,fem3d0_sphere_mode10_TE111e_E_fields.csv,fem3d0_sphere_mode10_TE111e_E.vtk
+11,TE111o,4.493,4.661183856753474,4.549,3.743241859636623,2.466121273982709,49,matched,E_cell_centroid_unit_peak_normalized,fem3d0_sphere_mode11_TE111o_E_fields.csv,fem3d0_sphere_mode11_TE111o_E.vtk

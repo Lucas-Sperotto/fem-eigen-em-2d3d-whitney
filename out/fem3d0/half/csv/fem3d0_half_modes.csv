@@ -1,0 +1,7 @@
+reference_index,mode_label,k0_analytic,k0_fem,ref_paper,error_percent_analytic,error_percent_ref_paper,matched_eig_index,match_status,field_status,fields_csv_file,vtk_file
+1,TE2101,3.538,3.552806318755304,3.534,0.4184940292624215,0.5321538979995607,49,matched,E_cell_centroid_unit_peak_normalized,fem3d0_half_mode01_TE2101_E_fields.csv,fem3d0_half_mode01_TE2101_E.vtk
+2,TE2201,5.445,5.444338346391132,5.44,0.0121515814300897,0.07974901454285861,56,matched,E_cell_centroid_unit_peak_normalized,fem3d0_half_mode02_TE2201_E_fields.csv,fem3d0_half_mode02_TE2201_E.vtk
+3,TE3102,5.935,5.936691834988824,5.916,0.0285060655235865,0.3497605643817461,59,matched,E_cell_centroid_unit_peak_normalized,fem3d0_half_mode03_TE3102_E_fields.csv,fem3d0_half_mode03_TE3102_E.vtk
+4,TE2301,7.503,7.513903721004107,7.501,0.1453248167947084,0.1720266764978903,72,matched,E_cell_centroid_unit_peak_normalized,fem3d0_half_mode04_TE2301_E_fields.csv,fem3d0_half_mode04_TE2301_E.vtk
+5,TE2202,7.633,7.625640324424847,7.56,0.09641917431092975,0.868258259587925,74,matched,E_cell_centroid_unit_peak_normalized,fem3d0_half_mode05_TE2202_E_fields.csv,fem3d0_half_mode05_TE2202_E.vtk
+6,TE2103,8.096,8.190904284440958,8.055999999999999,1.172236714932776,1.674581485116168,83,matched,E_cell_centroid_unit_peak_normalized,fem3d0_half_mode06_TE2103_E_fields.csv,fem3d0_half_mode06_TE2103_E.vtk

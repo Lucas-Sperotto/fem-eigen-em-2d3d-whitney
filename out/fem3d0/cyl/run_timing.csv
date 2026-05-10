@@ -1,0 +1,2 @@
+solver,case_name,storage,backend,debug_local_blocks,debug_candidates,nx,ny,nz,mesh_nodes,mesh_tets,mesh_edges,ndof,nnz_lower_s,nnz_lower_t,assembly_ms,solve_ms,post_ms,total_ms
+fem3d0,cyl,dense,closed-form,0,0,7,7,4,276,968,1433,863,0,0,16.062998,796.031866,451.485858,1263.634413

@@ -1,0 +1,2 @@
+case_label,geometry,backend,debug_local_blocks,debug_candidates,a,b,d12,d13_preview_over_a,eps_fill,nx,ny,mesh_nodes,mesh_tris,table9_sample_count,preview_sample_count,table10_block_count,table10_row_count,assembly_ms,solve_ms,post_ms,total_ms
+helmvec3_fig12_rect,rect,closed-form,0,0,1,0.45,0.225,0,2.45,10,5,66,100,5,0,0,0,4.125271,254.152986,309.9541559999999,568.232413

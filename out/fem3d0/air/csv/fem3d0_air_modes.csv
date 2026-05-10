@@ -1,0 +1,9 @@
+reference_index,mode_label,k0_analytic,k0_fem,ref_paper,error_percent_analytic,error_percent_ref_paper,matched_eig_index,match_status,field_status,fields_csv_file,vtk_file
+1,TE101,5.236,5.257380729733323,5.213,0.4083409039977708,0.8513472037852093,20,matched,E_cell_centroid_unit_peak_normalized,fem3d0_air_mode01_TE101_E_fields.csv,fem3d0_air_mode01_TE101_E.vtk
+2,TM110,7.025,6.742937526335909,6.977,4.015124180271768,3.354772447528905,21,matched,E_cell_centroid_unit_peak_normalized,fem3d0_air_mode02_TM110_E_fields.csv,fem3d0_air_mode02_TM110_E.vtk
+3,TE011,7.531,7.533942442376573,7.474,0.0390710712597742,0.8020128763255698,22,matched,E_cell_centroid_unit_peak_normalized,fem3d0_air_mode03_TE011_E_fields.csv,fem3d0_air_mode03_TE011_E.vtk
+4,TE201,7.531,7.576459687335563,7.573,0.6036341433483313,0.0456845019881437,23,matched,E_cell_centroid_unit_peak_normalized,fem3d0_air_mode04_TE201_E_fields.csv,fem3d0_air_mode04_TE201_E.vtk
+5,TE111,8.179,8.106508803339278,7.991,0.8863087988840038,1.445486213731422,24,matched,E_cell_centroid_unit_peak_normalized,fem3d0_air_mode05_TE111_E_fields.csv,fem3d0_air_mode05_TE111_E.vtk
+6,TM111,8.179,8.246593615038064,8.122,0.826428842622125,1.534026287097562,25,matched,E_cell_centroid_unit_peak_normalized,fem3d0_air_mode06_TM111_E_fields.csv,fem3d0_air_mode06_TM111_E.vtk
+7,TM210,8.885999999999999,8.870697538050484,8.571999999999999,0.1722086647480895,3.484572305768606,27,matched,E_cell_centroid_unit_peak_normalized,fem3d0_air_mode07_TM210_E_fields.csv,fem3d0_air_mode07_TM210_E.vtk
+8,TE102,8.946999999999999,8.503759332477152,8.795,4.954070275207859,3.311434536928344,26,matched,E_cell_centroid_unit_peak_normalized,fem3d0_air_mode08_TE102_E_fields.csv,fem3d0_air_mode08_TE102_E.vtk
