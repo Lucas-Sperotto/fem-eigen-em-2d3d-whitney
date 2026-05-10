@@ -46,11 +46,31 @@ __pycache__/
 # -----------------------------------------------------------------------------
 # Saidas do projeto FEM (resultados e pos-processamento)
 # -----------------------------------------------------------------------------
-#out/
-#/*.vtk
-#/*.vtu
-#/*.pvtu
-#/*.log
+# Imagens de apresentacao (geradas por export_presentation_assets.py - grande demais para git)
+docs/results/img/fem/
+docs/results/img/efgm/
+# Artefatos FEM brutos (CSVs/VTKs do pipeline - gerados localmente)
+out/helm10/
+out/helmvec/
+out/helmvec1/
+out/helmvec2/
+out/helmvec3/
+out/fem3d0/
+out/fem3d1/
+out/validation/
+out/img_all/
+out/benchmark_test/
+out/fem_efgmi_mode_report_base/base/efgm/helm10/circle/img/
+out/fem_efgmi_mode_report_base/base/efgm/helm10/coax/img/
+out/fem_efgmi_mode_report_base/base/efgm/helm10/rect/img/
+out/fem_efgmi_mode_report_base/base/efgm/helmvec1/circle/img/
+out/fem_efgmi_mode_report_base/base/efgm/helmvec1/rect/img/
+out/fem_efgmi_mode_report_base/base/efgm/helmvec2/rect/img/
+out/fem_efgmi_mode_report_base/base/efgm/helmvec3/fig12_rect/img/
+out/fem_efgmi_mode_report_base/base/efgm/helmvec3/fig13_rect/img/
+out/fem_efgmi_mode_report_base/base/fem/helm10/circle/img/
+out/fem_efgmi_mode_report_base/base/fem/helm10/coax/img/
+out/fem_efgmi_mode_report_base/base/fem/helm10/rect/img/
 
 # -----------------------------------------------------------------------------
 # Arquivos locais de referencia
